@@ -108,26 +108,26 @@ workflow SGE {
     }
 
     //
-    // SUBWORKFLOW: Run PE read merging on raw reads
+    // SUBWORKFLOW: Run adapter/quality trimming
     //
-    if (params.read_merging) {
-        READ_MERGING ( INPUT_CHECK.out.reads )
-        if (params.read_merging_qc) {
-            //MERGED_SEQUENCING_QC ( READ_MERGING.out.reads )
+    if (params.read_trimming) {
+        READ_TRIMMING ( INPUT_CHECK.out.reads )
+        if (params.read_trimming_qc) {
+            //TRIMMED_SEQUENCING_QC ( READ_TRIMMING.out.reads )
         }
     }
 
     //
-    // SUBWORKFLOW: Run adapter/quality trimming
+    // SUBWORKFLOW: Run PE read merging on raw reads
     //
-    if (params.read_trimming) {
-        if (params.read_merging) {
-            READ_TRIMMING ( READ_MERGING.out.reads )
+    if (params.read_merging) {
+        if (params.read_trimming) {
+            READ_MERGING ( READ_TRIMMING.out.reads )
         } else {
-            READ_TRIMMING ( INPUT_CHECK.out.reads )
+            READ_MERGING ( INPUT_CHECK.out.reads )
         }
-        if (params.read_trimming_qc) {
-            //TRIMMED_SEQUENCING_QC ( READ_TRIMMING.out.reads )
+        if (params.read_merging_qc) {
+            //MERGED_SEQUENCING_QC ( READ_MERGING.out.reads )
         }
     }
 
