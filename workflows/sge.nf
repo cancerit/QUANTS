@@ -5,17 +5,42 @@
 */
 
 def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
+def printErr = System.err.&println
 
 // Validate input parameters
-WorkflowSge.initialise(params, log)
+//WorkflowSge.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-def checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
+def checkPathParamList = [ params.input, params.multiqc_config ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+
+// Check read merging software (if set)
+def read_merging_software = ['seqprep', 'flash2']
+if (params.read_merging) {
+    if ( read_merging_software.contains( params.read_merging ) == false ) {
+	    printErr("If read_merging is set, software must be one of: " + read_merging_software.join(',') + ".")
+	    exit 1
+    }
+}
+
+// Check read trimming software (if set)
+def read_trimming_software = ['cutadapt']
+if (params.read_trimming) {
+    if ( read_trimming_software.contains( params.read_trimming ) == false ) {
+	    printErr("If read_trimming is set, software must be one of: " + read_trimming_software.join(',') + ".")
+	    exit 1
+    }
+}
+
+// Check read merging QC (if set)
+if (params.read_merging_qc && !params.read_merging) {
+    printErr("Read merging QC cannot be run when read_merging is set to false.")
+	exit 1
+}
 
 /*
 ========================================================================================
@@ -44,6 +69,9 @@ include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' 
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
 //
 include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( options: [:] )
+include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( options: [:] )
+include { READ_TRIMMING } from '../subworkflows/local/read_trimming' addParams( options: [:] )
+include { SEQUENCING_QC as RAW_SEQUENCING_QC; SEQUENCING_QC as MERGED_SEQUENCING_QC; SEQUENCING_QC as TRIMMED_SEQUENCING_QC;} from '../subworkflows/local/sequencing_qc' addParams( options: [:] )
 
 /*
 ========================================================================================
@@ -52,13 +80,7 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( opti
 */
 
 def multiqc_options   = modules['multiqc']
-multiqc_options.args += params.multiqc_title ? Utils.joinModuleArgs(["--title \"$params.multiqc_title\""]) : ''
-
-//
-// MODULE: Installed directly from nf-core/modules
-//
-include { FASTQC  } from '../modules/nf-core/modules/fastqc/main'  addParams( options: modules['fastqc'] )
-include { MULTIQC } from '../modules/nf-core/modules/multiqc/main' addParams( options: multiqc_options   )
+//multiqc_options.args += params.multiqc_title ? Utils.joinModuleArgs(["--title \"$params.multiqc_title\""]) : ''
 
 /*
 ========================================================================================
@@ -76,17 +98,38 @@ workflow SGE {
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
-    INPUT_CHECK (
-        ch_input
-    )
+    INPUT_CHECK ( ch_input )
 
     //
-    // MODULE: Run FastQC
+    // SUBWORKFLOW: Run FASTQC on raw reads
     //
-    FASTQC (
-        INPUT_CHECK.out.reads
-    )
-    ch_software_versions = ch_software_versions.mix(FASTQC.out.version.first().ifEmpty(null))
+    if (params.raw_sequencing_qc) {
+        //RAW_SEQUENCING_QC ( INPUT_CHECK.out.reads )
+    }
+
+    //
+    // SUBWORKFLOW: Run PE read merging on raw reads
+    //
+    if (params.read_merging) {
+        READ_MERGING ( INPUT_CHECK.out.reads )
+        if (params.read_merging_qc) {
+            //MERGED_SEQUENCING_QC ( READ_MERGING.out.reads )
+        }
+    }
+
+    //
+    // SUBWORKFLOW: Run adapter/quality trimming
+    //
+    if (params.read_trimming) {
+        if (params.read_merging) {
+            READ_TRIMMING ( READ_MERGING.out.reads )
+        } else {
+            READ_TRIMMING ( INPUT_CHECK.out.reads )
+        }
+        if (params.read_trimming_qc) {
+            //TRIMMED_SEQUENCING_QC ( READ_TRIMMING.out.reads )
+        }
+    }
 
     //
     // MODULE: Pipeline reporting
@@ -103,24 +146,6 @@ workflow SGE {
         ch_software_versions.map { it }.collect()
     )
 
-    //
-    // MODULE: MultiQC
-    //
-    workflow_summary    = WorkflowSge.paramsSummaryMultiqc(workflow, summary_params)
-    ch_workflow_summary = Channel.value(workflow_summary)
-
-    ch_multiqc_files = Channel.empty()
-    ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
-    ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_files = ch_multiqc_files.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
-    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-
-    MULTIQC (
-        ch_multiqc_files.collect()
-    )
-    multiqc_report       = MULTIQC.out.report.toList()
-    ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
 }
 
 /*
@@ -130,7 +155,7 @@ workflow SGE {
 */
 
 workflow.onComplete {
-    NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
+    //NfcoreTemplate.email(workflow, params, summary_params, projectDir, log, multiqc_report)
     NfcoreTemplate.summary(workflow, params, log)
 }
 

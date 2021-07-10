@@ -1,8 +1,5 @@
 #!/usr/bin/env python
 
-# TODO nf-core: Update the script to check the samplesheet
-# This script is based on the example at: https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/samplesheet/samplesheet_test_illumina_amplicon.csv
-
 import os
 import sys
 import errno
@@ -38,7 +35,6 @@ def print_error(error, context="Line", context_str=""):
     sys.exit(1)
 
 
-# TODO nf-core: Update the check_samplesheet function
 def check_samplesheet(file_in, file_out):
     """
     This function checks that the samplesheet follows the following structure:
@@ -47,9 +43,6 @@ def check_samplesheet(file_in, file_out):
     SAMPLE_PE,SAMPLE_PE_RUN1_1.fastq.gz,SAMPLE_PE_RUN1_2.fastq.gz
     SAMPLE_PE,SAMPLE_PE_RUN2_1.fastq.gz,SAMPLE_PE_RUN2_2.fastq.gz
     SAMPLE_SE,SAMPLE_SE_RUN1_1.fastq.gz,
-
-    For an example see:
-    https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/samplesheet/samplesheet_test_illumina_amplicon.csv
     """
 
     sample_mapping_dict = {}
@@ -57,7 +50,6 @@ def check_samplesheet(file_in, file_out):
 
         ## Check header
         MIN_COLS = 2
-        # TODO nf-core: Update the column names for the input samplesheet
         HEADER = ["sample", "fastq_1", "fastq_2"]
         header = [x.strip('"') for x in fin.readline().strip().split(",")]
         if header[: len(HEADER)] != HEADER:
@@ -130,9 +122,9 @@ def check_samplesheet(file_in, file_out):
                 ## Check that multiple runs of the same sample are of the same datatype
                 if not all(x[0] == sample_mapping_dict[sample][0][0] for x in sample_mapping_dict[sample]):
                     print_error("Multiple runs of a sample must be of the same datatype!", "Sample: {}".format(sample))
-
+                ## VAOFFORD: Removed _T1 suffix to sample name
                 for idx, val in enumerate(sample_mapping_dict[sample]):
-                    fout.write(",".join(["{}_T{}".format(sample, idx + 1)] + val) + "\n")
+                    fout.write(",".join(["{}".format(sample, idx + 1)] + val) + "\n")
     else:
         print_error("No entries to process!", "Samplesheet: {}".format(file_in))
 
