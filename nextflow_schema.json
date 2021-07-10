@@ -11,7 +11,8 @@
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
             "required": [
-                "input"
+                "input",
+                "single_end"
             ],
             "properties": {
                 "input": {
@@ -23,6 +24,11 @@
                     "description": "Path to comma-separated file containing information about the samples in the experiment.",
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/sge/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
+                },
+                "single_end": {
+                    "type": "boolean",
+                    "description": "If data is single-ended reads instead of paired-end.",
+                    "help_text": "Set this to true if input contains single-ended reads or false if paired-end reads."
                 },
                 "outdir": {
                     "type": "string",
@@ -43,6 +49,70 @@
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature",
                     "hidden": true
+                }
+            }
+        },
+        "quality_control_options": {
+            "title": "Quality control options",
+            "type": "object",
+            "fa_icon": "fas fa-clipboard-check",
+            "description": "Define pipeline options for quality control.",
+            "properties": {
+                "raw_sequencing_qc": {
+                    "type": "boolean",
+                    "description": "Define whether the pipeline should run sequencing QC for raw input data.",
+                    "help_text": "Set this to true if sequencing QC for raw input data is required, else set to false."
+                },
+                "read_merging_qc": {
+                    "type": "boolean",
+                    "description": "Define whether the pipeline should run sequencing QC for merged reads (only suitable for paired-end data with read merging enabled).",
+                    "help_text": "Set this to true if sequencing QC for merged reads is required, else set to false."
+                },
+                "read_trimming_qc": {
+                    "type": "boolean",
+                    "description": "Define whether the pipeline should run sequencing QC for trimmed reads (only suitable when read trimming enabled).",
+                    "help_text": "Set this to true if sequencing QC for trimmed reads is required, else set to false."
+                }
+            }
+        },
+        "read_merging_options": {
+            "title": "Read merging options",
+            "type": "object",
+            "fa_icon": "fas fa-align-center",
+            "description": "Define pipeline options for read merging.",
+            "properties": {
+                "read_merging": {
+                    "type": "boolean",
+                    "description": "Define whether the pipeline should merge reads (only suitable for paired-end data).",
+                    "help_text": "Set this to 'flash2' or 'seqprep' if read merging is required, else set to false."
+                },
+                "seqprep_options": {
+                    "type": "string",
+                    "description": "Define options for SeqPrep (only suitable for pair-end data with SeqPrep enabled).",
+                    "help_text": "Include valid SeqPrep command lines options where default options are not suitable."
+                },
+                "flash2_options": {
+                    "type": "string",
+                    "description": "Define options for FLASH2 (only suitable for pair-end data with FLASH2 enabled).",
+                    "help_text": "Include valid FLASH2 command lines options where default options are not suitable."
+                }
+            }
+        },
+        "read_trimming_options": {
+            "title": "Read trimming options",
+            "type": "object",
+            "fa_icon": "fas fa-cut",
+            "description": "Define pipeline options for read trimming.",
+            "properties": {
+                "read_trimming": {
+                    "type": "boolean",
+                    "description": "Define whether the pipeline should trim reads.",
+                    "help_text": "Set this to 'cutadapt' if read trimming is required, else set to false."
+                },
+                "cutadapt_options": {
+                    "type": "string",
+                    "description": "Define options for cutadapt (only suitable when cutadapt enabled).",
+                    "help_text": "Include valid cutadapt command lines options where default options are not suitable."
                 }
             }
         },
@@ -238,6 +308,15 @@
     "allOf": [
         {
             "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/quality_control_options"
+        },
+        {
+            "$ref": "#/definitions/read_merging_options"
+        },
+        {
+            "$ref": "#/definitions/read_trimming_options"
         },
         {
             "$ref": "#/definitions/institutional_config_options"
