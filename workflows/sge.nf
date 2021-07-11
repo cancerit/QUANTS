@@ -8,7 +8,7 @@ def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 def printErr = System.err.&println
 
 // Validate input parameters
-//WorkflowSge.initialise(params, log)
+WorkflowSge.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
@@ -81,28 +81,24 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 // Don't overwrite global params.modules, create a copy instead and use that within the main script.
 def modules = params.modules.clone()
 
+// MultiQC
+def multiqc_options   = modules['multiqc']
+multiqc_options.args += params.multiqc_title ? Utils.joinModuleArgs(["--title \"$params.multiqc_title\""]) : ''
+
 //
 // MODULE: Local to the pipeline
 //
 include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['tsv':'']] )
-
-//
-// SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
-//
 include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( options: [:] )
 include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( options: [:] )
 include { READ_TRIMMING } from '../subworkflows/local/read_trimming' addParams( options: [:] )
 include { HDR_ANALYSIS } from '../subworkflows/local/hdr_analysis' addParams( options: [:] )
 include { SEQUENCING_QC as RAW_SEQUENCING_QC; SEQUENCING_QC as MERGED_SEQUENCING_QC; SEQUENCING_QC as TRIMMED_SEQUENCING_QC;} from '../subworkflows/local/sequencing_qc' addParams( options: [:] )
 
-/*
-========================================================================================
-    IMPORT NF-CORE MODULES/SUBWORKFLOWS
-========================================================================================
-*/
-
-def multiqc_options   = modules['multiqc']
-//multiqc_options.args += params.multiqc_title ? Utils.joinModuleArgs(["--title \"$params.multiqc_title\""]) : ''
+//
+// MODULE: Installed directly from nf-core/modules
+//
+include { MULTIQC } from '../modules/nf-core/modules/multiqc/main' addParams( options: multiqc_options   )
 
 /*
 ========================================================================================
@@ -136,7 +132,7 @@ workflow SGE {
     if (params.read_trimming) {
         READ_TRIMMING ( INPUT_CHECK.out.reads )
         if (params.read_trimming_qc) {
-            ch_trimmed_read_qc = INPUT_CHECK.out.reads.map{it -> [[id: it[0].id + '_trimmed', single_end: it[0].single_end], it[1]]}
+            ch_trimmed_read_qc = READ_TRIMMING.out.reads.map{it -> [[id: it[0].id + '_trimmed', single_end: it[0].single_end], it[1]]}
             TRIMMED_SEQUENCING_QC ( ch_trimmed_read_qc )
         }
     }
@@ -151,7 +147,7 @@ workflow SGE {
             READ_MERGING ( INPUT_CHECK.out.reads )
         }
         if (params.read_merging_qc) {
-            ch_merged_read_qc = INPUT_CHECK.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: it[0].single_end], it[1]]}
+            ch_merged_read_qc = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: it[0].single_end], it[1]]}
             MERGED_SEQUENCING_QC ( ch_merged_read_qc )
         }
     }
@@ -192,6 +188,36 @@ workflow SGE {
         ch_software_versions.map { it }.collect()
     )
 
+    //
+    // MODULE: MultiQC
+    //
+    if (params.raw_sequencing_qc || params.trimmed_read_qc || params.merged_read_qc) {
+        workflow_summary    = WorkflowSge.paramsSummaryMultiqc(workflow, summary_params)
+        ch_workflow_summary = Channel.value(workflow_summary)
+
+        ch_multiqc_files = Channel.empty()
+        ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+        ch_multiqc_files = ch_multiqc_files.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
+
+        if (params.raw_sequencing_qc) {
+            ch_multiqc_files = ch_multiqc_files.mix(RAW_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
+        }
+        if (params.read_trimming_qc) {
+            ch_multiqc_files = ch_multiqc_files.mix(TRIMMED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
+        }
+        if (params.read_merging_qc) {
+            ch_multiqc_files = ch_multiqc_files.mix(MERGED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
+        }
+
+        MULTIQC (
+            ch_multiqc_files.collect()
+        )
+
+        multiqc_report       = MULTIQC.out.report.toList()
+        ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
+    } 
 }
 
 /*

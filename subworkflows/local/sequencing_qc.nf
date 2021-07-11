@@ -18,9 +18,12 @@ workflow SEQUENCING_QC {
         // MODULE: Run FastQC
         //
         FASTQC ( reads )
+        fastqc_zip = FASTQC.out.zip
+        fastqc_version = FASTQC.out.version
     
     emit:
-        FASTQC
+        fastqc_zip
+        fastqc_version
 }
 
     

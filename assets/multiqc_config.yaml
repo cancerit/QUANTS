@@ -7,5 +7,23 @@ report_section_order:
         order: -1000
     nf-core-sge-summary:
         order: -1001
-
+module_order:
+  - fastqc:
+      name: 'FastQC (raw)'
+      info: 'This section of the report shows FastQC results before adapter trimming.'
+      path_filters:
+        - '*_raw_*_fastqc.zip'
+  - cutadapt:
+      path_filters:
+        - '*cutadapt.out'
+  - fastqc:
+      name: 'FastQC (trimmed)'
+      info: 'This section of the report shows FastQC results after adapter trimming.'
+      path_filters:
+        - '*_trimmed_*_fastqc.zip'
+  - fastqc:
+      name: 'FastQC (merged)'
+      info: 'This section of the report shows FastQC results after merging.'
+      path_filters:
+        - '*_merged_*_fastqc.zip'
 export_plots: true
