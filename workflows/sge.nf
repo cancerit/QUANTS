@@ -126,7 +126,8 @@ workflow SGE {
     // SUBWORKFLOW: Run FASTQC on raw reads
     //
     if (params.raw_sequencing_qc) {
-        //RAW_SEQUENCING_QC ( INPUT_CHECK.out.reads )
+        ch_raw_read_qc = INPUT_CHECK.out.reads.map{it -> [[id: it[0].id + '_raw', single_end: it[0].single_end], it[1]]}
+        RAW_SEQUENCING_QC ( ch_raw_read_qc )
     }
 
     //
@@ -135,7 +136,8 @@ workflow SGE {
     if (params.read_trimming) {
         READ_TRIMMING ( INPUT_CHECK.out.reads )
         if (params.read_trimming_qc) {
-            //TRIMMED_SEQUENCING_QC ( READ_TRIMMING.out.reads )
+            ch_trimmed_read_qc = INPUT_CHECK.out.reads.map{it -> [[id: it[0].id + '_trimmed', single_end: it[0].single_end], it[1]]}
+            TRIMMED_SEQUENCING_QC ( ch_trimmed_read_qc )
         }
     }
 
@@ -149,7 +151,8 @@ workflow SGE {
             READ_MERGING ( INPUT_CHECK.out.reads )
         }
         if (params.read_merging_qc) {
-            //MERGED_SEQUENCING_QC ( READ_MERGING.out.reads )
+            ch_merged_read_qc = INPUT_CHECK.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: it[0].single_end], it[1]]}
+            MERGED_SEQUENCING_QC ( ch_merged_read_qc )
         }
     }
 
@@ -167,10 +170,13 @@ workflow SGE {
         ch_reads_to_analyse = INPUT_CHECK.out.reads
     }
 
+    //
+    // SUBWORKFLOW: Run HDR analysis
+    //
     if (params.hdr_analysis) {
         HDR_ANALYSIS ( ch_reads_to_analyse )
     }
-    HDR_ANALYSIS.out.view()
+
     //
     // MODULE: Pipeline reporting
     //

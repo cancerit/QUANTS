@@ -45,9 +45,7 @@ workflow READ_MERGING {
             SEQPREP ( reads )
             ch_merged_reads = SEQPREP.out.reads
         }
-
-        ch_merged_reads = ch_merged_reads.map{it -> [[id: it[0].id + '_merged', single_end: 'true'], [it[1]]]}
-
+        
     emit:
         reads = ch_merged_reads
 }
