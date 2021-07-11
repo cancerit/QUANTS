@@ -27,6 +27,12 @@ if (params.read_merging) {
     }
 }
 
+// Check read merging QC (if read merging set)
+if (params.read_merging_qc && !params.read_merging) {
+    printErr("Read merging QC cannot be run when read_merging is set to false.")
+	exit 1
+}
+
 // Check read trimming software (if set)
 def read_trimming_software = ['cutadapt']
 if (params.read_trimming) {
@@ -36,10 +42,25 @@ if (params.read_trimming) {
     }
 }
 
-// Check read merging QC (if set)
-if (params.read_merging_qc && !params.read_merging) {
-    printErr("Read merging QC cannot be run when read_merging is set to false.")
+// Check read trimming QC (if read trimming set)
+if (params.read_trimming_qc && !params.read_trimming) {
+    printErr("Read trimming QC cannot be run when read_trimming is set to false.")
 	exit 1
+}
+
+// Check HDR analysis software (if set)
+def hdr_analysis_software = ['pycroquet']
+if (params.hdr_analysis) {
+    if ( hdr_analysis_software.contains( params.hdr_analysis ) == false ) {
+	    printErr("If hdr_analysis is set, software must be one of: " + hdr_analysis_software.join(',') + ".")
+	    exit 1
+    }
+}
+
+// Check HDR analysis library exists (if HDR analysis set)
+if (params.hdr_analysis && !params.hdr_library) {
+    printErr("If hdr_analysis is set, a library file must be provided by hdr_library.")
+    exit 1
 }
 
 /*
@@ -71,6 +92,7 @@ include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' 
 include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( options: [:] )
 include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( options: [:] )
 include { READ_TRIMMING } from '../subworkflows/local/read_trimming' addParams( options: [:] )
+include { HDR_ANALYSIS } from '../subworkflows/local/hdr_analysis' addParams( options: [:] )
 include { SEQUENCING_QC as RAW_SEQUENCING_QC; SEQUENCING_QC as MERGED_SEQUENCING_QC; SEQUENCING_QC as TRIMMED_SEQUENCING_QC;} from '../subworkflows/local/sequencing_qc' addParams( options: [:] )
 
 /*
@@ -131,6 +153,24 @@ workflow SGE {
         }
     }
 
+    //
+    // Set up channel for analysis
+    //
+    // TODO: look for cleaner method of setting read channel for analysis
+    // TODO: check how this performs with -resume 
+    ch_reads_to_analyse = Channel.empty()
+    if (params.read_merging) {
+        ch_reads_to_analyse = READ_MERGING.out.reads
+    } else if (params.read_trimming) {
+        ch_reads_to_analyse = READ_TRIMMING.out.reads
+    } else {
+        ch_reads_to_analyse = INPUT_CHECK.out.reads
+    }
+
+    if (params.hdr_analysis) {
+        HDR_ANALYSIS ( ch_reads_to_analyse )
+    }
+    HDR_ANALYSIS.out.view()
     //
     // MODULE: Pipeline reporting
     //

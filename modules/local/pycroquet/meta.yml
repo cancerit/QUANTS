@@ -1,0 +1,53 @@
+name: pycroquet
+description: Map read file to library guides and output counts, statistics and alignments files.
+keywords:
+  - map
+  - alignment
+  - quantification
+  - counting
+tools:
+  - pycroquet:
+      description: |
+        Map read file to library guides and output counts, statistics and alignments files.
+      homepage: https://gitlab.internal.sanger.ac.uk/casm/team78/crispr-aligned/pycroquet
+      documentation: {}
+      licence: []
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - reads:
+      type: file
+      description: |
+        List of input FastQ files of size 2; i.e., paired-end data.
+      pattern: "*fastq.gz"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - counts:
+      type: file
+      description: Number of reads aligned to each oligo/guide
+      pattern: "*.counts.tsv"
+  - cram:
+      type: file
+      description: CRAM file and index containing read-to-oligo alignments
+      pattern: "*.cram*"
+  - stats:
+      type: file
+      description: Summary statistics
+      pattern: "*.stats.json"
+  - version:
+      type: file
+      description: File containing software version
+      pattern: "*.{version.txt}"
+
+authors:
+  - "@kr2"
+  - "@vaofford"

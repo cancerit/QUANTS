@@ -11,13 +11,13 @@ workflow INPUT_CHECK {
     samplesheet // file: /path/to/samplesheet.csv
 
     main:
+    //TODO: look into doing this as a single step rather than duplicating check loop
     SAMPLESHEET_CHECK ( samplesheet )
         .splitCsv ( header:true, sep:',' )
         .map { create_fastq_channels(it) }
         .set { reads }
-
     emit:
-    reads // channel: [ val(meta), [ reads ] ]
+        reads // channel: [ val(meta), [ reads ] ]
 }
 
 // Function to get list of [ meta, [ fastq_1, fastq_2 ] ]

@@ -24,14 +24,6 @@
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/sge/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
                 },
-                "library": {
-                    "type": "string",
-                    "format": "file-path",
-                    "schema": "assets/schema_input.json",
-                    "description": "Path to tab-delimited file containing information about the oligos in the experiment.",
-                    "help_text": "You will need to create a library file with information about the oligos in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a tab-delimited file with 4 columns, and a header. See [usage docs](https://nf-co.re/sge/usage#library-input).",
-                    "fa_icon": "fas fa-file"
-                },
                 "single_end": {
                     "type": "boolean",
                     "description": "If data is single-ended reads instead of paired-end.",
@@ -101,7 +93,7 @@
                 "flash2_options": {
                     "type": "string",
                     "description": "Define options for FLASH2 (only suitable for pair-end data with FLASH2 enabled).",
-                    "help_text": "Include valid FLASH2 command lines options where default options are not suitable."
+                    "help_text": "Include valid FLASH2 command line options where default options are not suitable."
                 }
             }
         },
@@ -119,7 +111,33 @@
                 "cutadapt_options": {
                     "type": "string",
                     "description": "Define options for cutadapt (only suitable when cutadapt enabled).",
-                    "help_text": "Include valid cutadapt command lines options where default options are not suitable."
+                    "help_text": "Include valid cutadapt command line options where default options are not suitable."
+                }
+            }
+        },
+        "hdr_analysis_options": {
+            "title": "HDR analysis options",
+            "type": "object",
+            "fa_icon": "fas fa-list-ol",
+            "description": "Define pipeline options for HDR analysis.",
+            "properties": {
+                "hdr_analysis": {
+                    "type": "string",
+                    "description": "Define whether the pipeline should run HDR analysis.",
+                    "help_text": "Set this to 'pycroquet' if HDR analysis is required, else set to false."
+                },
+                "hdr_library": {
+                    "type": "string",
+                    "format": "file-path",
+                    "schema": "assets/schema_input.json",
+                    "description": "Path to tab-delimited file containing information about the oligos in the experiment (only suitable when HDR analysis enabled).",
+                    "help_text": "You will need to create a library file with information about the oligos in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a tab-delimited file with a header.",
+                    "fa_icon": "fas fa-file"
+                },
+                "pycroquet_options": {
+                    "type": "string",
+                    "description": "Define options for pyCROQUET (only suitable when HDR analysis enabled).",
+                    "help_text": "Include valid pyCROQUET command line options where default options are not suitable."
                 }
             }
         },
@@ -324,6 +342,9 @@
         },
         {
             "$ref": "#/definitions/read_trimming_options"
+        },
+        {
+            "$ref": "#/definitions/hdr_analysis_options"
         },
         {
             "$ref": "#/definitions/institutional_config_options"
