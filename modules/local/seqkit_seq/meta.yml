@@ -1,0 +1,43 @@
+name: seqkit stats
+description: Simple statistics of FASTA/Q files
+keywords:
+  - FASTQ
+  - statistics
+tools:
+  - seqkit:
+      description: |
+        Simple statistics of FASTA/Q files
+      homepage: https://bioinf.shenwei.me/seqkit
+      documentation: {https://bioinf.shenwei.me/seqkit/usage}
+      licence: []
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+
+        e.g. [ id:'test', single_end:false ]
+  - reads:
+      type: file
+      description: |
+        List of input FastQ files of size 2; i.e., paired-end data.
+      pattern: "*fastq.gz"
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - stats:
+      type: file
+      description: Number of reads aligned to each oligo/guide
+      pattern: "*.stats.tsv"
+  - version:
+      type: file
+      description: File containing software version
+      pattern: "*.{version.txt}"
+
+authors:
+  - "@vaofford"

@@ -48,6 +48,18 @@ if (params.read_trimming_qc && !params.read_trimming) {
 	exit 1
 }
 
+// Check read fitering is valid (if set)
+if (params.read_filtering && (!params.single_end && !params.read_merging)) {
+    printErr("Read filtering cannot be run when data is paired end or single end, but read merging is set to false.")
+	exit 1
+}
+
+// Check read trimming QC (if read trimming set)
+if (params.read_filtering_qc && !params.read_filtering) {
+    printErr("Read filtering QC cannot be run when read_filtering is set to false.")
+	exit 1
+}
+
 // Check HDR analysis software (if set)
 def hdr_analysis_software = ['pycroquet']
 if (params.hdr_analysis) {
@@ -92,8 +104,13 @@ include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' 
 include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( options: [:] )
 include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( options: [:] )
 include { READ_TRIMMING } from '../subworkflows/local/read_trimming' addParams( options: [:] )
+include { READ_FILTERING } from '../subworkflows/local/read_filtering' addParams( options: [:] )
 include { HDR_ANALYSIS } from '../subworkflows/local/hdr_analysis' addParams( options: [:] )
-include { SEQUENCING_QC as RAW_SEQUENCING_QC; SEQUENCING_QC as MERGED_SEQUENCING_QC; SEQUENCING_QC as TRIMMED_SEQUENCING_QC;} from '../subworkflows/local/sequencing_qc' addParams( options: [:] )
+include { SEQUENCING_QC as RAW_SEQUENCING_QC; 
+          SEQUENCING_QC as MERGED_SEQUENCING_QC; 
+          SEQUENCING_QC as TRIMMED_SEQUENCING_QC;
+          SEQUENCING_QC as FILTERED_SEQUENCING_QC
+        } from '../subworkflows/local/sequencing_qc' addParams( options: [:] )
 
 //
 // MODULE: Installed directly from nf-core/modules
@@ -147,8 +164,25 @@ workflow SGE {
             READ_MERGING ( INPUT_CHECK.out.reads )
         }
         if (params.read_merging_qc) {
-            ch_merged_read_qc = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: it[0].single_end], it[1]]}
+            ch_merged_read_qc = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1]]}
             MERGED_SEQUENCING_QC ( ch_merged_read_qc )
+        }
+    }
+
+    //
+    // SUBWORKFLOW: Run SE read filtering
+    //
+    if (params.read_filtering) {
+        if (params.read_merging) {
+            READ_FILTERING ( READ_MERGING.out.reads )
+        } else if (params.read_trimming) {
+            READ_FILTERING ( READ_TRIMMING.out.reads )
+        } else {
+            READ_FILTERING ( INPUT_CHECK.out.reads )
+        }
+        if (params.read_filtering_qc) {
+            ch_filtered_read_qc = READ_FILTERING.out.reads.map{it -> [[id: it[0].id + '_filtered', single_end: true], it[1]]}
+            FILTERED_SEQUENCING_QC ( ch_filtered_read_qc )
         }
     }
 
@@ -158,8 +192,10 @@ workflow SGE {
     // TODO: look for cleaner method of setting read channel for analysis
     // TODO: check how this performs with -resume 
     ch_reads_to_analyse = Channel.empty()
-    if (params.read_merging) {
-        ch_reads_to_analyse = READ_MERGING.out.reads
+    if (params.read_filtering) {
+        ch_reads_to_analyse = READ_FILTERING.out.reads.map{it -> [[id: it[0].id, single_end: true], it[1]]}
+    } else if (params.read_merging) {
+        ch_reads_to_analyse = READ_MERGING.out.reads.map{it -> [[id: it[0].id, single_end: true], it[1]]}
     } else if (params.read_trimming) {
         ch_reads_to_analyse = READ_TRIMMING.out.reads
     } else {
@@ -210,7 +246,10 @@ workflow SGE {
         if (params.read_merging_qc) {
             ch_multiqc_files = ch_multiqc_files.mix(MERGED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
         }
-
+        if (params.read_filtering_qc) {
+            ch_multiqc_files = ch_multiqc_files.mix(FILTERED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
+        }
+        
         MULTIQC (
             ch_multiqc_files.collect()
         )

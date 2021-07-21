@@ -71,6 +71,16 @@
                     "type": "boolean",
                     "description": "Define whether the pipeline should run sequencing QC for trimmed reads (only suitable when read trimming enabled).",
                     "help_text": "Set this to true if sequencing QC for trimmed reads is required, else set to false."
+                },
+                "read_filtering_qc": {
+                    "type": "boolean",
+                    "description": "Define whether the pipeline should run sequencing QC for filtered reads (only suitable when read filtering enabled).",
+                    "help_text": "Set this to true if sequencing QC for filtered reads is required, else set to false."
+                },
+                "seqkit_stats_options": {
+                    "type": "string",
+                    "description": "Define options for SeqKit stats (only suitable when at least one qc is enabled).",
+                    "help_text": "Include valid SeqKit stats command line options where default options are not suitable."
                 }
             }
         },
@@ -112,6 +122,24 @@
                     "type": "string",
                     "description": "Define options for cutadapt (only suitable when cutadapt enabled).",
                     "help_text": "Include valid cutadapt command line options where default options are not suitable."
+                }
+            }
+        },
+        "read_filtering_options": {
+            "title": "Read filtering options",
+            "type": "object",
+            "fa_icon": "fas fa-cut",
+            "description": "Define pipeline options for read filtering.",
+            "properties": {
+                "read_filtering": {
+                    "type": "string",
+                    "description": "Define whether the pipeline should filter reads (only suitable when input is single-end or read merging is enabled).",
+                    "help_text": "Set this to true if read filtering is required, else set to false."
+                },
+                "seqkit_seq_options": {
+                    "type": "string",
+                    "description": "Define options for SeqKit seq (only suitable when read_filtering enabled).",
+                    "help_text": "Include valid SeqKit seq command line options where default options are not suitable."
                 }
             }
         },

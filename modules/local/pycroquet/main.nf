@@ -19,16 +19,16 @@ process PYCROQUET {
         container "quay.io/biocontainers/flash2:2.2.00--h5bf99c6_3"
     }
     */
-    container "gitlab-registry.internal.sanger.ac.uk/casm/team78/crispr-aligned/pycroquet:2776c6c5"
+    container "gitlab-registry.internal.sanger.ac.uk/casm/team78/crispr-aligned/pycroquet:37c038a9"
 
     input:
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("*.counts.tsv")              , emit: counts
-    tuple val(meta), path("*.cram"), path("*.cram.cai"), emit: cram
-    tuple val(meta), path("*.stats.json")              , emit: stats
-    path "*.version.txt"                               , emit: version
+    tuple val(meta), path("*.counts.tsv")               , emit: counts
+    tuple val(meta), path("*.stats.json")               , emit: stats
+    tuple val(meta), path("*.cram"), path("*.cram.crai"), optional: true, emit: cram
+    path "*.version.txt"                                , emit: version
 
     script:
     def software    = getSoftwareName(task.process)
@@ -40,6 +40,7 @@ process PYCROQUET {
     """
     pycroquet single-guide \\
         $options.args \\
+        --cpus $task.cpus \
         $guidelib \\
         $queries\\
         $sample\\

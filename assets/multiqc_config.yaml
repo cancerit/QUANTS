@@ -26,4 +26,9 @@ module_order:
       info: 'This section of the report shows FastQC results after merging.'
       path_filters:
         - '*_merged_*_fastqc.zip'
+  - fastqc:
+      name: 'FastQC (filtered)'
+      info: 'This section of the report shows FastQC results after filtering.'
+      path_filters:
+        - '*_filtered_*_fastqc.zip'
 export_plots: true
