@@ -19,7 +19,7 @@ process PYCROQUET {
         container "quay.io/biocontainers/flash2:2.2.00--h5bf99c6_3"
     }
     */
-    container "gitlab-registry.internal.sanger.ac.uk/casm/team78/crispr-aligned/pycroquet:37c038a9"
+    container "gitlab-registry.internal.sanger.ac.uk/casm/team78/crispr-aligned/pycroquet:ddcff12f"
 
     input:
     tuple val(meta), path(reads)
