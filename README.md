@@ -32,8 +32,7 @@ On release, automated continuous integration tests run the pipeline on a full-si
 2. Read trimming + QC ([`cutadapt`](https://cutadapt.readthedocs.io), [`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 3. Read merging ([`FLASH2`](https://github.com/dstreett/FLASH2), [`SeqPrep`](https://github.com/jstjohn/SeqPrep), [`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
 4. Present QC for sequencing data ([`MultiQC`](http://multiqc.info/))
-5. HDR quantification (pyCROQUET)
-6. NHEJ (CRISPRESSO)
+5. Library-dependent quantification (pyCROQUET)
 
 ## Quick Start
 

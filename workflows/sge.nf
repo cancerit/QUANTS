@@ -60,19 +60,28 @@ if (params.read_filtering_qc && !params.read_filtering) {
 	exit 1
 }
 
-// Check HDR analysis software (if set)
-def hdr_analysis_software = ['pycroquet']
-if (params.hdr_analysis) {
-    if ( hdr_analysis_software.contains( params.hdr_analysis ) == false ) {
-	    printErr("If hdr_analysis is set, software must be one of: " + hdr_analysis_software.join(',') + ".")
+// Check library-dependent quantification software (if set)
+def library_dependent_quantification_software = ['pycroquet']
+if (params.library_dependent_quantification) {
+    if ( library_dependent_quantification_software.contains( params.library_dependent_quantification ) == false ) {
+	    printErr("If library_dependent_quantification is set, software must be one of: " + library_dependent_quantification_software.join(',') + ".")
 	    exit 1
     }
 }
 
-// Check HDR analysis library exists (if HDR analysis set)
-if (params.hdr_analysis && !params.hdr_library) {
-    printErr("If hdr_analysis is set, a library file must be provided by hdr_library.")
+// Check library-dependent quantification library exists (if library_dependent_quantification set)
+if (params.library_dependent_quantification && !params.oligo_library) {
+    printErr("If library_dependent_quantification is set, a library file must be provided by oligo_library.")
     exit 1
+}
+
+// Check library-independent quantification software (if set)
+def library_independent_quantification_software = ['pycroquet']
+if (params.library_independent_quantification) {
+    if ( library_independent_quantification_software.contains( params.library_independent_quantification ) == false ) {
+	    printErr("If library_independent_quantification is set, software must be one of: " + library_independent_quantification_software.join(',') + ".")
+	    exit 1
+    }
 }
 
 /*
@@ -105,7 +114,8 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( opti
 include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( options: [:] )
 include { READ_TRIMMING } from '../subworkflows/local/read_trimming' addParams( options: [:] )
 include { READ_FILTERING } from '../subworkflows/local/read_filtering' addParams( options: [:] )
-include { HDR_ANALYSIS } from '../subworkflows/local/hdr_analysis' addParams( options: [:] )
+include { LIBRARY_DEPENDENT_QUANTIFICATION } from '../subworkflows/local/library_dependent_quantification' addParams( options: [:] )
+include { LIBRARY_INDEPENDENT_QUANTIFICATION } from '../subworkflows/local/library_independent_quantification' addParams( options: [:] )
 include { SEQUENCING_QC as RAW_SEQUENCING_QC; 
           SEQUENCING_QC as MERGED_SEQUENCING_QC; 
           SEQUENCING_QC as TRIMMED_SEQUENCING_QC;
@@ -164,7 +174,7 @@ workflow SGE {
             READ_MERGING ( INPUT_CHECK.out.reads )
         }
         if (params.read_merging_qc) {
-            ch_merged_read_qc = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1]]}
+            ch_merged_read_qc = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1][1]]}
             MERGED_SEQUENCING_QC ( ch_merged_read_qc )
         }
     }
@@ -203,10 +213,19 @@ workflow SGE {
     }
 
     //
-    // SUBWORKFLOW: Run HDR analysis
+    // SUBWORKFLOW: Run library-dependent quantification
+    // Returns the number of reads assigned to each guide from a user-defined library
     //
-    if (params.hdr_analysis) {
-        HDR_ANALYSIS ( ch_reads_to_analyse )
+    if (params.library_dependent_quantification) {
+        LIBRARY_DEPENDENT_QUANTIFICATION ( ch_reads_to_analyse )
+    }
+
+    //
+    // SUBWORKFLOW: Run library-independent quantification
+    // Returns the frequency of unique reads
+    //
+    if (params.library_independent_quantification) {
+        LIBRARY_INDEPENDENT_QUANTIFICATION ( ch_reads_to_analyse )
     }
 
     //
@@ -227,7 +246,7 @@ workflow SGE {
     //
     // MODULE: MultiQC
     //
-    if (params.raw_sequencing_qc || params.trimmed_read_qc || params.merged_read_qc) {
+    if (params.raw_sequencing_qc || params.read_trimming_qc || params.read_merging_qc) {
         workflow_summary    = WorkflowSge.paramsSummaryMultiqc(workflow, summary_params)
         ch_workflow_summary = Channel.value(workflow_summary)
 
@@ -242,6 +261,7 @@ workflow SGE {
         }
         if (params.read_trimming_qc) {
             ch_multiqc_files = ch_multiqc_files.mix(TRIMMED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
+            ch_multiqc_files = ch_multiqc_files.mix(READ_TRIMMING.out.stats.collect{it[1]}.ifEmpty([]))
         }
         if (params.read_merging_qc) {
             ch_multiqc_files = ch_multiqc_files.mix(MERGED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))

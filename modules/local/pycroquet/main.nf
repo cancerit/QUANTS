@@ -19,29 +19,30 @@ process PYCROQUET {
         container "quay.io/biocontainers/flash2:2.2.00--h5bf99c6_3"
     }
     */
-    container "gitlab-registry.internal.sanger.ac.uk/casm/team78/crispr-aligned/pycroquet:ddcff12f"
+    container "quay.io/wtsicgp/pycroquet:1.5.0"
 
     input:
-    tuple val(meta), path(reads)
+        val(subcommand)
+        tuple val(meta), path(reads)
+        path(guides)
 
     output:
-    tuple val(meta), path("*.counts.tsv")               , emit: counts
-    tuple val(meta), path("*.stats.json")               , emit: stats
-    tuple val(meta), path("*.cram"), path("*.cram.crai"), optional: true, emit: cram
-    path "*.version.txt"                                , emit: version
+        tuple val(meta), path("*counts.tsv.gz")            , emit: counts
+        tuple val(meta), path("*.stats.json")               , optional: true, emit: stats
+        tuple val(meta), path("*.cram"), path("*.cram.crai"), optional: true, emit: cram
+        path "*.version.txt"                                , emit: version
 
     script:
-    def software    = getSoftwareName(task.process)
-    def guidelib    = "-g ${params.hdr_library}"
-    def queries     = "-q ${reads}"
-    def sample      = options.suffix ? "-s ${meta.id}${options.suffix}" : "-s ${meta.id}"
-    def output      = options.suffix ? "-o ${meta.id}${options.suffix}" : "-o ${meta.id}"
+        def software    = getSoftwareName(task.process)
+        def queries     = guides ? "-q ${reads} -g ${guides}" : "-q ${reads}"
+        def sample      = options.suffix ? "-s ${meta.id}${options.suffix}" : "-s ${meta.id}"
+        def output      = options.suffix ? "-o ${meta.id}${options.suffix}" : "-o ${meta.id}"
 
     """
-    pycroquet single-guide \\
+    pycroquet \\
+        $subcommand \\
         $options.args \\
-        --cpus $task.cpus \
-        $guidelib \\
+        --cpus $task.cpus \\
         $queries\\
         $sample\\
         $output
