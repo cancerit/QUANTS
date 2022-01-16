@@ -27,7 +27,9 @@ workflow READ_TRIMMING {
 
             CUTADAPT ( reads )
             ch_trimmed_reads = CUTADAPT.out.reads
+            ch_trimmed_stats = CUTADAPT.out.log
         }
     emit:
         reads = ch_trimmed_reads
+        stats = ch_trimmed_stats
 }
