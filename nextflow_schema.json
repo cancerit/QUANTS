@@ -1,7 +1,7 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/nf-core/sge/master/nextflow_schema.json",
-    "title": "nf-core/sge pipeline parameters",
+    "$id": "https://raw.githubusercontent.com/QUANTS/master/nextflow_schema.json",
+    "title": "QUANTS pipeline parameters",
     "description": "Analysis pipeline for satutation genome editing screens",
     "type": "object",
     "definitions": {
@@ -149,7 +149,7 @@
             "fa_icon": "fas fa-list-ol",
             "description": "Define pipeline options for library-dependent quantification.",
             "properties": {
-                "library-dependent quantification": {
+                "library_dependent_quantification": {
                     "type": "string",
                     "description": "Define whether the pipeline should run library-dependent quantification.",
                     "help_text": "Set this to 'pycroquet' if library-dependent quantification is required, else set to false."
@@ -162,9 +162,26 @@
                     "help_text": "You will need to create a library file with information about the oligos in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a tab-delimited file with a header.",
                     "fa_icon": "fas fa-file"
                 },
-                "pycroquet_library_dependent_options": {
+                "pycroquet_lib_dep_options": {
                     "type": "string",
                     "description": "Define options for pyCROQUET (only suitable when library-dependent quantification enabled).",
+                    "help_text": "Include valid pyCROQUET command line options where default options are not suitable."
+                }
+            }
+        },"library_independent_quantification_options": {
+            "title": "Library-independent quantification options",
+            "type": "object",
+            "fa_icon": "fas fa-list-ol",
+            "description": "Define pipeline options for library-independent quantification.",
+            "properties": {
+                "library_independent_quantification": {
+                    "type": "string",
+                    "description": "Define whether the pipeline should run library-independent quantification.",
+                    "help_text": "Set this to 'pycroquet' if library-independent quantification is required, else set to false."
+                },
+                "pycroquet_lib_indep_options": {
+                    "type": "string",
+                    "description": "Define options for pyCROQUET (only suitable when library-independent quantification enabled).",
                     "help_text": "Include valid pyCROQUET command line options where default options are not suitable."
                 }
             }
