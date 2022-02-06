@@ -7,7 +7,7 @@ on:
 jobs:
   run-tower:
     name: Run AWS tests
-    if: github.repository == 'nf-core/sge'
+    if: github.repository == 'QUANTS'
     runs-on: ubuntu-latest
     steps:
       - name: Launch workflow via tower
