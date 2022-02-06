@@ -1,11 +1,9 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-    nf-core/sge
+    QUANTS
 ========================================================================================
-    Github : https://github.com/nf-core/sge
-    Website: https://nf-co.re/sge
-    Slack  : https://nfcore.slack.com/channels/sge
+    GitLab : https://gitlab.internal.sanger.ac.uk/team113_nextflow_pipelines/QUANTS
 ----------------------------------------------------------------------------------------
 */
 
@@ -28,9 +26,9 @@ WorkflowMain.initialise(workflow, params, log)
 include { SGE } from './workflows/sge'
 
 //
-// WORKFLOW: Run main nf-core/sge analysis pipeline
+// WORKFLOW: Run main QUANTS analysis pipeline
 //
-workflow NFCORE_SGE {
+workflow NFCORE_QUANTS {
     SGE ()
 }
 
@@ -45,7 +43,7 @@ workflow NFCORE_SGE {
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    NFCORE_SGE ()
+    NFCORE_QUANTS ()
 }
 
 /*

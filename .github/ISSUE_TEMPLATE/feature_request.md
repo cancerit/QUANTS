@@ -1,11 +1,11 @@
 ---
 name: Feature request
-about: Suggest an idea for the nf-core/sge pipeline
+about: Suggest an idea for the QUANTS pipeline
 labels: enhancement
 ---
 
 <!--
-# nf-core/sge feature request
+# QUANTS feature request
 
 Hi there!
 

@@ -5,7 +5,7 @@ labels: bug
 ---
 
 <!--
-# nf-core/sge bug report
+# QUANTS bug report
 
 Hi there!
 
@@ -17,8 +17,7 @@ Please delete this text and anything that's not relevant from the template below
 
 I have checked the following places for your error:
 
-- [ ] [nf-core website: troubleshooting](https://nf-co.re/usage/troubleshooting)
-- [ ] [nf-core/sge pipeline documentation](https://nf-co.re/sge/usage)
+- [ ] [QUANTS pipeline documentation](assets/usage)
 
 ## Description of the bug
 
@@ -51,7 +50,7 @@ Have you provided the following extra information/files:
 
 ## Nextflow Installation
 
-- Version: <!-- [e.g. 21.04.0] -->
+- Version: <!-- [e.g. 21.10.6] -->
 
 ## Container engine
 

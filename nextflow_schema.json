@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/QUANTS/master/nextflow_schema.json",
+    "$id": "https://gitlab.internal.sanger.ac.uk/team113_nextflow_pipelines/QUANTS/-/blob/master/nextflow_schema.json",
     "title": "QUANTS pipeline parameters",
     "description": "Analysis pipeline for satutation genome editing screens",
     "type": "object",
@@ -390,6 +390,9 @@
         },
         {
             "$ref": "#/definitions/library_dependent_quantification_options"
+        },
+        {
+            "$ref": "#/definitions/library_independent_quantification_options"
         },
         {
             "$ref": "#/definitions/institutional_config_options"
