@@ -246,7 +246,7 @@ class NfcoreTemplate {
     }
 
     //
-    // nf-core logo
+    // QUANTS
     //
     public static String logo(workflow, monochrome_logs) {
         Map colors = logColours(monochrome_logs)

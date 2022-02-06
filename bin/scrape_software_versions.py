@@ -8,7 +8,7 @@ for version_file in version_files:
 
     software = version_file.replace(".version.txt", "")
     if software == "pipeline":
-        software = "nf-core/sge"
+        software = "QUANTS"
 
     with open(version_file) as fin:
         version = fin.read().strip()
@@ -18,8 +18,8 @@ for version_file in version_files:
 print(
     """
 id: 'software_versions'
-section_name: 'nf-core/sge Software Versions'
-section_href: 'https://github.com/nf-core/sge'
+section_name: 'QUANTS Software Versions'
+section_href: 'https://gitlab.internal.sanger.ac.uk/team113_nextflow_pipelines/QUANTS'
 plot_type: 'html'
 description: 'are collected at run time from the software output.'
 data: |

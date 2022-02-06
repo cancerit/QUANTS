@@ -174,7 +174,13 @@ workflow SGE {
             READ_MERGING ( INPUT_CHECK.out.reads )
         }
         if (params.read_merging_qc) {
-            ch_merged_read_qc = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1][1]]}
+            ch_merged_read_qc = Channel.empty()
+            if (params.read_merging == 'flash2') {
+                ch_merged_read_qc = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1][1]]}
+            } 
+            if (params.read_merging == 'seqprep') {
+                ch_merged_read_qc = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1]]}
+            }
             MERGED_SEQUENCING_QC ( ch_merged_read_qc )
         }
     }
