@@ -22,6 +22,7 @@ process SEQKIT_SEQ {
 
     input:
         tuple val(meta), path(reads)
+        val(suffix)
 
     output:
         tuple val(meta), path("*.fq.gz"), emit: reads
@@ -36,9 +37,9 @@ process SEQKIT_SEQ {
         seq \
         $options.args \
         --threads $task.cpus \
-        ${reads[0]} > ${prefix}.filtered.fq 
+        ${reads[0]} > ${prefix}.${suffix}.fq 
     
-    gzip ${prefix}.filtered.fq
+    gzip ${prefix}.${suffix}.fq
 
     echo \$(seqkit --version 2>&1) | sed 's/^.*seqkit //; s/Using.*\$//' > ${software}.version.txt
     """

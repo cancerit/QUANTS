@@ -18,6 +18,43 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
 
+// TODO: enable transformation for paired end data (for now, exit)
+if (!params.single_end && (params.r1_transform || params.r2_transform)) {
+   printErr("Transformation of paired end data is not enabled. Please contact the developer.")
+	exit 1 
+}
+
+// Check transformation of R2 is not set when single end
+if (params.single_end && params.r2_transform) {
+   printErr("r2_transform must be set to null when single_end is set to true.")
+	exit 1 
+}
+
+// Check R1 and transformation (if set)
+def read_transformation_options = ['reverse', 'complement', 'reverse_complement']
+if (params.r1_transform) {
+    if ( read_transformation_options.contains( params.r1_transform ) == false ) {
+	    printErr("If r1_transform is set, value must be one of: " + read_transformation_options.join(',') + ".")
+	    exit 1
+    }
+}
+
+// Check R2 and transformation (if set)
+if (params.r2_transform) {
+    if ( read_transformation_options.contains( params.r2_transform ) == false ) {
+	    printErr("If r2_transform is set, value must be one of: " + read_transformation_options.join(',') + ".")
+	    exit 1
+    }
+}
+
+// Check read merging software (if set)
+if (params.read_merging) {
+    if ( read_merging_software.contains( params.read_merging ) == false ) {
+	    printErr("If read_merging is set, software must be one of: " + read_merging_software.join(',') + ".")
+	    exit 1
+    }
+}
+
 // Check read merging software (if set)
 def read_merging_software = ['seqprep', 'flash2']
 if (params.read_merging) {
@@ -111,6 +148,7 @@ multiqc_options.args += params.multiqc_title ? Utils.joinModuleArgs(["--title \"
 //
 include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['tsv':'']] )
 include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( options: [:] )
+include { READ_TRANSFORM } from '../subworkflows/local/read_transform' addParams( options: [:] )
 include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( options: [:] )
 include { READ_TRIMMING } from '../subworkflows/local/read_trimming' addParams( options: [:] )
 include { READ_FILTERING } from '../subworkflows/local/read_filtering' addParams( options: [:] )
@@ -144,6 +182,18 @@ workflow SGE {
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
     INPUT_CHECK ( ch_input )
+
+    //
+    // SUBWORKFLOW: Reverse complement 
+    //
+    
+    ch_input_reads = INPUT_CHECK.out.reads.map{it -> [[id: it[0].id + '_raw', single_end: it[0].single_end], it[1]]}
+    if (params.r1_transform || params.r2_transform) {
+        READ_TRANSFORM ( ch_input_reads )
+        ch_raw_reads = READ_TRANSFORM.out.reads
+    } else {
+        ch_raw_reads = ch_input_reads
+    }
 
     //
     // SUBWORKFLOW: Run FASTQC on raw reads
