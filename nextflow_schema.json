@@ -84,6 +84,24 @@
                 }
             }
         },
+        "read_transformation_options": {
+            "title": "Read transformation options",
+            "type": "object",
+            "fa_icon": "fas fa-align-center",
+            "description": "Define pipeline options for read reverse complementing.",
+            "properties": {
+                "r1_transform": {
+                    "type": "string",
+                    "description": "Define whether the pipeline should reverese complement R1 reads.",
+                    "help_text": "Set this to reverse, complement or reverse_complement if transformation is required, else set to null."
+                },
+                "r2_transform": {
+                    "type": "string",
+                    "description": "Define whether the pipeline should reverse complement R2 reads (only suitable for single-end data).",
+                    "help_text": "Set this to reverse, complement or reverse_complement if transformation is required, else set to null."
+                }
+            }
+        },
         "read_merging_options": {
             "title": "Read merging options",
             "type": "object",
@@ -93,7 +111,7 @@
                 "read_merging": {
                     "type": "string",
                     "description": "Define whether the pipeline should merge reads (only suitable for paired-end data).",
-                    "help_text": "Set this to 'flash2' or 'seqprep' if read merging is required, else set to false."
+                    "help_text": "Set this to 'flash2' or 'seqprep' if read merging is required, else set to null."
                 },
                 "seqprep_options": {
                     "type": "string",
@@ -116,7 +134,7 @@
                 "read_trimming": {
                     "type": "string",
                     "description": "Define whether the pipeline should trim reads.",
-                    "help_text": "Set this to 'cutadapt' if read trimming is required, else set to false."
+                    "help_text": "Set this to 'cutadapt' if read trimming is required, else set to null."
                 },
                 "cutadapt_options": {
                     "type": "string",
@@ -152,7 +170,7 @@
                 "library_dependent_quantification": {
                     "type": "string",
                     "description": "Define whether the pipeline should run library-dependent quantification.",
-                    "help_text": "Set this to 'pycroquet' if library-dependent quantification is required, else set to false."
+                    "help_text": "Set this to 'pycroquet' or 'pycroquet_independent' if library-dependent quantification is required, else set to null."
                 },
                 "oligo_library": {
                     "type": "string",
@@ -168,7 +186,8 @@
                     "help_text": "Include valid pyCROQUET command line options where default options are not suitable."
                 }
             }
-        },"library_independent_quantification_options": {
+        },
+        "library_independent_quantification_options": {
             "title": "Library-independent quantification options",
             "type": "object",
             "fa_icon": "fas fa-list-ol",
@@ -177,7 +196,7 @@
                 "library_independent_quantification": {
                     "type": "string",
                     "description": "Define whether the pipeline should run library-independent quantification.",
-                    "help_text": "Set this to 'pycroquet' if library-independent quantification is required, else set to false."
+                    "help_text": "Set this to 'pycroquet' if library-independent quantification is required, else set to null."
                 },
                 "pycroquet_lib_indep_options": {
                     "type": "string",
@@ -383,10 +402,16 @@
             "$ref": "#/definitions/quality_control_options"
         },
         {
+            "$ref": "#/definitions/read_transformation_options"
+        },
+        {
             "$ref": "#/definitions/read_merging_options"
         },
         {
             "$ref": "#/definitions/read_trimming_options"
+        },
+        {
+            "$ref": "#/definitions/read_filtering_options"
         },
         {
             "$ref": "#/definitions/library_dependent_quantification_options"
