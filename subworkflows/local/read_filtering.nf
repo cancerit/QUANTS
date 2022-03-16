@@ -25,7 +25,7 @@ workflow READ_FILTERING {
             // MODULE: Run SeqKit seq
             //
 
-            SEQKIT_SEQ ( reads )
+            SEQKIT_SEQ ( reads, 'filtered' )
             ch_filtered_reads = SEQKIT_SEQ.out.reads
         }
     emit:

@@ -24,9 +24,14 @@
                     "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row. See [usage docs](https://nf-co.re/sge/usage#samplesheet-input).",
                     "fa_icon": "fas fa-file-csv"
                 },
+                "input_type": {
+                    "type": "string",
+                    "description": "Input data type.",
+                    "help_text": "Input data type (fastq or cram). Input data type must be the same for all samples listed in the samplesheet."
+                },
                 "single_end": {
                     "type": "boolean",
-                    "description": "If data is single-ended reads instead of paired-end.",
+                    "description": "Whether data is single-end.",
                     "help_text": "Set this to true if input contains single-ended reads or false if paired-end reads."
                 },
                 "outdir": {

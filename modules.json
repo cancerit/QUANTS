@@ -3,19 +3,17 @@
     "homePage": "https://gitlab.internal.sanger.ac.uk/team113_nextflow_pipelines/QUANTS",
     "repos": {
         "nf-core/modules": {
+            "cutadapt": {
+                "git_sha": "e937c7950af70930d1f34bb961403d9d2aa81c7d"
+            },
             "fastqc": {
                 "git_sha": "e937c7950af70930d1f34bb961403d9d2aa81c7d"
             },
             "multiqc": {
                 "git_sha": "e937c7950af70930d1f34bb961403d9d2aa81c7d"
             },
-            "cutadapt": {
-                "git_sha": "e937c7950af70930d1f34bb961403d9d2aa81c7d"
-            }
-        },
-        "local/modules": {
-            "pyCCROQUET": {
-                "git_sha": "6198a419ebe7c697c98747a39674b90ad56af1c9"
+            "samtools/bam2fq": {
+                "git_sha": "1ad73f1b2abdea9398680d6d20014838135c9a35"
             }
         }
     }
