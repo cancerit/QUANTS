@@ -30,9 +30,9 @@ process SAMTOOLS_BAM2FQ {
             bam2fq \\
             $args \\
             -@ $task.cpus \\
-            $inputbam >${prefix}.fq
+            $inputbam >${prefix}_1.fq
 
-        gzip ${prefix}.fq
+        gzip ${prefix}_1.fq
 
         cat <<-END_VERSIONS > versions.yml
         "${task.process}":
