@@ -95,14 +95,9 @@
             "fa_icon": "fas fa-align-center",
             "description": "Define pipeline options for read reverse complementing.",
             "properties": {
-                "r1_transform": {
+                "read_transform": {
                     "type": "string",
-                    "description": "Define whether the pipeline should reverese complement R1 reads.",
-                    "help_text": "Set this to reverse, complement or reverse_complement if transformation is required, else set to null."
-                },
-                "r2_transform": {
-                    "type": "string",
-                    "description": "Define whether the pipeline should reverse complement R2 reads (only suitable for single-end data).",
+                    "description": "Define whether the pipeline should transform read (applied post-merging for paired-end data).",
                     "help_text": "Set this to reverse, complement or reverse_complement if transformation is required, else set to null."
                 }
             }

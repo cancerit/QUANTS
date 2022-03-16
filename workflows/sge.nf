@@ -25,36 +25,6 @@ if ( input_type_options.contains( params.input_type ) == false ) {
 	    exit 1
     }
 
-// TODO: enable transformation for paired end data (for now, exit)
-if (!params.single_end && (params.r1_transform || params.r2_transform)) {
-   printErr("Transformation of paired end data is not enabled. Please contact the developer.")
-	exit 1 
-}
-
-// Check transformation of R2 is not set when single end
-if (params.single_end && params.r2_transform) {
-   printErr("r2_transform must be set to null when single_end is set to true.")
-	exit 1 
-}
-
-// Check R1 and transformation (if set)
-def read_transformation_options = ['reverse', 'complement', 'reverse_complement']
-if (params.r1_transform) {
-    if ( read_transformation_options.contains( params.r1_transform ) == false ) {
-	    printErr("If r1_transform is set, value must be one of: " + read_transformation_options.join(',') + ".")
-	    exit 1
-    }
-}
-
-// Check R2 and transformation (if set)
-if (params.r2_transform) {
-    if ( read_transformation_options.contains( params.r2_transform ) == false ) {
-	    printErr("If r2_transform is set, value must be one of: " + read_transformation_options.join(',') + ".")
-	    exit 1
-    }
-}
-
-
 // Check read merging software (if set)
 def read_merging_software = ['seqprep', 'flash2']
 if (params.read_merging) {
@@ -68,6 +38,16 @@ if (params.read_merging) {
 if (params.read_merging_qc && !params.read_merging) {
     printErr("Read merging QC cannot be run when read_merging is set to false.")
 	exit 1
+}
+
+
+// Check transformation (if set)
+def read_transformation_options = ['reverse', 'complement', 'reverse_complement']
+if (params.read_transform) {
+    if ( read_transformation_options.contains( params.read_transform ) == false ) {
+	    printErr("If read_transform is set, value must be one of: " + read_transformation_options.join(',') + ".")
+	    exit 1
+    }
 }
 
 // Check read trimming software (if set)
@@ -195,24 +175,14 @@ workflow SGE {
         // SUBWORKFLOW: Convert CRAM to FASTQ
         //
         ch_raw_reads = CRAM_TO_FASTQ(INPUT_CHECK_CRAM.out.crams)
-        ch_read_transform = ch_raw_reads
+        ch_read_trim = ch_raw_reads
     } else {
         //
         // SUBWORKFLOW: Read in samplesheet, validate and stage input files
         //
         INPUT_CHECK_FASTQ ( ch_input )
         ch_raw_reads = INPUT_CHECK_FASTQ.out.reads
-        ch_read_transform = INPUT_CHECK_FASTQ.out.reads
-    }
-
-    //
-    // SUBWORKFLOW: Reverse complement (only enabled for SE)
-    //
-    if (params.r1_transform || params.r2_transform) {
-        READ_TRANSFORM ( ch_read_transform )
-        ch_read_trim = READ_TRANSFORM.out.reads
-    } else {
-        ch_read_trim = ch_read_transform
+        ch_read_trim = INPUT_CHECK_FASTQ.out.reads
     }
 
     //
@@ -245,19 +215,30 @@ workflow SGE {
     //
     if (params.read_merging) {
         READ_MERGING ( ch_read_merge )
-        ch_read_filter = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1]]}
+        ch_read_transform = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1]]}
 
         //
         // SUBWORKFLOW: Run FASTQC on merged reads
         //
         if (params.read_merging_qc) {
-            ch_merged_read_qc = ch_read_filter
+            ch_merged_read_qc = ch_read_transform
             MERGED_SEQUENCING_QC ( ch_merged_read_qc )
         }
     } else {
-        ch_read_filter = ch_read_merge
+        ch_read_transform = ch_read_merge
     }
-    
+
+    //
+    // SUBWORKFLOW: Read transformation (reverse, complement or reverse_complement)
+    // Data must be SE by this stage
+    //
+    if (params.read_transform ) {
+        READ_TRANSFORM ( ch_read_transform )
+        ch_read_filter = READ_TRANSFORM.out.reads
+    } else {
+        ch_read_filter = ch_read_transform
+    }
+
     //
     // SUBWORKFLOW: Run read filtering (data must be SE by this stage)
     //
