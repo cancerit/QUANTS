@@ -27,7 +27,8 @@ process PYCROQUET {
         path(guides)
 
     output:
-        tuple val(meta), path("*counts.tsv.gz")            , emit: counts
+        tuple val(meta), path("*counts.tsv.gz")             , emit: library_counts
+        tuple val(meta), path("*query_counts.tsv.gz")       , emit: read_counts
         tuple val(meta), path("*.stats.json")               , optional: true, emit: stats
         tuple val(meta), path("*.cram"), path("*.cram.crai"), optional: true, emit: cram
         path "*.version.txt"                                , emit: version
