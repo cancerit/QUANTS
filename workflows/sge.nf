@@ -130,8 +130,8 @@ include { READ_TRANSFORM } from '../subworkflows/local/read_transform' addParams
 include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( options: [:] )
 include { READ_TRIMMING } from '../subworkflows/local/read_trimming' addParams( options: [:] )
 include { READ_FILTERING } from '../subworkflows/local/read_filtering' addParams( options: [:] )
-include { LIBRARY_DEPENDENT_QUANTIFICATION } from '../subworkflows/local/library_dependent_quantification' addParams( options: [:] )
-include { COMBINE_UNIQUE_READ_COUNTS_WITH_LIBRARY } from '../subworkflows/local/library_independent_quantification' addParams( options: [:] )
+include { QUANTIFICATION; 
+          POST_PYCROQUET_QUANTIFICATION } from '../subworkflows/local/quantification' addParams( options: [:] )
 include { SEQUENCING_QC as RAW_SEQUENCING_QC; 
           SEQUENCING_QC as MERGED_SEQUENCING_QC; 
           SEQUENCING_QC as TRIMMED_SEQUENCING_QC;
@@ -254,17 +254,16 @@ workflow SGE {
     // Returns the number of reads assigned to each guide from a user-defined library
     //
     if (params.quantification) {
-        LIBRARY_DEPENDENT_QUANTIFICATION ( ch_reads_to_analyse )
-        ch_unique_read_counts = LIBRARY_DEPENDENT_QUANTIFICATION.out.read_counts
+        QUANTIFICATION ( ch_reads_to_analyse )
+        ch_unique_read_counts = QUANTIFICATION.out.read_counts
     }
 
     //
     // SUBWORKFLOW: Combine unique read counts (query) with library
     // Returns the number of reads assigned to each guide from a user-defined library
     //
-    ch_unique_read_counts.view()
     if (params.quantification) {
-        COMBINE_UNIQUE_READ_COUNTS_WITH_LIBRARY ( ch_unique_read_counts )
+        POST_PYCROQUET_QUANTIFICATION ( ch_unique_read_counts )
     }
 
     //
