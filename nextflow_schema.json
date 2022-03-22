@@ -161,46 +161,28 @@
                 }
             }
         },
-        "library_dependent_quantification_options": {
-            "title": "Library-dependent quantification options",
+        "quantification_options": {
+            "title": "Quantification options",
             "type": "object",
             "fa_icon": "fas fa-list-ol",
-            "description": "Define pipeline options for library-dependent quantification.",
+            "description": "Define pipeline options for quantification.",
             "properties": {
-                "library_dependent_quantification": {
+                "quantification": {
                     "type": "string",
                     "description": "Define whether the pipeline should run library-dependent quantification.",
-                    "help_text": "Set this to 'pycroquet' or 'pycroquet_independent' if library-dependent quantification is required, else set to null."
+                    "help_text": "Set this to 'pycroquet' if quantification is required, else set to null."
                 },
                 "oligo_library": {
                     "type": "string",
                     "format": "file-path",
                     "schema": "assets/schema_input.json",
-                    "description": "Path to tab-delimited file containing information about the oligos in the experiment (only suitable when library-dependent quantification enabled).",
+                    "description": "Path to tab-delimited file containing information about the oligos in the experiment (only required when quantification enabled).",
                     "help_text": "You will need to create a library file with information about the oligos in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a tab-delimited file with a header.",
                     "fa_icon": "fas fa-file"
                 },
                 "pycroquet_lib_dep_options": {
                     "type": "string",
-                    "description": "Define options for pyCROQUET (only suitable when library-dependent quantification enabled).",
-                    "help_text": "Include valid pyCROQUET command line options where default options are not suitable."
-                }
-            }
-        },
-        "library_independent_quantification_options": {
-            "title": "Library-independent quantification options",
-            "type": "object",
-            "fa_icon": "fas fa-list-ol",
-            "description": "Define pipeline options for library-independent quantification.",
-            "properties": {
-                "library_independent_quantification": {
-                    "type": "string",
-                    "description": "Define whether the pipeline should run library-independent quantification.",
-                    "help_text": "Set this to 'pycroquet' if library-independent quantification is required, else set to null."
-                },
-                "pycroquet_lib_indep_options": {
-                    "type": "string",
-                    "description": "Define options for pyCROQUET (only suitable when library-independent quantification enabled).",
+                    "description": "Define options for pyCROQUET (only suitable when quantification enabled).",
                     "help_text": "Include valid pyCROQUET command line options where default options are not suitable."
                 }
             }
@@ -414,10 +396,7 @@
             "$ref": "#/definitions/read_filtering_options"
         },
         {
-            "$ref": "#/definitions/library_dependent_quantification_options"
-        },
-        {
-            "$ref": "#/definitions/library_independent_quantification_options"
+            "$ref": "#/definitions/quantification_options"
         },
         {
             "$ref": "#/definitions/institutional_config_options"

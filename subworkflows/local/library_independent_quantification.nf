@@ -1,35 +1,30 @@
 //
-// Library-independent quantification
+// Library-dependent quantification
 //
 
 params.options = [:]
-
 def modules = params.modules.clone()
 
 //
-// MODULE: Load pyCROQUET
+// MODULE: R-library_independent_quantification
 //
-def pycroquet_options  = modules['pycroquet']
-if (params.pycroquet_lib_indep_options) {
-    pycroquet_options.args += " " + params.pycroquet_lib_indep_options
-} 
-include { PYCROQUET  } from '../../modules/local/pycroquet/main.nf' addParams( options: pycroquet_options )
 
+include { LIBRARY_INDEPENDENT_QUANTIFICATION  } from '../../modules/local/R/library_independent_quantification/main.nf' addParams( )
 
-workflow LIBRARY_INDEPENDENT_QUANTIFICATION {
+workflow COMBINE_UNIQUE_READ_COUNTS_WITH_LIBRARY {
     take: 
-        reads
+        unique_read_counts
 
     main: 
         ch_sample_counts = Channel.empty()
-        if (params.library_independent_quantification == "pycroquet") {
+        if (params.quantification == "pycroquet") {
             //
             // MODULE: Run pyCROQUET
             //
-            PYCROQUET ( 'long-read --unique', reads, params.oligo_library )
-            ch_sample_counts = PYCROQUET.out.counts
+            LIBRARY_INDEPENDENT_QUANTIFICATION ( unique_read_counts, params.oligo_library)
+            ch_sample_library_counts = LIBRARY_INDEPENDENT_QUANTIFICATION.out.counts
         }
 
     emit:
-        counts = ch_sample_counts
+        library_counts = ch_sample_library_counts
 }
