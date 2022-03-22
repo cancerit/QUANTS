@@ -4,12 +4,12 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 params.options = [:]
 options        = initOptions(params.options)
 
-process LIBRARY_INDEPENDENT_QUANTIFICATION {
+process QUANTIFY_PYCROQUET_LIBRARY_WITH_UNIQUE_READ_COUNTS {
     tag "$meta.id"
     label 'process_medium'
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:'library_independent_quantification', meta:meta, publish_by_meta:['id']) }    conda (params.enable_conda ? "bioconda::r-tidyverse=1.2.1-mro351hf348343_0" : null)
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:'pycroquet', meta:meta, publish_by_meta:['id']) }    conda (params.enable_conda ? "bioconda::r-tidyverse=1.2.1-mro351hf348343_0" : null)
 
     if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
         container "https://depot.galaxyproject.org/singularity/r-tidyverse:1.2.1"
@@ -22,13 +22,13 @@ process LIBRARY_INDEPENDENT_QUANTIFICATION {
     path(pycroquet_library)
 
     output:
-    tuple val(meta), path("*.library_counts.tsv.gz"), emit: counts
+    tuple val(meta), path("*.query_to_library_counts.tsv.gz"), emit: counts
     path "*.version.txt"                            , emit: version
 
     script:
     def software = getSoftwareName(task.process)
-    def script = "${moduleDir}/bin/combine_pyCROQUET_library_and_unique_read_counts.R"
-    def outfile = "${meta.id}.library_counts.tsv"
+    def script = "${moduleDir}/bin/quantify_pyCROQUET_library_using_unique_read_counts.R"
+    def outfile = "${meta.id}.query_to_library_counts.tsv"
     """
     Rscript \\
         $options.args \\

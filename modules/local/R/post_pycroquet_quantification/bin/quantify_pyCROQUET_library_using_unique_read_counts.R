@@ -139,7 +139,7 @@ library_counts <- tryCatch({
 
 # Write counts to file ----------------------------------------------------
 
-output_file <- str_replace(unique_read_count_file, 'query_counts.tsv.gz', 'library_counts.tsv')
+output_file <- str_replace(unique_read_count_file, 'query_counts.tsv.gz', 'query_to_library_counts.tsv')
 tryCatch({
   write(header_lines, output_file)
   write.table(library_counts, output_file, row.names = F, sep = "\t", quote = F, append = T)
