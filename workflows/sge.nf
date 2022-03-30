@@ -18,20 +18,12 @@ for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
 
-// Check read merging software (if set)
-def read_merging_software = ['seqprep', 'flash2']
-if (params.read_merging) {
-    if ( read_merging_software.contains( params.read_merging ) == false ) {
-	    printErr("If read_merging is set, software must be one of: " + read_merging_software.join(',') + ".")
+// Check input_type
+def input_type_options = ['fastq', 'cram']
+if ( input_type_options.contains( params.input_type ) == false ) {
+	    printErr("input_type must be one of: " + input_type_options.join(',') + ".")
 	    exit 1
     }
-}
-
-// Check read merging QC (if read merging set)
-if (params.read_merging_qc && !params.read_merging) {
-    printErr("Read merging QC cannot be run when read_merging is set to false.")
-	exit 1
-}
 
 // Check read trimming software (if set)
 def read_trimming_software = ['cutadapt']
@@ -48,40 +40,61 @@ if (params.read_trimming_qc && !params.read_trimming) {
 	exit 1
 }
 
+// Check read merging software (if set)
+def read_merging_software = ['seqprep', 'flash2']
+if (params.read_merging) {
+    if ( read_merging_software.contains( params.read_merging ) == false ) {
+	    printErr("If read_merging is set, software must be one of: " + read_merging_software.join(',') + ".")
+	    exit 1
+    }
+}
+
+// Check read merging QC (if read merging set)
+if (params.read_merging_qc && !params.read_merging) {
+    printErr("Read merging QC cannot be run when read_merging is set to false.")
+	exit 1
+}
+
+// Check transformation (if set)
+def read_transformation_options = ['reverse', 'complement', 'reverse_complement']
+if (params.read_transform) {
+    if ( read_transformation_options.contains( params.read_transform ) == false ) {
+	    printErr("If read_transform is set, value must be one of: " + read_transformation_options.join(',') + ".")
+	    exit 1
+    }
+}
+
 // Check read fitering is valid (if set)
 if (params.read_filtering && (!params.single_end && !params.read_merging)) {
     printErr("Read filtering cannot be run when data is paired end or single end, but read merging is set to false.")
 	exit 1
 }
 
-// Check read trimming QC (if read trimming set)
+// Check read filtering QC (if read filtering set)
 if (params.read_filtering_qc && !params.read_filtering) {
     printErr("Read filtering QC cannot be run when read_filtering is set to false.")
 	exit 1
 }
 
-// Check library-dependent quantification software (if set)
-def library_dependent_quantification_software = ['pycroquet']
-if (params.library_dependent_quantification) {
-    if ( library_dependent_quantification_software.contains( params.library_dependent_quantification ) == false ) {
-	    printErr("If library_dependent_quantification is set, software must be one of: " + library_dependent_quantification_software.join(',') + ".")
-	    exit 1
-    }
-}
-
-// Check library-dependent quantification library exists (if library_dependent_quantification set)
-if (params.library_dependent_quantification && !params.oligo_library) {
-    printErr("If library_dependent_quantification is set, a library file must be provided by oligo_library.")
+// Check quantification library exists (if quantification set)
+if (params.quantification && !params.oligo_library) {
+    printErr("If quantification is set, a library file must be provided by oligo_library.")
     exit 1
 }
 
-// Check library-independent quantification software (if set)
-def library_independent_quantification_software = ['pycroquet']
-if (params.library_independent_quantification) {
-    if ( library_independent_quantification_software.contains( params.library_independent_quantification ) == false ) {
-	    printErr("If library_independent_quantification is set, software must be one of: " + library_independent_quantification_software.join(',') + ".")
+// Check quantification software (if set)
+def quantification_software = ['pycroquet']
+if (params.quantification) {
+    if ( quantification_software.contains( params.quantification ) == false ) {
+	    printErr("If quantification is set, software must be one of: " + quantification_software.join(',') + ".")
 	    exit 1
     }
+}
+
+// Check that read merging is enabled if quantification is set and data is PE
+if (((params.quantification || params.quantification ) && !params.single_end) && !params.read_merging) {
+    printErr("Read merging must be enabled when quantification is requested and input is paired end.")
+	exit 1
 }
 
 /*
@@ -110,12 +123,15 @@ multiqc_options.args += params.multiqc_title ? Utils.joinModuleArgs(["--title \"
 // MODULE: Local to the pipeline
 //
 include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['tsv':'']] )
-include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( options: [:] )
+include { INPUT_CHECK_FASTQ; 
+          INPUT_CHECK_CRAM } from '../subworkflows/local/input_check' addParams( options: [:] )
+include { CRAM_TO_FASTQ } from '../subworkflows/local/cram_to_fastq' addParams( options: [:] )
+include { READ_TRANSFORM } from '../subworkflows/local/read_transform' addParams( options: [:] )
 include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( options: [:] )
 include { READ_TRIMMING } from '../subworkflows/local/read_trimming' addParams( options: [:] )
 include { READ_FILTERING } from '../subworkflows/local/read_filtering' addParams( options: [:] )
-include { LIBRARY_DEPENDENT_QUANTIFICATION } from '../subworkflows/local/library_dependent_quantification' addParams( options: [:] )
-include { LIBRARY_INDEPENDENT_QUANTIFICATION } from '../subworkflows/local/library_independent_quantification' addParams( options: [:] )
+include { QUANTIFICATION; 
+          POST_PYCROQUET_QUANTIFICATION } from '../subworkflows/local/quantification' addParams( options: [:] )
 include { SEQUENCING_QC as RAW_SEQUENCING_QC; 
           SEQUENCING_QC as MERGED_SEQUENCING_QC; 
           SEQUENCING_QC as TRIMMED_SEQUENCING_QC;
@@ -137,19 +153,34 @@ include { MULTIQC } from '../modules/nf-core/modules/multiqc/main' addParams( op
 def multiqc_report = []
 
 workflow SGE {
-
+    // Set up empty channels
     ch_software_versions = Channel.empty()
 
-    //
-    // SUBWORKFLOW: Read in samplesheet, validate and stage input files
-    //
-    INPUT_CHECK ( ch_input )
+    if (params.input_type == 'cram') {
+        //
+        // SUBWORKFLOW: Read in samplesheet, validate and stage input files
+        //
+        INPUT_CHECK_CRAM ( ch_input )
+        
+        //
+        // SUBWORKFLOW: Convert CRAM to FASTQ
+        //
+        ch_raw_reads = CRAM_TO_FASTQ(INPUT_CHECK_CRAM.out.crams)
+        ch_read_trim = ch_raw_reads
+    } else {
+        //
+        // SUBWORKFLOW: Read in samplesheet, validate and stage input files
+        //
+        INPUT_CHECK_FASTQ ( ch_input )
+        ch_raw_reads = INPUT_CHECK_FASTQ.out.reads
+        ch_read_trim = INPUT_CHECK_FASTQ.out.reads
+    }
 
     //
     // SUBWORKFLOW: Run FASTQC on raw reads
     //
     if (params.raw_sequencing_qc) {
-        ch_raw_read_qc = INPUT_CHECK.out.reads.map{it -> [[id: it[0].id + '_raw', single_end: it[0].single_end], it[1]]}
+        ch_raw_read_qc = ch_raw_reads.map{it -> [[id: it[0].id + '_raw', single_end: it[0].single_end], it[1]]}
         RAW_SEQUENCING_QC ( ch_raw_read_qc )
     }
 
@@ -157,81 +188,82 @@ workflow SGE {
     // SUBWORKFLOW: Run adapter/quality trimming
     //
     if (params.read_trimming) {
-        READ_TRIMMING ( INPUT_CHECK.out.reads )
+        READ_TRIMMING ( ch_read_trim )
+        ch_read_merge = READ_TRIMMING.out.reads
+        //
+        // SUBWORKFLOW: Run FASTQC on trimmed reads
+        //
         if (params.read_trimming_qc) {
             ch_trimmed_read_qc = READ_TRIMMING.out.reads.map{it -> [[id: it[0].id + '_trimmed', single_end: it[0].single_end], it[1]]}
             TRIMMED_SEQUENCING_QC ( ch_trimmed_read_qc )
         }
+    } else {
+        ch_read_merge = ch_read_trim
     }
 
     //
-    // SUBWORKFLOW: Run PE read merging on raw reads
+    // SUBWORKFLOW: Run read merging (PE only)
     //
     if (params.read_merging) {
-        if (params.read_trimming) {
-            READ_MERGING ( READ_TRIMMING.out.reads )
-        } else {
-            READ_MERGING ( INPUT_CHECK.out.reads )
-        }
+        READ_MERGING ( ch_read_merge )
+        ch_read_transform = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1]]}
+
+        //
+        // SUBWORKFLOW: Run FASTQC on merged reads
+        //
         if (params.read_merging_qc) {
-            ch_merged_read_qc = Channel.empty()
-            if (params.read_merging == 'flash2') {
-                ch_merged_read_qc = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1][1]]}
-            } 
-            if (params.read_merging == 'seqprep') {
-                ch_merged_read_qc = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1]]}
-            }
+            ch_merged_read_qc = ch_read_transform
             MERGED_SEQUENCING_QC ( ch_merged_read_qc )
         }
+    } else {
+        ch_read_transform = ch_read_merge
     }
 
     //
-    // SUBWORKFLOW: Run SE read filtering
+    // SUBWORKFLOW: Read transformation (reverse, complement or reverse_complement)
+    // Data must be SE by this stage
     //
+    if (params.read_transform ) {
+        READ_TRANSFORM ( ch_read_transform )
+        ch_read_filter = READ_TRANSFORM.out.reads
+    } else {
+        ch_read_filter = ch_read_transform
+    }
+
+    //
+    // SUBWORKFLOW: Run read filtering (data must be SE by this stage)
+    //
+    
     if (params.read_filtering) {
-        if (params.read_merging) {
-            READ_FILTERING ( READ_MERGING.out.reads )
-        } else if (params.read_trimming) {
-            READ_FILTERING ( READ_TRIMMING.out.reads )
-        } else {
-            READ_FILTERING ( INPUT_CHECK.out.reads )
-        }
+        READ_FILTERING ( ch_read_filter )
+        ch_reads_to_analyse = READ_FILTERING.out.reads
+        
+        //
+        // SUBWORKFLOW: Run FASTQC on filtered reads
+        //
         if (params.read_filtering_qc) {
             ch_filtered_read_qc = READ_FILTERING.out.reads.map{it -> [[id: it[0].id + '_filtered', single_end: true], it[1]]}
             FILTERED_SEQUENCING_QC ( ch_filtered_read_qc )
         }
-    }
-
-    //
-    // Set up channel for analysis
-    //
-    // TODO: look for cleaner method of setting read channel for analysis
-    // TODO: check how this performs with -resume 
-    ch_reads_to_analyse = Channel.empty()
-    if (params.read_filtering) {
-        ch_reads_to_analyse = READ_FILTERING.out.reads.map{it -> [[id: it[0].id, single_end: true], it[1]]}
-    } else if (params.read_merging) {
-        ch_reads_to_analyse = READ_MERGING.out.reads.map{it -> [[id: it[0].id, single_end: true], it[1]]}
-    } else if (params.read_trimming) {
-        ch_reads_to_analyse = READ_TRIMMING.out.reads
     } else {
-        ch_reads_to_analyse = INPUT_CHECK.out.reads
+        ch_reads_to_analyse = ch_read_filter
     }
 
     //
     // SUBWORKFLOW: Run library-dependent quantification
     // Returns the number of reads assigned to each guide from a user-defined library
     //
-    if (params.library_dependent_quantification) {
-        LIBRARY_DEPENDENT_QUANTIFICATION ( ch_reads_to_analyse )
+    if (params.quantification) {
+        QUANTIFICATION ( ch_reads_to_analyse )
+        ch_unique_read_counts = QUANTIFICATION.out.read_counts
     }
 
     //
-    // SUBWORKFLOW: Run library-independent quantification
-    // Returns the frequency of unique reads
+    // SUBWORKFLOW: Combine unique read counts (query) with library
+    // Returns the number of reads assigned to each guide from a user-defined library
     //
-    if (params.library_independent_quantification) {
-        LIBRARY_INDEPENDENT_QUANTIFICATION ( ch_reads_to_analyse )
+    if (params.quantification) {
+        POST_PYCROQUET_QUANTIFICATION ( ch_unique_read_counts )
     }
 
     //

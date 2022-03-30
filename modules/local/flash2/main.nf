@@ -21,9 +21,10 @@ process FLASH2 {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("*.merged.*.fastq.gz"), emit: reads
-    path "*.hist"                            , emit: hist
-    path "*.version.txt"                      , emit: version
+    tuple val(meta), path("*.merged.extendedFrags*.fastq.gz"), emit: reads
+    tuple val(meta), path("*.merged.notCombined*.fastq.gz")  , emit: uncombined_reads
+    path "*.hist"                                            , emit: hist
+    path "*.version.txt"                                     , emit: version
 
     script:
     def software = getSoftwareName(task.process)

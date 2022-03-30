@@ -12,3 +12,11 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 * Rename from nf-core-sge to QUANTS
 * Fix SeqPrep->QC file assignment bug
 * Add initial documentation
+
+## 1.2.0.0 [30th March 2022]
+
+* Restructure flow of data (technical debt)
+* Add subflow for read transform (rev comp, rev, comp)
+* Add support for CRAM input
+* Remove separate library-independent quantification
+* Replace library-dependent quantification with counting unqiue reads + merge with library (pyCROQUET) 
