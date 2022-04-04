@@ -20,3 +20,7 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 * Add support for CRAM input
 * Remove separate library-independent quantification
 * Replace library-dependent quantification with counting unqiue reads + merge with library (pyCROQUET) 
+
+## 1.2.1.0 [4th April 2022]
+
+* Allow sample names to start with numeric in post-processing R script

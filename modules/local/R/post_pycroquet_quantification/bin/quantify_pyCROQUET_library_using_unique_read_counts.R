@@ -94,7 +94,7 @@ sample_name <- gsub("[[:space:]]+", "_", sample_name)
 # Read in unique read count file
 unique_read_counts <- data.frame()
 unique_read_counts <- tryCatch({
-  read.delim(unique_read_count_file, header = T, sep = "\t", skip = 2, col.names = c('QUERY', sample_name))
+  read.delim(unique_read_count_file, header = T, sep = "\t", skip = 2, col.names = c('QUERY', sample_name), check.names = F)
 }, warning = function(w) {
   print(paste("Warning when reading library file: ", w))
 }, error = function(e) {
