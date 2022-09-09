@@ -24,3 +24,7 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 ## 1.2.1.0 [4th April 2022]
 
 * Allow sample names to start with numeric in post-processing R script
+
+## 1.2.1.1 (9th September 2022)
+
+* Remove meta id tag from pyCROQUET module
