@@ -10,7 +10,7 @@ def modules = params.modules.clone()
 //
 def seqkit_seq_options  = modules['seqkit_seq']
 if (params.read_transform != null && params.read_transform.contains('complement')) {
-    seqkit_seq_options.args += " -p"
+    seqkit_seq_options.args += " -p -t dna"
 }
 if (params.read_transform != null && params.read_transform.contains('reverse')) {
     seqkit_seq_options.args += " -r"
