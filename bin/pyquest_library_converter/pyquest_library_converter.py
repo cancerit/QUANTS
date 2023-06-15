@@ -31,14 +31,14 @@ _HELP__REVERSE_PRIMER = (
     "DNA primer to be removed from the end of the oligo sequence if provided."
 )
 _HELP__SKIP_N_ROWS = "Number of rows to skip in the CSV/TSV file before reading the data. By default, 1 row is skipped which assumes a header row. If you use the --name-header or --sequence-header options, you can set this to 0."
-_HELP__REVERSE_COMPLIMENT_FLAG = "Reverse compliment the oligo sequence."
+_HELP__REVERSE_COMPLEMENT_FLAG = "Reverse complement the oligo sequence."
 
 _ARG_INPUT = "input"
 _ARG_OUTPUT = "output"
 _ARG_VERBOSE = "verbose"
 _ARG_FORWARD_PRIMER = "forward_primer"
 _ARG_REVERSE_PRIMER = "reverse_primer"
-_ARG_REVERSE_COMPLIMENT_FLAG = "reverse_compliment_flag"
+_ARG_REVERSE_COMPLEMENT_FLAG = "reverse_complement_flag"
 _ARG_NAME_HEADER = "name_header"
 _ARG_NAME_INDEX = "name_index"
 _ARG_SEQ_HEADER = "sequence_header"
@@ -67,6 +67,9 @@ class Report:
     reverse_primers_trimmed: t.List[int] = field(
         default_factory=list, repr=False, hash=False
     )
+    scanning_summary: t.List[str] = field(
+        default_factory=list, repr=False, hash=False, init=True
+    )
 
     @property
     def both_trimmed(self) -> t.List[int]:
@@ -75,63 +78,6 @@ class Report:
         )
         both.sort()
         return both
-
-    @property
-    def forward_primers_trimmed_only(self) -> t.List[int]:
-        forward_primers_only = list(
-            set(self.forward_primers_trimmed) - set(self.reverse_primers_trimmed)
-        )
-        forward_primers_only.sort()
-        return forward_primers_only
-
-    @property
-    def reverse_primers_trimmed_only(self) -> t.List[int]:
-        reverse_primers_only = list(
-            set(self.reverse_primers_trimmed) - set(self.forward_primers_trimmed)
-        )
-        reverse_primers_only.sort()
-        return reverse_primers_only
-
-    @staticmethod
-    def compact_integer_sequence(seq: t.List[int]) -> str:
-        """
-        Compact a sorted series of unique integers into a more human-readable representation.
-
-        Examples:
-            >>> compact_integer_sequence([1, 2, 3, 4, 5, 8, 9, 10, 15, 20, 22, 23])
-            '1-5, 8-10, 15, 20, 22-23'
-        """
-        if seq != sorted(set(seq)):
-            raise ValueError("Input list must be sorted and contain unique values.")
-
-        compacted = []
-        start, end = seq[0], seq[0]
-        for current in seq[1:]:
-            # Continue the subsequence: if the current value directly proceeds
-            # the last value by 1, then the subsequence continues.
-            if current - end == 1:
-                # Update the end of the subsequence for the next iteration.
-                end = current
-
-            # End the subsequence: if the current value does not directly proceed
-            # the last value by 1, then the subsequence ends.
-            else:
-                # We write the last subsequence, if the subsequence is a single
-                # value we write it as a digit but if the subsequence is more
-                # than one value we write it as a range.
-                as_range = f"{start}-{end}"
-                as_digit = str(start)
-                last_subsequence = as_digit if start == end else as_range
-                compacted.append(last_subsequence)
-                start = end = current
-
-        # Handle the last element.
-        as_range = f"{start}-{end}"
-        as_digit = str(start)
-        final_subsequence = as_digit if start == end else as_range
-        compacted.append(final_subsequence)
-
-        return ", ".join(compacted)
 
     def add_row(
         self,
@@ -146,50 +92,24 @@ class Report:
             self.reverse_primers_trimmed.append(row_id)
         return
 
+    def add_scanning_summary(self, scanning_summary: t.List[str]):
+        self.scanning_summary = scanning_summary
+        return
+
     def summary(self) -> str:
-        summary = []
-        summary.append(f"Total rows selected: {self.row_count}")
+        summary = self.scanning_summary.copy()
+        total = self.row_count
+        summary.append(f"Total rows selected: {total}")
         self.forward_primers_trimmed.sort()
         self.reverse_primers_trimmed.sort()
-        both_detail = (
-            self.compact_integer_sequence(self.both_trimmed)
-            if self.both_trimmed
-            else "None"
-        )
-        forward_primer_detail = (
-            self.compact_integer_sequence(self.forward_primers_trimmed)
-            if self.forward_primers_trimmed
-            else "None"
-        )
-        reverse_primer = (
-            self.compact_integer_sequence(self.reverse_primers_trimmed)
-            if self.reverse_primers_trimmed
-            else "None"
-        )
-        reverse_primer_only_detail = (
-            self.compact_integer_sequence(self.reverse_primers_trimmed_only)
-            if self.reverse_primers_trimmed_only
-            else "None"
-        )
-        forward_primer_detail_only = (
-            self.compact_integer_sequence(self.forward_primers_trimmed_only)
-            if self.forward_primers_trimmed_only
-            else "None"
+        summary.append(
+            f"Forward primer trimmed {len(self.forward_primers_trimmed)} of {total} sequences."
         )
         summary.append(
-            f"Rows with both forward and reverse trimmed ({len(self.both_trimmed)}): {both_detail}"
+            f"Reverse primer trimmed {len(self.reverse_primers_trimmed)} of {total} sequences."
         )
         summary.append(
-            f"Rows with forward trimmed ({len(self.forward_primers_trimmed)}): {forward_primer_detail}"
-        )
-        summary.append(
-            f"Rows with forward trimmed only ({len(self.forward_primers_trimmed_only)}): {forward_primer_detail_only}"
-        )
-        summary.append(
-            f"Rows with reverse trimmed ({len(self.reverse_primers_trimmed)}): {reverse_primer}"
-        )
-        summary.append(
-            f"Rows with reverse trimmed only ({len(self.reverse_primers_trimmed_only)}): {reverse_primer_only_detail}"
+            f"Forward + reverse primer trimmed in {len(self.both_trimmed)} out of {total} sequences."
         )
         return "\n".join(summary)
 
@@ -348,6 +268,215 @@ class CSVHelper:
                 return len(row)
 
 
+class PrimerScanner:
+    """
+    PrimmerScanner is a class that scans a CSV file, using the given forward and
+    reverse primers and identifies whether to use the orginal or reverse
+    complement of each primer for downstream usage, e.g. trimming.
+    """
+
+    def __init__(self, forward_primer: str, reverse_primer: str) -> None:
+        self._given_forward_primer = forward_primer
+        self._given_reverse_primer = reverse_primer
+        self._given_forward_primer_revcomp = reverse_complement(forward_primer)
+        self._given_reverse_primer_revcomp = reverse_complement(reverse_primer)
+        self.__init_counters()
+        self._has_scanned = False
+
+    def __init_counter_dict(self, original: str, revcomp: str) -> t.Dict[str, int]:
+        return {original: 0, revcomp: 0}
+
+    def __init_counters(self) -> t.Tuple[t.Dict[str, int], t.Dict[str, int]]:
+        self._forward_primer_counter: t.Dict[str, int] = self.__init_counter_dict(
+            self._given_forward_primer, self._given_forward_primer_revcomp
+        )
+        self._reverse_primer_counter: t.Dict[str, int] = self.__init_counter_dict(
+            self._given_reverse_primer, self._given_reverse_primer_revcomp
+        )
+        self._total_oligos_scanned = 0
+
+    def summary(self) -> t.List[str]:
+        """
+        Get a summary of the scanning results.
+        """
+        self._assert_has_scanned()
+        total = self._total_oligos_scanned
+        forward_cnt = self._forward_primer_counter[self._given_forward_primer]
+        forward_revcomp_cnt = self._forward_primer_counter[
+            self._given_forward_primer_revcomp
+        ]
+        reverse_cnt = self._reverse_primer_counter[self._given_reverse_primer]
+        reverse_revcomp_cnt = self._reverse_primer_counter[
+            self._given_reverse_primer_revcomp
+        ]
+        predicted_fwd_primer = self.predict_forward_primer()
+        predicted_reverse_primer = self.predict_reverse_primer()
+
+        lines = [
+            f"Forward primer found {forward_cnt} times in {total} oligos scanned",
+            f"Forward primer reverse complement found {forward_revcomp_cnt} times in {total} oligos scanned",
+            f"Reverse primer found {reverse_cnt} times in {total} oligos scanned",
+            f"Reverse primer reverse complement found {reverse_revcomp_cnt} times in {total} oligos scanned",
+            self._summary_chosen_primer(
+                predicted_fwd_primer,
+                "forward",
+                original_count=forward_cnt,
+                revcomp_count=forward_revcomp_cnt,
+            ),
+            self._summary_chosen_primer(
+                predicted_reverse_primer,
+                "reverse",
+                original_count=reverse_cnt,
+                revcomp_count=reverse_revcomp_cnt,
+            ),
+        ]
+        return lines
+
+    def _summary_chosen_primer(
+        self,
+        predicted_primer: str,
+        primer_name: str,
+        original_count: int,
+        revcomp_count: str,
+    ) -> str:
+        if not predicted_primer and original_count == 0 and revcomp_count == 0:
+            chosen_line = "WARNING: Chosen {primer_name} primer chosen is an empty string because the forward primerwas not found in any of the oligos"
+        elif not predicted_primer and not self._given_forward_primer:
+            chosen_line = "OK: Chosen {primer_name} primer chosen is an empty string"
+        elif predicted_primer == self._given_forward_primer:
+            chosen_line = "OK: Chosen {primer_name} primer chosen is the same as the given {primer_name} primer"
+        elif predicted_primer == self._given_forward_primer_revcomp:
+            chosen_line = "OK: Chosen {primer_name} primer chosen is the reverse complement of the given {primer_name} primer"
+        return chosen_line + f": {predicted_primer!r}"
+
+    def scan_all(self, oligos: t.List[str]) -> None:
+        """
+        Scan all oligos and count the number of times the given forward and reverse primers or their respective reverse complements are found.
+        """
+        self.__init_counters()
+        for oligo in oligos:
+            self._scan(oligo)
+            self._total_oligos_scanned += 1
+        if self._total_oligos_scanned == 0:
+            raise ValueError("No oligos given to scan")
+        self._has_scanned = self._total_oligos_scanned > 0
+        return
+
+    def _forward_primer_ratio(self) -> float:
+        self._assert_has_scanned()
+        total = sum(self._forward_primer_counter.values())
+        numerator = self._forward_primer_counter[self._given_forward_primer]
+        return numerator / total
+
+    def _reverse_primer_ratio(self) -> float:
+        self._assert_has_scanned()
+        total = sum(self._reverse_primer_counter.values())
+        numerator = self._reverse_primer_counter[self._given_reverse_primer]
+        return numerator / total
+
+    def predict_forward_primer(self) -> str:
+        """
+        Predict the forward primer based on the ratio of the number of times the
+        given forward primer or its reverse complement is found in the oligos.
+
+        If no primer is found, an empty string is returned.
+
+        If the ratio is greater than 0.5, the given forward primer is returned.
+        Otherwise, the reverse complement of the given forward primer is returned.
+        """
+        self._assert_has_scanned()
+        original = self._given_forward_primer
+        revcomp = self._given_forward_primer_revcomp
+        func = self._forward_primer_ratio
+        return self._predict_primer(original, revcomp, func)
+
+    def predict_reverse_primer(self) -> str:
+        """
+        Predict the reverse primer based on the ratio of the number of times the
+        given reverse primer or its reverse complement is found in the oligos.
+
+        If no primer is found, an empty string is returned.
+
+        If the ratio is greater than 0.5, the given reverse primer is returned.
+        Otherwise, the reverse complement of the given reverse primer is returned.
+        """
+        self._assert_has_scanned()
+        original = self._given_reverse_primer
+        revcomp = self._given_reverse_primer_revcomp
+        func = self._reverse_primer_ratio
+        return self._predict_primer(original, revcomp, func)
+
+    def _predict_primer(
+        self, original: str, revcomp: str, func: t.Callable[[], None]
+    ) -> str:
+        self._assert_has_scanned()
+        try:
+            ratio = func()
+        except ZeroDivisionError:
+            # This happens when the primer is not found in any of the oligos
+            primer = ""  # use empty string to indicate no primer found, let caller deal with it
+        else:
+            primer = original if ratio > 0.5 else revcomp
+        return primer
+
+    def _scan(self, oligo: str) -> None:
+        for original, revcomp, counter in [
+            (
+                self._given_forward_primer,
+                self._given_forward_primer_revcomp,
+                self._forward_primer_counter,
+            ),
+            (
+                self._given_reverse_primer,
+                self._given_reverse_primer_revcomp,
+                self._reverse_primer_counter,
+            ),
+        ]:
+            self._count_primers(oligo, original, revcomp, counter)
+
+    def _count_primers(
+        self, oligo: str, original: str, revcomp: str, counter: t.Dict[str, int]
+    ) -> None:
+        if original == "" and revcomp == "":
+            has_original = has_revcomp = True
+        else:
+            (has_original, has_revcomp) = self._find_primers(oligo, original, revcomp)
+        counter[original] += 1 if has_original else 0
+        counter[revcomp] += 1 if has_revcomp else 0
+        return
+
+    def _find_primers(
+        self, oligo: str, original: str, revcomp: str
+    ) -> t.Tuple[bool, bool]:
+        has_original_at_either_end = oligo.startswith(original) or oligo.endswith(
+            original
+        )
+        has_revcomp_at_either_end = oligo.startswith(revcomp) or oligo.endswith(revcomp)
+        contains_original = original in oligo
+        contains_revcomp = revcomp in oligo
+        # Catch dangerous scenarios
+        # Edge case 1: a primer is found but not at either end of the oligo
+        has_original_not_at_ends = contains_original and not has_original_at_either_end
+        has_revcomp_not_at_ends = contains_revcomp and not has_revcomp_at_either_end
+        if has_original_not_at_ends or has_revcomp_not_at_ends:
+            msg = "Oligo contains a primer that is not found at either end of the oligo; this is not supported at this this time."
+            raise NotImplementedError(msg)
+
+        # Edge case 2: the original and revcomp are found in the same oligo
+        has_original_and_revcomp = contains_original and contains_revcomp
+        if has_original_and_revcomp:
+            msg = "Oligo contains both the original primer and a reverse combinant of that same primer; this is not supported at this time."
+            raise NotImplementedError(msg)
+
+        # Normal case:
+        return has_original_at_either_end, has_revcomp_at_either_end
+
+    def _assert_has_scanned(self):
+        if not self._has_scanned:
+            msg = "Must call 'scan_all()' before calling this method or property"
+            raise RuntimeError(msg)
+
+
 class ArgsCleaner:
     _ALLOWED_DNA = "ACTG"
 
@@ -411,9 +540,9 @@ class ArgsCleaner:
         )
         return index
 
-    def get_clean_reverse_compliment_flag(self) -> bool:
+    def get_clean_reverse_complement_flag(self) -> bool:
         self._assert_has_validated_all()
-        return self._get_arg(_ARG_REVERSE_COMPLIMENT_FLAG)
+        return self._get_arg(_ARG_REVERSE_COMPLEMENT_FLAG)
 
     def validate(self):
         validators = [
@@ -423,7 +552,7 @@ class ArgsCleaner:
             self._validate_reverse_primer,
             self._validate_name_index,
             self._validate_sequence_index,
-            self._validate_reverse_compliment_flag,
+            self._validate_reverse_complement_flag,
         ]
         for validator in validators:
             validator()
@@ -488,10 +617,10 @@ class ArgsCleaner:
         allowed_chars = set(self._ALLOWED_DNA.upper())
         self._assert_valid_chars(reverse_primer_value, allowed_chars)
 
-    def _validate_reverse_compliment_flag(self):
-        flag = self._get_arg(_ARG_REVERSE_COMPLIMENT_FLAG)
+    def _validate_reverse_complement_flag(self):
+        flag = self._get_arg(_ARG_REVERSE_COMPLEMENT_FLAG)
         if not isinstance(flag, bool):
-            msg = f"Reverse compliment flag {flag!r} must be a boolean."
+            msg = f"Reverse complement flag {flag!r} must be a boolean."
             raise ValidationError(msg)
         return
 
@@ -679,8 +808,8 @@ def get_argparser() -> argparse.ArgumentParser:
         "--revcomp",
         action="store_true",
         default=False,
-        help=_HELP__REVERSE_COMPLIMENT_FLAG,
-        dest=_ARG_REVERSE_COMPLIMENT_FLAG,
+        help=_HELP__REVERSE_COMPLEMENT_FLAG,
+        dest=_ARG_REVERSE_COMPLEMENT_FLAG,
     )
 
     # Mutually exclusive argument group for oligo sequence name
@@ -733,8 +862,9 @@ def main(
     reverse_primer: str,
     name_index: int,
     sequence_index: int,
-    reverse_compliment_flag: bool,
+    reverse_complement_flag: bool,
 ):
+    report = Report()
     input_file = Path(input_file)
     output_file = Path(output_file)
     output_headers = [
@@ -743,25 +873,39 @@ def main(
         _OUTPUT_HEADER__SEQUENCE,
     ]
 
-    # Prepare closured functions
-    _reverse_compliment_sequences_closure = partial(
-        reverse_compliment_sequences,
+    # Scan the file once to auto-detect the best primers
+    csv_helper = CSVHelper(input_file, skip_n_rows=skip_n_rows)
+    with csv_helper.get_csv_reader() as csv_reader:
+        primer_scanner = PrimerScanner(
+            forward_primer=forward_primer, reverse_primer=reverse_primer
+        )
+        dict_rows = filter_rows(
+            csv_reader, name_index=name_index, sequence_index=sequence_index
+        )
+        oligos_to_scan = [row[_OUTPUT_HEADER__SEQUENCE] for row in dict_rows]
+        primer_scanner.scan_all(oligos_to_scan)
+        detected_forward_primer = primer_scanner.get_forward_primer()
+        detected_reverse_primer = primer_scanner.get_reverse_primer()
+        report.add_scanning_summary(primer_scanner.summary())
+
+    # Prepare closured functions for writing the output file
+    _reverse_complement_sequences_closure = partial(
+        reverse_complement_sequences,
         header=_OUTPUT_HEADER__SEQUENCE,
     )
     trim_sequences_closure = partial(
         trim_sequences,
         sequence_header=_OUTPUT_HEADER__SEQUENCE,
         id_header=_OUTPUT_HEADER__ID,
-        forward_primer=forward_primer,
-        reverse_primer=reverse_primer,
+        forward_primer=detected_forward_primer,
+        reverse_primer=detected_reverse_primer,
     )
-    conditionally_reverse_compliment_sequences = (
-        _reverse_compliment_sequences_closure
-        if reverse_compliment_flag
+    conditionally_reverse_complement_sequences = (
+        _reverse_complement_sequences_closure
+        if reverse_complement_flag
         else noop_sequences
     )
 
-    report = Report()
     # Prepare a temporary file to write to
     with tempfile.NamedTemporaryFile(delete=True) as temp_handle:
         temp_file = Path(temp_handle.name)
@@ -773,7 +917,7 @@ def main(
                 csv_reader, name_index=name_index, sequence_index=sequence_index
             )
             dict_rows = trim_sequences_closure(dict_rows, report=report)
-            dict_rows = conditionally_reverse_compliment_sequences(dict_rows)
+            dict_rows = conditionally_reverse_complement_sequences(dict_rows)
             write_rows(dict_rows, output_file=temp_file, headers=output_headers)
 
         # Copy the temporary file to the output file
@@ -894,18 +1038,18 @@ def trim_sequence(
     return (trimmed_sequence, has_trimmed_forward_primer, has_trimmed_reverse_primer)
 
 
-def reverse_compliment_sequences(
+def reverse_complement_sequences(
     dict_rows: t.Iterator[t.Dict[str, str]],
     header: str,
 ) -> t.Iterable[t.Dict[str, str]]:
     """
-    Update each row to have the reverse compliment of the sequence.
+    Update each row to have the reverse complement of the sequence.
 
     Header corresponds to the CSV header for the sequence column.
     """
     for dict_row in dict_rows:
         sequence = dict_row[header]
-        reversed_sequence = reverse_compliment(sequence)
+        reversed_sequence = reverse_complement(sequence)
         dict_row[header] = reversed_sequence
         yield dict_row
 
@@ -934,9 +1078,9 @@ def write_rows(
         csv_writer.writerows(dict_rows)
 
 
-def reverse_compliment(sequence: str) -> str:
+def reverse_complement(sequence: str) -> str:
     """
-    Reverse compliment the sequence (DNA only).
+    Reverse complement the sequence (DNA only).
     """
     # Make the translation map
     trans = str.maketrans("ACGT", "TGCA")
@@ -965,5 +1109,5 @@ if __name__ == "__main__":
         reverse_primer=cleaner.get_clean_reverse_primer(),
         name_index=cleaner.get_clean_name_index(),
         sequence_index=cleaner.get_clean_sequence_index(),
-        reverse_compliment_flag=cleaner.get_clean_reverse_compliment_flag(),
+        reverse_complement_flag=cleaner.get_clean_reverse_complement_flag(),
     )

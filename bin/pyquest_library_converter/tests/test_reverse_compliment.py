@@ -1,5 +1,5 @@
 import unittest
-from pyquest_library_converter import reverse_compliment, reverse_compliment_sequences
+from pyquest_library_converter import reverse_complement, reverse_complement_sequences
 
 
 import unittest
@@ -7,7 +7,7 @@ import unittest
 EXAMPLE_CSV_HEADER = "sequence"
 
 
-class TestReverseCompliment(unittest.TestCase):
+class TestReverseComplement(unittest.TestCase):
     def setUp(self):
         self.test_cases = [
             {
@@ -42,24 +42,24 @@ class TestReverseCompliment(unittest.TestCase):
             },
         ]
 
-    def test_reverse_compliment(self):
+    def test_reverse_complement(self):
         for test_case in self.test_cases:
             with self.subTest(f"{test_case['name']}"):
-                self._assert_reverse_compliment(
+                self._assert_reverse_complement(
                     input_sequence=test_case["input"],
                     expected_output=test_case["expected_output"],
                 )
 
-    def _assert_reverse_compliment(self, input_sequence, expected_output):
+    def _assert_reverse_complement(self, input_sequence, expected_output):
         # When
-        actual_output = reverse_compliment(input_sequence)
+        actual_output = reverse_complement(input_sequence)
 
         # Then
         is_equal = actual_output == expected_output
         self.assertEqual(actual_output, expected_output)
 
 
-class TestReverseComplimentSequences(unittest.TestCase):
+class TestReverseComplementSequences(unittest.TestCase):
     def setUp(self):
         self.test_cases = [
             {
@@ -90,18 +90,18 @@ class TestReverseComplimentSequences(unittest.TestCase):
             },
         ]
 
-    def test_reverse_compliment_sequences(self):
+    def test_reverse_complement_sequences(self):
         for test_case in self.test_cases:
             with self.subTest(f"{test_case['name']}"):
-                self._assert_reverse_compliment_sequences(
+                self._assert_reverse_complement_sequences(
                     input_sequence=test_case["input"],
                     expected_output=test_case["expected_output"],
                 )
 
-    def _assert_reverse_compliment_sequences(self, input_sequence, expected_output):
+    def _assert_reverse_complement_sequences(self, input_sequence, expected_output):
         # When
         actual_output = list(
-            reverse_compliment_sequences(input_sequence, header=EXAMPLE_CSV_HEADER)
+            reverse_complement_sequences(input_sequence, header=EXAMPLE_CSV_HEADER)
         )
 
         # Then
