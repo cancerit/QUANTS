@@ -11,104 +11,104 @@ class TestTrimSequence(unittest.TestCase):
 
     def test_trim_sequence_both_change_1(self):
         sequence = self.sequence_AtoI
-        prefix = "A"
+        forward_primer = "A"
         suffix = "I"
-        result = trim_sequence(sequence, prefix, suffix)
+        result = trim_sequence(sequence, forward_primer, suffix)
         self.assertEqual(result, ("BCDEFGH", True, True))
 
     def test_trim_sequence_both_change_2(self):
         sequence = self.sequence_AtoI
-        prefix = "AB"
+        forward_primer = "AB"
         suffix = "HI"
-        result = trim_sequence(sequence, prefix, suffix)
+        result = trim_sequence(sequence, forward_primer, suffix)
         self.assertEqual(result, ("CDEFG", True, True))
 
     def test_trim_sequence_both_change_3(self):
         sequence = self.sequence_AtoI
-        prefix = "ABC"
+        forward_primer = "ABC"
         suffix = "GHI"
-        result = trim_sequence(sequence, prefix, suffix)
+        result = trim_sequence(sequence, forward_primer, suffix)
         self.assertEqual(result, ("DEF", True, True))
 
     def test_trim_sequence_both_change_4(self):
         sequence = self.sequence_AtoI
-        prefix = "ABCD"
+        forward_primer = "ABCD"
         suffix = "FGHI"
-        result = trim_sequence(sequence, prefix, suffix)
+        result = trim_sequence(sequence, forward_primer, suffix)
         self.assertEqual(result, ("E", True, True))
 
     def test_trim_sequence_both_change_5(self):
         sequence = "ABCDEFGH"
-        prefix = "ABCD"
+        forward_primer = "ABCD"
         suffix = "EFGH"
-        result = trim_sequence(sequence, prefix, suffix)
+        result = trim_sequence(sequence, forward_primer, suffix)
         self.assertEqual(result, ("", True, True))
 
-    def test_trim_sequence_only_prefix(self):
+    def test_trim_sequence_only_forward_primer(self):
         sequence = self.sequence_AtoI
-        prefix = "ABC"
+        forward_primer = "ABC"
         suffix = "XYZ"
-        result = trim_sequence(sequence, prefix, suffix)
+        result = trim_sequence(sequence, forward_primer, suffix)
         self.assertEqual(result, ("DEFGHI", True, False))
 
     def test_trim_sequence_only_suffix(self):
         sequence = self.sequence_AtoI
-        prefix = "XYZ"
+        forward_primer = "XYZ"
         suffix = "GHI"
-        result = trim_sequence(sequence, prefix, suffix)
+        result = trim_sequence(sequence, forward_primer, suffix)
         self.assertEqual(result, ("ABCDEF", False, True))
 
-    def test_trim_sequence_no_prefix_or_suffix(self):
+    def test_trim_sequence_no_forward_primer_or_suffix(self):
         sequence = self.sequence_AtoI
-        prefix = "MNO"
+        forward_primer = "MNO"
         suffix = "XYZ"
-        result = trim_sequence(sequence, prefix, suffix)
+        result = trim_sequence(sequence, forward_primer, suffix)
         self.assertEqual(result, ("ABCDEFGHI", False, False))
 
     def test_trim_sequence_empty_string(self):
         sequence = ""
-        prefix = "AB"
+        forward_primer = "AB"
         suffix = "HI"
-        result = trim_sequence(sequence, prefix, suffix)
+        result = trim_sequence(sequence, forward_primer, suffix)
         self.assertEqual(result, ("", False, False))
 
-    def test_trim_sequence_empty_prefix_and_suffix(self):
+    def test_trim_sequence_empty_forward_primer_and_suffix(self):
         sequence = self.sequence_AtoI
-        prefix = ""
+        forward_primer = ""
         suffix = ""
-        result = trim_sequence(sequence, prefix, suffix)
+        result = trim_sequence(sequence, forward_primer, suffix)
         self.assertEqual(result, ("ABCDEFGHI", False, False))
 
-    def test_trim_sequence_overlapping_prefix_and_suffix_1(self):
+    def test_trim_sequence_overlapping_forward_primer_and_suffix_1(self):
         sequence = self.sequence_AtoI
-        prefix = "ABCDE"
+        forward_primer = "ABCDE"
         suffix = "EFGHI"
         with self.assertRaises(NotImplementedError) as context:
-            trim_sequence(sequence, prefix, suffix)
+            trim_sequence(sequence, forward_primer, suffix)
         self.assertIn("overlap", str(context.exception))
 
-    def test_trim_sequence_overlapping_prefix_and_suffix_2(self):
+    def test_trim_sequence_overlapping_forward_primer_and_suffix_2(self):
         sequence = self.sequence_AtoI
-        prefix = "ABCDEF"
+        forward_primer = "ABCDEF"
         suffix = "DEFGHI"
         with self.assertRaises(NotImplementedError) as context:
-            trim_sequence(sequence, prefix, suffix)
+            trim_sequence(sequence, forward_primer, suffix)
         self.assertIn("overlap", str(context.exception))
 
-    def test_trim_sequence_overlapping_prefix_and_suffix_3(self):
+    def test_trim_sequence_overlapping_forward_primer_and_suffix_3(self):
         sequence = self.sequence_AtoI
-        prefix = "ABCDEFG"
+        forward_primer = "ABCDEFG"
         suffix = "FGHI"
         with self.assertRaises(NotImplementedError) as context:
-            trim_sequence(sequence, prefix, suffix)
+            trim_sequence(sequence, forward_primer, suffix)
         self.assertIn("overlap", str(context.exception))
 
-    def test_trim_sequence_overlapping_prefix_and_suffix_4(self):
+    def test_trim_sequence_overlapping_forward_primer_and_suffix_4(self):
         sequence = self.sequence_AtoI
-        prefix = "ABCD"
+        forward_primer = "ABCD"
         suffix = "CDEFGHI"
         with self.assertRaises(NotImplementedError) as context:
-            trim_sequence(sequence, prefix, suffix)
+            trim_sequence(sequence, forward_primer, suffix)
         self.assertIn("overlap", str(context.exception))
 
 

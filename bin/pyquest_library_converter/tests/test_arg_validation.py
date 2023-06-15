@@ -33,10 +33,10 @@ class _ArgsCleaner_Method_Tests_Mixin:
         args_cleaner = ArgsCleaner(namespace)
         args_cleaner._validate_output()
 
-    def test_validate_prefix(self):
+    def test_validate_forward_primer(self):
         namespace = self.valid_namespace
         args_cleaner = ArgsCleaner(namespace)
-        args_cleaner._validate_prefix()
+        args_cleaner._validate_forward_primer()
 
     def test_validate_suffix(self):
         namespace = self.valid_namespace
@@ -168,33 +168,33 @@ class _ArgsCleaner_Method_Tests_Mixin:
         # Then
         self.assertEqual(expected_output, actual_output)
 
-    def test_get_clean_prefix(self):
+    def test_get_clean_forward_primer(self):
         # Given
-        expected_prefix = ""
+        expected_forward_primer = ""
         namespace = self.valid_namespace
-        namespace.prefix = expected_prefix
+        namespace.forward_primer = expected_forward_primer
         args_cleaner = ArgsCleaner(namespace)
 
         # When
         args_cleaner.validate()
-        actual_prefix = args_cleaner.get_clean_prefix()
+        actual_forward_primer = args_cleaner.get_clean_forward_primer()
 
         # Then
-        self.assertEqual(expected_prefix, actual_prefix)
+        self.assertEqual(expected_forward_primer, actual_forward_primer)
 
-    def test_get_clean_prefix__with_chars(self):
+    def test_get_clean_forward_primer__with_chars(self):
         # Given
-        expected_prefix = "AATTAACG"
+        expected_forward_primer = "AATTAACG"
         namespace = self.valid_namespace
-        namespace.prefix = expected_prefix
+        namespace.forward_primer = expected_forward_primer
         args_cleaner = ArgsCleaner(namespace)
 
         # When
         args_cleaner.validate()
-        actual_prefix = args_cleaner.get_clean_prefix()
+        actual_forward_primer = args_cleaner.get_clean_forward_primer()
 
         # Then
-        self.assertEqual(expected_prefix, actual_prefix)
+        self.assertEqual(expected_forward_primer, actual_forward_primer)
 
     def test_get_clean_suffix(self):
         # Given
@@ -303,7 +303,7 @@ class _ExampleData1_Mixin:
         cls.valid_namespace = argparse.Namespace(
             input=cls.csv_path,
             output=None,
-            prefix="",
+            forward_primer="",
             suffix="",
             skip_n_rows=0,
             name_header=None,
@@ -315,7 +315,7 @@ class _ExampleData1_Mixin:
         cls.valid_namespace_with_headers = argparse.Namespace(
             input=cls.csv_path,
             output=None,
-            prefix="",
+            forward_primer="",
             suffix="",
             skip_n_rows=0,
             name_header=cls.oligo_seq_name_header,
@@ -340,7 +340,7 @@ class _ExampleData2_Mixin:
         cls.valid_namespace = argparse.Namespace(
             input=cls.csv_path,
             output=None,
-            prefix="",
+            forward_primer="",
             suffix="",
             skip_n_rows=3,
             name_header=None,
@@ -352,7 +352,7 @@ class _ExampleData2_Mixin:
         cls.valid_namespace_with_headers = argparse.Namespace(
             input=cls.csv_path,
             output=None,
-            prefix="",
+            forward_primer="",
             suffix="",
             skip_n_rows=2,
             name_header=cls.oligo_seq_name_header,

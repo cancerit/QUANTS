@@ -23,7 +23,7 @@ _HELP__GROUP_SEQ_IDX = _TEMPLATE_GROUP_IDX.format("oligo sequence itself")
 _HELP__GROUP_NAME = _TEMPLATE_GROUP_HEADER.format("oligo sequence name")
 _HELP__GROUP_NAME_IDX = _TEMPLATE_GROUP_IDX.format("oligo sequence name")
 _HELP__VERBOSE = "Print a summary."
-_HELP__PREFIX = (
+_HELP__FORWARD_PRIMER = (
     "DNA primer to be removed from the start of the oligo sequence if provided."
 )
 _HELP__SUFFIX = (
@@ -34,7 +34,7 @@ _HELP_SKIP_N_ROWS = "Number of rows to skip in the CSV/TSV file before reading t
 _ARG_INPUT = "input"
 _ARG_OUTPUT = "output"
 _ARG_VERBOSE = "verbose"
-_ARG_PREFIX = "prefix"
+_ARG_FORWARD_PRIMER = "forward_primer"
 _ARG_SUFFIX = "suffix"
 _ARG_NAME_HEADER = "name_header"
 _ARG_NAME_INDEX = "name_index"
@@ -58,24 +58,24 @@ class ValidationError(Exception):
 @dataclass
 class Report:
     row_count: int = 0
-    prefixes_trimmed: t.List[int] = field(default_factory=list, repr=False, hash=False)
+    forward_primer_trimmed: t.List[int] = field(default_factory=list, repr=False, hash=False)
     suffixes_trimmed: t.List[int] = field(default_factory=list, repr=False, hash=False)
 
     @property
     def both_trimmed(self) -> t.List[int]:
-        both = list(set(self.prefixes_trimmed) & set(self.suffixes_trimmed))
+        both = list(set(self.forward_primer_trimmed) & set(self.suffixes_trimmed))
         both.sort()
         return both
 
     @property
-    def prefixes_trimmed_only(self) -> t.List[int]:
-        prefixes_only = list(set(self.prefixes_trimmed) - set(self.suffixes_trimmed))
-        prefixes_only.sort()
-        return prefixes_only
+    def forward_primer_trimmed_only(self) -> t.List[int]:
+        forward_primer_only = list(set(self.forward_primer_trimmed) - set(self.suffixes_trimmed))
+        forward_primer_only.sort()
+        return forward_primer_only
 
     @property
     def suffixes_trimmed_only(self) -> t.List[int]:
-        suffixes_only = list(set(self.suffixes_trimmed) - set(self.prefixes_trimmed))
+        suffixes_only = list(set(self.suffixes_trimmed) - set(self.forward_primer_trimmed))
         suffixes_only.sort()
         return suffixes_only
 
@@ -120,10 +120,10 @@ class Report:
 
         return ", ".join(compacted)
 
-    def add_row(self, row_id: int, has_trimmed_prefix: bool, has_trimmed_suffix: bool):
+    def add_row(self, row_id: int, has_trimmed_forward_primer: bool, has_trimmed_suffix: bool):
         self.row_count += 1
-        if has_trimmed_prefix:
-            self.prefixes_trimmed.append(row_id)
+        if has_trimmed_forward_primer:
+            self.forward_primer_trimmed.append(row_id)
         if has_trimmed_suffix:
             self.suffixes_trimmed.append(row_id)
         return
@@ -131,16 +131,16 @@ class Report:
     def summary(self) -> str:
         summary = []
         summary.append(f"Total rows selected: {self.row_count}")
-        self.prefixes_trimmed.sort()
+        self.forward_primer_trimmed.sort()
         self.suffixes_trimmed.sort()
         both_detail = (
             self.compact_integer_sequence(self.both_trimmed)
             if self.both_trimmed
             else "None"
         )
-        prefix_detail = (
-            self.compact_integer_sequence(self.prefixes_trimmed)
-            if self.prefixes_trimmed
+        forward_primer_detail = (
+            self.compact_integer_sequence(self.forward_primer_trimmed)
+            if self.forward_primer_trimmed
             else "None"
         )
         suffix_detail = (
@@ -153,19 +153,19 @@ class Report:
             if self.suffixes_trimmed_only
             else "None"
         )
-        prefixes_only_detail = (
-            self.compact_integer_sequence(self.prefixes_trimmed_only)
-            if self.prefixes_trimmed_only
+        forward_primer_detail_only = (
+            self.compact_integer_sequence(self.forward_primer_trimmed_only)
+            if self.forward_primer_trimmed_only
             else "None"
         )
         summary.append(
-            f"Rows with both prefix and suffix trimmed ({len(self.both_trimmed)}): {both_detail}"
+            f"Rows with both forward and reverse trimmed ({len(self.both_trimmed)}): {both_detail}"
         )
         summary.append(
-            f"Rows with prefix trimmed ({len(self.prefixes_trimmed)}): {prefix_detail}"
+            f"Rows with forward trimmed ({len(self.forward_primer_trimmed)}): {forward_primer_detail}"
         )
         summary.append(
-            f"Rows with prefix trimmed only ({len(self.prefixes_trimmed_only)}): {prefixes_only_detail}"
+            f"Rows with forward trimmed only ({len(self.forward_primer_trimmed_only)}): {forward_primer_detail_only}"
         )
         summary.append(
             f"Rows with suffix trimmed ({len(self.suffixes_trimmed)}): {suffix_detail}"
@@ -331,7 +331,7 @@ class CSVHelper:
 
 
 class ArgsCleaner:
-    ALLOWED_PREFIX = "ACTG"
+    _ALLOWED_DNA = "ACTG"
     ALLOWED_SUFFIX = "ACTG"
 
     def __init__(self, namespace: argparse.Namespace):
@@ -366,9 +366,9 @@ class ArgsCleaner:
         output: Path = self._normalise_output_to_file()
         return output
 
-    def get_clean_prefix(self) -> str:
+    def get_clean_forward_primer(self) -> str:
         self._assert_has_validated_all()
-        return self._get_arg(_ARG_PREFIX)
+        return self._get_arg(_ARG_FORWARD_PRIMER)
 
     def get_clean_suffix(self) -> str:
         self._assert_has_validated_all()
@@ -398,7 +398,7 @@ class ArgsCleaner:
         validators = [
             self._validate_codependent_input_args,
             self._validate_output,
-            self._validate_prefix,
+            self._validate_forward_primer,
             self._validate_suffix,
             self._validate_name_index,
             self._validate_sequence_index,
@@ -456,10 +456,10 @@ class ArgsCleaner:
         self._assert_valid_column_index(index)
         return
 
-    def _validate_prefix(self):
-        prefix_value: str = self._get_arg(_ARG_PREFIX)
-        allowed_chars = set(self.ALLOWED_PREFIX.upper())
-        self._assert_valid_chars(prefix_value, allowed_chars)
+    def _validate_forward_primer(self):
+        forward_primer_value: str = self._get_arg(_ARG_FORWARD_PRIMER)
+        allowed_chars = set(self._ALLOWED_DNA.upper())
+        self._assert_valid_chars(forward_primer_value, allowed_chars)
 
     def _validate_suffix(self):
         suffix_value: str = self._get_arg(_ARG_SUFFIX)
@@ -620,13 +620,13 @@ def get_argparser() -> argparse.ArgumentParser:
         dest=_ARG_VERBOSE,
     )
 
-    # DNA primer arguments (suffix and prefix while we don't consider 5 and 3 prime ends or reverse complement complexity)
+    # DNA primer arguments (forward and reverse primers while we don't consider 5 and 3 prime ends or reverse complement complexity)
     parser.add_argument(
-        "--prefix",
+        "--forward",
         type=str,
         default="",
-        help=_HELP__PREFIX,
-        dest=_ARG_PREFIX,
+        help=_HELP__FORWARD_PRIMER,
+        dest=_ARG_FORWARD_PRIMER,
     )
     parser.add_argument(
         "--suffix",
@@ -691,7 +691,7 @@ def main(
     skip_n_rows: int,
     output_file: t.Union[str, Path],
     verbose: bool,
-    prefix: str,
+    forward_primer: str,
     suffix: str,
     name_index: int,
     sequence_index: int,
@@ -716,7 +716,7 @@ def main(
                 csv_reader, name_index=name_index, sequence_index=sequence_index
             )
             dict_rows = trim_sequences(
-                dict_rows, prefix=prefix, suffix=suffix, report=report
+                dict_rows, forward_primer=forward_primer, suffix=suffix, report=report
             )
             write_rows(dict_rows, output_file=temp_file, headers=output_headers)
 
@@ -757,57 +757,57 @@ def filter_rows(
 
 
 def trim_sequences(
-    dict_rows: t.Iterator[t.Dict[str, str]], prefix: str, suffix: str, report: Report
+    dict_rows: t.Iterator[t.Dict[str, str]], forward_primer: str, suffix: str, report: Report
 ) -> t.Iterable[t.Dict[str, str]]:
     """
-    Trim the prefix and suffix from the sequence.
+    Trim the forward and reverse primer from the sequence.
 
     Yield dictionaries of index, name, sequence values from each row, where keys are the new headers.
     """
     for dict_row in dict_rows:
         # Trim the sequence and update the dictionary
         sequence = dict_row[_OUTPUT_HEADER__SEQUENCE]
-        trimmed_sequence, has_trimmed_prefix, has_trimmed_suffix = trim_sequence(
-            sequence, prefix, suffix
+        trimmed_sequence, has_trimmed_forward_primer, has_trimmed_suffix = trim_sequence(
+            sequence, forward_primer, suffix
         )
         dict_row[_OUTPUT_HEADER__SEQUENCE] = trimmed_sequence
 
         # Update the report
         row_id = dict_row[_OUTPUT_HEADER__ID]
-        report.add_row(row_id, has_trimmed_prefix, has_trimmed_suffix)
+        report.add_row(row_id, has_trimmed_forward_primer, has_trimmed_suffix)
         yield dict_row
 
 
-def trim_sequence(sequence: str, prefix: str, suffix: str) -> t.Tuple[str, bool, bool]:
+def trim_sequence(sequence: str, forward_primer: str, suffix: str) -> t.Tuple[str, bool, bool]:
     """
-    Trim the prefix and suffix from the sequence.
+    Trim the forward primer and suffix from the sequence.
 
-    Return the trimmed sequence and whether the prefix and suffix were trimmed.
+    Return the trimmed sequence and whether the forward primer and suffix were trimmed.
     """
     start_index: int = 0
     # None is the end of the string, and works for slicing
     end_index: t.Optional[int] = None
-    trimmed_prefix = False
+    has_trimmed_forward_primer = False
     trimmed_suffix = False
 
-    err_msg = f"The prefix and suffix overlap in the sequence (no handling in code yet): {prefix=}, {suffix=}, {sequence=}"
+    err_msg = f"The forward and reverse primer overlap in the sequence (no handling in code yet): {forward_primer=}, {suffix=}, {sequence=}"
 
-    prefix_exists = len(prefix) and sequence.startswith(prefix)
+    forward_primer_exists = len(forward_primer) and sequence.startswith(forward_primer)
     suffix_exists = len(suffix) and sequence.endswith(suffix)
 
     is_overlapping = False
 
-    if prefix_exists:
-        temp_index = len(prefix)
+    if forward_primer_exists:
+        temp_index = len(forward_primer)
         suffix_exists_after_trimming = sequence[temp_index:].endswith(suffix)
         is_overlapping = suffix_exists and not suffix_exists_after_trimming
         start_index = temp_index
-        trimmed_prefix = True
+        has_trimmed_forward_primer = True
 
     if suffix_exists:
         temp_index = len(sequence) - len(suffix)
-        prefix_exists_after_trimming = sequence[:temp_index].startswith(prefix)
-        is_overlapping = prefix_exists and not prefix_exists_after_trimming
+        forward_primer_exists_after_trimming = sequence[:temp_index].startswith(forward_primer)
+        is_overlapping = forward_primer_exists and not forward_primer_exists_after_trimming
         end_index = temp_index
         trimmed_suffix = True
 
@@ -816,7 +816,7 @@ def trim_sequence(sequence: str, prefix: str, suffix: str) -> t.Tuple[str, bool,
 
     trimmed_sequence = sequence[start_index:end_index]
 
-    return (trimmed_sequence, trimmed_prefix, trimmed_suffix)
+    return (trimmed_sequence, has_trimmed_forward_primer, trimmed_suffix)
 
 
 def write_rows(
@@ -850,7 +850,7 @@ if __name__ == "__main__":
         skip_n_rows=cleaner.get_clean_skip_n_rows(),
         output_file=cleaner.get_clean_output(),
         verbose=cleaner.get_clean_verbose(),
-        prefix=cleaner.get_clean_prefix(),
+        forward_primer=cleaner.get_clean_forward_primer(),
         suffix=cleaner.get_clean_suffix(),
         name_index=cleaner.get_clean_name_index(),
         sequence_index=cleaner.get_clean_sequence_index(),
