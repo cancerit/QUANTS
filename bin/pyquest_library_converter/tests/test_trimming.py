@@ -1,7 +1,7 @@
 import unittest
 import typing as t
 
-from pyquest_library_converter import trim_sequence
+from pyquest_library_converter import trim_sequence, UndevelopedFeatureError
 
 
 class TestTrimSequence(unittest.TestCase):
@@ -83,7 +83,7 @@ class TestTrimSequence(unittest.TestCase):
         sequence = self.sequence_AtoI
         forward_primer = "ABCDE"
         reverse_primer = "EFGHI"
-        with self.assertRaises(NotImplementedError) as context:
+        with self.assertRaises(UndevelopedFeatureError) as context:
             trim_sequence(sequence, forward_primer, reverse_primer)
         self.assertIn("overlap", str(context.exception))
 
@@ -91,7 +91,7 @@ class TestTrimSequence(unittest.TestCase):
         sequence = self.sequence_AtoI
         forward_primer = "ABCDEF"
         reverse_primer = "DEFGHI"
-        with self.assertRaises(NotImplementedError) as context:
+        with self.assertRaises(UndevelopedFeatureError) as context:
             trim_sequence(sequence, forward_primer, reverse_primer)
         self.assertIn("overlap", str(context.exception))
 
@@ -99,7 +99,7 @@ class TestTrimSequence(unittest.TestCase):
         sequence = self.sequence_AtoI
         forward_primer = "ABCDEFG"
         reverse_primer = "FGHI"
-        with self.assertRaises(NotImplementedError) as context:
+        with self.assertRaises(UndevelopedFeatureError) as context:
             trim_sequence(sequence, forward_primer, reverse_primer)
         self.assertIn("overlap", str(context.exception))
 
@@ -107,7 +107,7 @@ class TestTrimSequence(unittest.TestCase):
         sequence = self.sequence_AtoI
         forward_primer = "ABCD"
         reverse_primer = "CDEFGHI"
-        with self.assertRaises(NotImplementedError) as context:
+        with self.assertRaises(UndevelopedFeatureError) as context:
             trim_sequence(sequence, forward_primer, reverse_primer)
         self.assertIn("overlap", str(context.exception))
 

@@ -37,6 +37,30 @@ REVERSE="CATCATGGAAGATTACTTTGCGTATCGCGGCTTTAAATACCTCAGGCTTGATGGTGAGTATGAGCCAGTGA
 ./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --forward $FORWARD --reverse $REVERSE -v
 ```
 
+## Usage - Auto-detect primer
+```bash
+IN="example_data_2.in.csv"
+OUT="example_data_2.out.csv"
+FORWARD="ATTCACGTTATGCTGTCCAATCTCT"  # Exists at the start of oligo
+REVERSE="CCCTGGGAAGGTAATTTTAGATTTC"  # Exists at the end of oligo, but as reverse compliment
+
+./pyquest_library_converter.py $IN -o $OUT -n "oligo_name" -s "mseq" --skip 0 -v --forward $FORWARD --reverse $REVERSE
+```
+The script will try to identify whether to treat each primer as a typical sequence of as a reverse complement sequence.
+
+In this case the script will print a message similar to:
+```
+Total seqeunces processed: 1
+Forward primer found 1 times in 1 sequences scanned.
+Forward primer reverse complement found 0 times in 1 sequences scanned.
+Reverse primer found 0 times in 1 sequences scanned
+Reverse primer reverse complement found 1 times in 1 sequences scanned.
+Chosen forward primer is the same as the given forward primer: 'ATTCACGTTATGCTGTCCAATCTCT'.
+Chosen reverse primer is the reverse complement of the given reverse primer: 'GAAATCTAAAATTACCTTCCCAGGG'.
+Forward primer trimmed in 1 of 1 sequences.
+Reverse primer trimmed in 1 of 1 sequences.
+Forward + reverse primer trimmed in 1 out of 1 sequences
+```
 ## Usage - Output
 
 ```bash

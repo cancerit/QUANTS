@@ -58,6 +58,10 @@ class ValidationError(Exception):
     pass
 
 
+class UndevelopedFeatureError(Exception):
+    pass
+
+
 @dataclass
 class Report:
     row_count: int = 0
@@ -102,10 +106,10 @@ class Report:
         self.forward_primers_trimmed.sort()
         self.reverse_primers_trimmed.sort()
         summary.append(
-            f"Forward primer trimmed {len(self.forward_primers_trimmed)} of {total} sequences."
+            f"Forward primer trimmed in {len(self.forward_primers_trimmed)} of {total} sequences."
         )
         summary.append(
-            f"Reverse primer trimmed {len(self.reverse_primers_trimmed)} of {total} sequences."
+            f"Reverse primer trimmed in {len(self.reverse_primers_trimmed)} of {total} sequences."
         )
         summary.append(
             f"Forward + reverse primer trimmed in {len(self.both_trimmed)} out of {total} sequences."
@@ -328,26 +332,30 @@ class PrimerScanner:
             f"Reverse primer reverse complement found {reverse_revcomp_cnt} times in {total} sequences scanned.",
         ]
         search_fwd_lines = (
-            ["Search skipped because given forward primer was empty string."]
+            ["Forward primer search was unnecessary because it is an empty string."]
             if natural_empty_fwd_primer
             else search_fwd_lines
         )
         search_rev_lines = (
-            ["Search skipped because given reverse primer was empty string."]
+            ["Reverse primer search was unnecessary because it is an empty string."]
             if natural_empty_rev_primer
             else search_rev_lines
         )
 
         chosen_fwd_line = self._summary_chosen_primer(
-            predicted_fwd_primer,
-            "forward",
+            predicted_primer=predicted_fwd_primer,
+            primer_name="forward",
+            given_original_primer=self._given_forward_primer,
+            given_revcomp_primer=self._given_forward_primer_revcomp,
             original_count=forward_cnt,
             revcomp_count=forward_revcomp_cnt,
         )
 
         chosen_rev_line = self._summary_chosen_primer(
-            predicted_rev_primer,
-            "reverse",
+            predicted_primer=predicted_rev_primer,
+            primer_name="reverse",
+            given_original_primer=self._given_reverse_primer,
+            given_revcomp_primer=self._given_reverse_primer_revcomp,
             original_count=reverse_cnt,
             revcomp_count=reverse_revcomp_cnt,
         )
@@ -362,18 +370,22 @@ class PrimerScanner:
     def _summary_chosen_primer(
         self,
         predicted_primer: str,
+        given_original_primer: str,
+        given_revcomp_primer: str,
         primer_name: str,
         original_count: int,
         revcomp_count: str,
     ) -> str:
         if not predicted_primer and original_count == 0 and revcomp_count == 0:
-            chosen_line = f"WARNING: Chosen {primer_name} primer chosen is an empty string because the forward primer was not found in any of the sequences"
-        elif not predicted_primer and not self._given_forward_primer:
-            chosen_line = f"Chosen {primer_name} primer chosen is an empty string"
-        elif predicted_primer == self._given_forward_primer:
-            chosen_line = f"Chosen {primer_name} primer chosen is the same as the given {primer_name} primer"
-        elif predicted_primer == self._given_forward_primer_revcomp:
-            chosen_line = f"Chosen {primer_name} primer chosen is the reverse complement of the given {primer_name} primer"
+            chosen_line = f"WARNING: Chosen {primer_name} primer is an empty string because the forward primer was not found in any of the sequences"
+        elif not predicted_primer and not given_original_primer:
+            chosen_line = f"Chosen {primer_name} primer is an empty string"
+        elif predicted_primer == given_original_primer:
+            chosen_line = f"Chosen {primer_name} primer is the same as the given {primer_name} primer"
+        elif predicted_primer == given_revcomp_primer:
+            chosen_line = f"Chosen {primer_name} primer is the reverse complement of the given {primer_name} primer"
+        else:
+            raise NotImplementedError("Unhandled case - please report this as a bug")
         return chosen_line + f": {predicted_primer!r}."
 
     def scan_all(self, oligos: t.List[str]) -> None:
@@ -487,13 +499,13 @@ class PrimerScanner:
         has_revcomp_not_at_ends = contains_revcomp and not has_revcomp_at_either_end
         if has_original_not_at_ends or has_revcomp_not_at_ends:
             msg = "Oligo contains a primer that is not found at either end of the oligo; this is not supported at this this time."
-            raise NotImplementedError(msg)
+            raise UndevelopedFeatureError(msg)
 
         # Edge case 2: the original and revcomp are found in the same oligo
         has_original_and_revcomp = contains_original and contains_revcomp
         if has_original_and_revcomp:
             msg = "Oligo contains both the original primer and a reverse combinant of that same primer; this is not supported at this time."
-            raise NotImplementedError(msg)
+            raise UndevelopedFeatureError(msg)
 
         # Normal case:
         return has_original_at_either_end, has_revcomp_at_either_end
@@ -1058,7 +1070,7 @@ def trim_sequence(
         has_trimmed_reverse_primer = True
 
     if is_overlapping:
-        raise NotImplementedError(err_msg)
+        raise UndevelopedFeatureError(err_msg)
 
     trimmed_sequence = sequence[start_index:end_index]
 
@@ -1115,6 +1127,14 @@ def reverse_complement(sequence: str) -> str:
     return sequence.translate(trans)[::-1]
 
 
+def display_error(prefix: str, error: Exception) -> None:
+    """
+    Display the error message.
+    """
+    error_msg = f"{prefix}\n{error}"
+    print(error_msg, file=sys.stderr)
+
+
 if __name__ == "__main__":
     parser = get_argparser()
     namespace = parser.parse_args()
@@ -1122,9 +1142,10 @@ if __name__ == "__main__":
     try:
         cleaner.validate()
     except ValidationError as err:
-        error_detail = str(err)
-        error_msg = f"Error: Argument validation!\n{error_detail}"
-        print(error_msg, file=sys.stderr)
+        display_error("Error: Argument validation!", err)
+        sys.exit(1)
+    except UndevelopedFeatureError as err:
+        print(f"Error: Not implemented feature!", file=sys.stderr)
         sys.exit(1)
 
     main(
