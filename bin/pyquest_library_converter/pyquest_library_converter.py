@@ -6,6 +6,7 @@ import os
 import argparse
 import csv
 from contextlib import contextmanager
+from functools import partial
 from pathlib import Path
 import tempfile
 import shutil
@@ -29,13 +30,15 @@ _HELP__FORWARD_PRIMER = (
 _HELP__REVERSE_PRIMER = (
     "DNA primer to be removed from the end of the oligo sequence if provided."
 )
-_HELP_SKIP_N_ROWS = "Number of rows to skip in the CSV/TSV file before reading the data. By default, 1 row is skipped which assumes a header row. If you use the --name-header or --sequence-header options, you can set this to 0."
+_HELP__SKIP_N_ROWS = "Number of rows to skip in the CSV/TSV file before reading the data. By default, 1 row is skipped which assumes a header row. If you use the --name-header or --sequence-header options, you can set this to 0."
+_HELP__REVERSE_COMPLIMENT_FLAG = "Reverse compliment the oligo sequence."
 
 _ARG_INPUT = "input"
 _ARG_OUTPUT = "output"
 _ARG_VERBOSE = "verbose"
 _ARG_FORWARD_PRIMER = "forward_primer"
 _ARG_REVERSE_PRIMER = "reverse_primer"
+_ARG_REVERSE_COMPLIMENT_FLAG = "reverse_compliment_flag"
 _ARG_NAME_HEADER = "name_header"
 _ARG_NAME_INDEX = "name_index"
 _ARG_SEQ_HEADER = "sequence_header"
@@ -408,6 +411,10 @@ class ArgsCleaner:
         )
         return index
 
+    def get_clean_reverse_compliment_flag(self) -> bool:
+        self._assert_has_validated_all()
+        return self._get_arg(_ARG_REVERSE_COMPLIMENT_FLAG)
+
     def validate(self):
         validators = [
             self._validate_codependent_input_args,
@@ -416,6 +423,7 @@ class ArgsCleaner:
             self._validate_reverse_primer,
             self._validate_name_index,
             self._validate_sequence_index,
+            self._validate_reverse_compliment_flag,
         ]
         for validator in validators:
             validator()
@@ -479,6 +487,13 @@ class ArgsCleaner:
         reverse_primer_value: str = self._get_arg(_ARG_REVERSE_PRIMER)
         allowed_chars = set(self._ALLOWED_DNA.upper())
         self._assert_valid_chars(reverse_primer_value, allowed_chars)
+
+    def _validate_reverse_compliment_flag(self):
+        flag = self._get_arg(_ARG_REVERSE_COMPLIMENT_FLAG)
+        if not isinstance(flag, bool):
+            msg = f"Reverse compliment flag {flag!r} must be a boolean."
+            raise ValidationError(msg)
+        return
 
     def _assert_has_validated_all(self, throw=True) -> bool:
         if not self._validated:
@@ -655,8 +670,17 @@ def get_argparser() -> argparse.ArgumentParser:
         "--skip",
         type=int,
         default=1,
-        help=_HELP_SKIP_N_ROWS,
+        help=_HELP__SKIP_N_ROWS,
         dest=_ARG_SKIP_N_ROWS,
+    )
+
+    # Include a way to toggle the output sequences to be in reverse complement, default is false
+    parser.add_argument(
+        "--revcomp",
+        action="store_true",
+        default=False,
+        help=_HELP__REVERSE_COMPLIMENT_FLAG,
+        dest=_ARG_REVERSE_COMPLIMENT_FLAG,
     )
 
     # Mutually exclusive argument group for oligo sequence name
@@ -709,6 +733,7 @@ def main(
     reverse_primer: str,
     name_index: int,
     sequence_index: int,
+    reverse_compliment_flag: bool,
 ):
     input_file = Path(input_file)
     output_file = Path(output_file)
@@ -717,6 +742,24 @@ def main(
         _OUTPUT_HEADER__NAME,
         _OUTPUT_HEADER__SEQUENCE,
     ]
+
+    # Prepare closured functions
+    _reverse_compliment_sequences_closure = partial(
+        reverse_compliment_sequences,
+        header=_OUTPUT_HEADER__SEQUENCE,
+    )
+    trim_sequences_closure = partial(
+        trim_sequences,
+        sequence_header=_OUTPUT_HEADER__SEQUENCE,
+        id_header=_OUTPUT_HEADER__ID,
+        forward_primer=forward_primer,
+        reverse_primer=reverse_primer,
+    )
+    conditionally_reverse_compliment_sequences = (
+        _reverse_compliment_sequences_closure
+        if reverse_compliment_flag
+        else noop_sequences
+    )
 
     report = Report()
     # Prepare a temporary file to write to
@@ -729,12 +772,8 @@ def main(
             dict_rows = filter_rows(
                 csv_reader, name_index=name_index, sequence_index=sequence_index
             )
-            dict_rows = trim_sequences(
-                dict_rows,
-                forward_primer=forward_primer,
-                reverse_primer=reverse_primer,
-                report=report,
-            )
+            dict_rows = trim_sequences_closure(dict_rows, report=report)
+            dict_rows = conditionally_reverse_compliment_sequences(dict_rows)
             write_rows(dict_rows, output_file=temp_file, headers=output_headers)
 
         # Copy the temporary file to the output file
@@ -778,24 +817,28 @@ def trim_sequences(
     forward_primer: str,
     reverse_primer: str,
     report: Report,
+    sequence_header: str,
+    id_header: str,
 ) -> t.Iterable[t.Dict[str, str]]:
     """
     Trim the forward and reverse primer from the sequence.
 
     Yield dictionaries of index, name, sequence values from each row, where keys are the new headers.
+
+    Header corresponds to the CSV header for the sequence column.
     """
     for dict_row in dict_rows:
         # Trim the sequence and update the dictionary
-        sequence = dict_row[_OUTPUT_HEADER__SEQUENCE]
+        sequence = dict_row[sequence_header]
         (
             trimmed_sequence,
             has_trimmed_forward_primer,
             has_trimmed_reverse_primer,
         ) = trim_sequence(sequence, forward_primer, reverse_primer)
-        dict_row[_OUTPUT_HEADER__SEQUENCE] = trimmed_sequence
+        dict_row[sequence_header] = trimmed_sequence
 
         # Update the report
-        row_id = dict_row[_OUTPUT_HEADER__ID]
+        row_id = dict_row[id_header]
         report.add_row(row_id, has_trimmed_forward_primer, has_trimmed_reverse_primer)
         yield dict_row
 
@@ -851,6 +894,32 @@ def trim_sequence(
     return (trimmed_sequence, has_trimmed_forward_primer, has_trimmed_reverse_primer)
 
 
+def reverse_compliment_sequences(
+    dict_rows: t.Iterator[t.Dict[str, str]],
+    header: str,
+) -> t.Iterable[t.Dict[str, str]]:
+    """
+    Update each row to have the reverse compliment of the sequence.
+
+    Header corresponds to the CSV header for the sequence column.
+    """
+    for dict_row in dict_rows:
+        sequence = dict_row[header]
+        reversed_sequence = reverse_compliment(sequence)
+        dict_row[header] = reversed_sequence
+        yield dict_row
+
+
+def noop_sequences(
+    dict_rows: t.Iterator[t.Dict[str, str]]
+) -> t.Iterable[t.Dict[str, str]]:
+    """
+    Pass through the rows without changing them.
+    """
+    for dict_row in dict_rows:
+        yield dict_row
+
+
 def write_rows(
     dict_rows: t.Iterator[t.Dict[str, str]], headers: t.List[str], output_file: Path
 ) -> None:
@@ -896,4 +965,5 @@ if __name__ == "__main__":
         reverse_primer=cleaner.get_clean_reverse_primer(),
         name_index=cleaner.get_clean_name_index(),
         sequence_index=cleaner.get_clean_sequence_index(),
+        reverse_compliment_flag=cleaner.get_clean_reverse_compliment_flag(),
     )

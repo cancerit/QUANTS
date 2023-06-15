@@ -21,18 +21,20 @@ REVERSE="CATCATGGAAGATTACTTTGCGTATCGCGGCTTTAAATACCTCAGGCTTGATGGTGAGTATGAGCCAGTGA
 # Example usage with headers
 ./pyquest_library_converter.py $IN  -o $OUT -n "oligo_name" -s "mseq" --skip 0 -v
 
-# Example usage without headers
+# Example usage with column indices
 ./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 -v
 
-# Example usage without headers and a reverse that needs to be removed
+# Example usage where the output csv has reverse complements for the output sequence
+./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 -v --revcomp
+
+# Example usage with a reverse that needs to be removed
 ./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --reverse $REVERSE -v
 
-# Example usage without headers and a forward that needs to be removed
+# Example usage with a forward that needs to be removed
 ./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --forward $FORWARD -v
 
-# Example usage without headers and a forward and reverse that needs to be removed
+# Example usage with both a forward and reverse that needs to be removed
 ./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --forward $FORWARD --reverse $REVERSE -v
-
 ```
 
 ## Usage - Output

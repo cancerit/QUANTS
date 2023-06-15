@@ -43,6 +43,11 @@ class _ArgsCleaner_Method_Tests_Mixin:
         args_cleaner = ArgsCleaner(namespace)
         args_cleaner._validate_reverse_primer()
 
+    def test_validate_reverse_compliment_flag(self):
+        namespace = self.valid_namespace
+        args_cleaner = ArgsCleaner(namespace)
+        args_cleaner._validate_reverse_compliment_flag()
+
     def test_validate_name_index(self):
         namespace = self.valid_namespace
         args_cleaner = ArgsCleaner(namespace)
@@ -224,6 +229,23 @@ class _ArgsCleaner_Method_Tests_Mixin:
         # Then
         self.assertEqual(expected_reverse_primer, actual_reverse_primer)
 
+    def test_get_reverse_compliment_flag(self):
+        # Given
+        expected_reverse_compliment_flag = True
+        namespace = self.valid_namespace
+        namespace.reverse_compliment_flag = expected_reverse_compliment_flag
+        args_cleaner = ArgsCleaner(namespace)
+
+        # When
+        args_cleaner.validate()
+        actual_reverse_compliment_flag = args_cleaner.get_clean_verbose()
+
+        # Then
+        self.assertEqual(
+            expected_reverse_compliment_flag,
+            actual_reverse_compliment_flag,
+        )
+
     def test_get_clean_verbose(self):
         # Given
         expected_verbose = True
@@ -305,6 +327,7 @@ class _ExampleData1_Mixin:
             output=None,
             forward_primer="",
             reverse_primer="",
+            reverse_compliment_flag=False,
             skip_n_rows=0,
             name_header=None,
             name_index=cls.oligo_seq_name_index,
@@ -317,6 +340,7 @@ class _ExampleData1_Mixin:
             output=None,
             forward_primer="",
             reverse_primer="",
+            reverse_compliment_flag=False,
             skip_n_rows=0,
             name_header=cls.oligo_seq_name_header,
             name_index=None,
@@ -342,6 +366,7 @@ class _ExampleData2_Mixin:
             output=None,
             forward_primer="",
             reverse_primer="",
+            reverse_compliment_flag=False,
             skip_n_rows=3,
             name_header=None,
             name_index=cls.oligo_seq_name_index,
@@ -354,6 +379,7 @@ class _ExampleData2_Mixin:
             output=None,
             forward_primer="",
             reverse_primer="",
+            reverse_compliment_flag=False,
             skip_n_rows=2,
             name_header=cls.oligo_seq_name_header,
             name_index=None,
