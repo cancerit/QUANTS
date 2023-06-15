@@ -58,24 +58,34 @@ class ValidationError(Exception):
 @dataclass
 class Report:
     row_count: int = 0
-    forward_primers_trimmed: t.List[int] = field(default_factory=list, repr=False, hash=False)
-    reverse_primers_trimmed: t.List[int] = field(default_factory=list, repr=False, hash=False)
+    forward_primers_trimmed: t.List[int] = field(
+        default_factory=list, repr=False, hash=False
+    )
+    reverse_primers_trimmed: t.List[int] = field(
+        default_factory=list, repr=False, hash=False
+    )
 
     @property
     def both_trimmed(self) -> t.List[int]:
-        both = list(set(self.forward_primers_trimmed) & set(self.reverse_primers_trimmed))
+        both = list(
+            set(self.forward_primers_trimmed) & set(self.reverse_primers_trimmed)
+        )
         both.sort()
         return both
 
     @property
     def forward_primers_trimmed_only(self) -> t.List[int]:
-        forward_primers_only = list(set(self.forward_primers_trimmed) - set(self.reverse_primers_trimmed))
+        forward_primers_only = list(
+            set(self.forward_primers_trimmed) - set(self.reverse_primers_trimmed)
+        )
         forward_primers_only.sort()
         return forward_primers_only
 
     @property
     def reverse_primers_trimmed_only(self) -> t.List[int]:
-        reverse_primers_only = list(set(self.reverse_primers_trimmed) - set(self.forward_primers_trimmed))
+        reverse_primers_only = list(
+            set(self.reverse_primers_trimmed) - set(self.forward_primers_trimmed)
+        )
         reverse_primers_only.sort()
         return reverse_primers_only
 
@@ -120,7 +130,12 @@ class Report:
 
         return ", ".join(compacted)
 
-    def add_row(self, row_id: int, has_trimmed_forward_primer: bool, has_trimmed_reverse_primer: bool):
+    def add_row(
+        self,
+        row_id: int,
+        has_trimmed_forward_primer: bool,
+        has_trimmed_reverse_primer: bool,
+    ):
         self.row_count += 1
         if has_trimmed_forward_primer:
             self.forward_primers_trimmed.append(row_id)
@@ -715,7 +730,10 @@ def main(
                 csv_reader, name_index=name_index, sequence_index=sequence_index
             )
             dict_rows = trim_sequences(
-                dict_rows, forward_primer=forward_primer, reverse_primer=reverse_primer, report=report
+                dict_rows,
+                forward_primer=forward_primer,
+                reverse_primer=reverse_primer,
+                report=report,
             )
             write_rows(dict_rows, output_file=temp_file, headers=output_headers)
 
@@ -756,7 +774,10 @@ def filter_rows(
 
 
 def trim_sequences(
-    dict_rows: t.Iterator[t.Dict[str, str]], forward_primer: str, reverse_primer: str, report: Report
+    dict_rows: t.Iterator[t.Dict[str, str]],
+    forward_primer: str,
+    reverse_primer: str,
+    report: Report,
 ) -> t.Iterable[t.Dict[str, str]]:
     """
     Trim the forward and reverse primer from the sequence.
@@ -766,9 +787,11 @@ def trim_sequences(
     for dict_row in dict_rows:
         # Trim the sequence and update the dictionary
         sequence = dict_row[_OUTPUT_HEADER__SEQUENCE]
-        trimmed_sequence, has_trimmed_forward_primer, has_trimmed_reverse_primer = trim_sequence(
-            sequence, forward_primer, reverse_primer
-        )
+        (
+            trimmed_sequence,
+            has_trimmed_forward_primer,
+            has_trimmed_reverse_primer,
+        ) = trim_sequence(sequence, forward_primer, reverse_primer)
         dict_row[_OUTPUT_HEADER__SEQUENCE] = trimmed_sequence
 
         # Update the report
@@ -777,7 +800,9 @@ def trim_sequences(
         yield dict_row
 
 
-def trim_sequence(sequence: str, forward_primer: str, reverse_primer: str) -> t.Tuple[str, bool, bool]:
+def trim_sequence(
+    sequence: str, forward_primer: str, reverse_primer: str
+) -> t.Tuple[str, bool, bool]:
     """
     Trim the forward and reverse primer from the sequence.
 
@@ -798,15 +823,23 @@ def trim_sequence(sequence: str, forward_primer: str, reverse_primer: str) -> t.
 
     if forward_primer_exists:
         temp_index = len(forward_primer)
-        reverse_primer_exists_after_trimming = sequence[temp_index:].endswith(reverse_primer)
-        is_overlapping = reverse_primer_exists and not reverse_primer_exists_after_trimming
+        reverse_primer_exists_after_trimming = sequence[temp_index:].endswith(
+            reverse_primer
+        )
+        is_overlapping = (
+            reverse_primer_exists and not reverse_primer_exists_after_trimming
+        )
         start_index = temp_index
         has_trimmed_forward_primer = True
 
     if reverse_primer_exists:
         temp_index = len(sequence) - len(reverse_primer)
-        forward_primer_exists_after_trimming = sequence[:temp_index].startswith(forward_primer)
-        is_overlapping = forward_primer_exists and not forward_primer_exists_after_trimming
+        forward_primer_exists_after_trimming = sequence[:temp_index].startswith(
+            forward_primer
+        )
+        is_overlapping = (
+            forward_primer_exists and not forward_primer_exists_after_trimming
+        )
         end_index = temp_index
         has_trimmed_reverse_primer = True
 
