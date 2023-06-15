@@ -26,7 +26,7 @@ _HELP__VERBOSE = "Print a summary."
 _HELP__FORWARD_PRIMER = (
     "DNA primer to be removed from the start of the oligo sequence if provided."
 )
-_HELP__SUFFIX = (
+_HELP__REVERSE_PRIMER = (
     "DNA primer to be removed from the end of the oligo sequence if provided."
 )
 _HELP_SKIP_N_ROWS = "Number of rows to skip in the CSV/TSV file before reading the data. By default, 1 row is skipped which assumes a header row. If you use the --name-header or --sequence-header options, you can set this to 0."
@@ -35,7 +35,7 @@ _ARG_INPUT = "input"
 _ARG_OUTPUT = "output"
 _ARG_VERBOSE = "verbose"
 _ARG_FORWARD_PRIMER = "forward_primer"
-_ARG_SUFFIX = "suffix"
+_ARG_REVERSE_PRIMER = "reverse_primer"
 _ARG_NAME_HEADER = "name_header"
 _ARG_NAME_INDEX = "name_index"
 _ARG_SEQ_HEADER = "sequence_header"
@@ -58,26 +58,26 @@ class ValidationError(Exception):
 @dataclass
 class Report:
     row_count: int = 0
-    forward_primer_trimmed: t.List[int] = field(default_factory=list, repr=False, hash=False)
-    suffixes_trimmed: t.List[int] = field(default_factory=list, repr=False, hash=False)
+    forward_primers_trimmed: t.List[int] = field(default_factory=list, repr=False, hash=False)
+    reverse_primers_trimmed: t.List[int] = field(default_factory=list, repr=False, hash=False)
 
     @property
     def both_trimmed(self) -> t.List[int]:
-        both = list(set(self.forward_primer_trimmed) & set(self.suffixes_trimmed))
+        both = list(set(self.forward_primers_trimmed) & set(self.reverse_primers_trimmed))
         both.sort()
         return both
 
     @property
-    def forward_primer_trimmed_only(self) -> t.List[int]:
-        forward_primer_only = list(set(self.forward_primer_trimmed) - set(self.suffixes_trimmed))
-        forward_primer_only.sort()
-        return forward_primer_only
+    def forward_primers_trimmed_only(self) -> t.List[int]:
+        forward_primers_only = list(set(self.forward_primers_trimmed) - set(self.reverse_primers_trimmed))
+        forward_primers_only.sort()
+        return forward_primers_only
 
     @property
-    def suffixes_trimmed_only(self) -> t.List[int]:
-        suffixes_only = list(set(self.suffixes_trimmed) - set(self.forward_primer_trimmed))
-        suffixes_only.sort()
-        return suffixes_only
+    def reverse_primers_trimmed_only(self) -> t.List[int]:
+        reverse_primers_only = list(set(self.reverse_primers_trimmed) - set(self.forward_primers_trimmed))
+        reverse_primers_only.sort()
+        return reverse_primers_only
 
     @staticmethod
     def compact_integer_sequence(seq: t.List[int]) -> str:
@@ -120,58 +120,58 @@ class Report:
 
         return ", ".join(compacted)
 
-    def add_row(self, row_id: int, has_trimmed_forward_primer: bool, has_trimmed_suffix: bool):
+    def add_row(self, row_id: int, has_trimmed_forward_primer: bool, has_trimmed_reverse_primer: bool):
         self.row_count += 1
         if has_trimmed_forward_primer:
-            self.forward_primer_trimmed.append(row_id)
-        if has_trimmed_suffix:
-            self.suffixes_trimmed.append(row_id)
+            self.forward_primers_trimmed.append(row_id)
+        if has_trimmed_reverse_primer:
+            self.reverse_primers_trimmed.append(row_id)
         return
 
     def summary(self) -> str:
         summary = []
         summary.append(f"Total rows selected: {self.row_count}")
-        self.forward_primer_trimmed.sort()
-        self.suffixes_trimmed.sort()
+        self.forward_primers_trimmed.sort()
+        self.reverse_primers_trimmed.sort()
         both_detail = (
             self.compact_integer_sequence(self.both_trimmed)
             if self.both_trimmed
             else "None"
         )
         forward_primer_detail = (
-            self.compact_integer_sequence(self.forward_primer_trimmed)
-            if self.forward_primer_trimmed
+            self.compact_integer_sequence(self.forward_primers_trimmed)
+            if self.forward_primers_trimmed
             else "None"
         )
-        suffix_detail = (
-            self.compact_integer_sequence(self.suffixes_trimmed)
-            if self.suffixes_trimmed
+        reverse_primer = (
+            self.compact_integer_sequence(self.reverse_primers_trimmed)
+            if self.reverse_primers_trimmed
             else "None"
         )
-        suffix_only_detail = (
-            self.compact_integer_sequence(self.suffixes_trimmed_only)
-            if self.suffixes_trimmed_only
+        reverse_primer_only_detail = (
+            self.compact_integer_sequence(self.reverse_primers_trimmed_only)
+            if self.reverse_primers_trimmed_only
             else "None"
         )
         forward_primer_detail_only = (
-            self.compact_integer_sequence(self.forward_primer_trimmed_only)
-            if self.forward_primer_trimmed_only
+            self.compact_integer_sequence(self.forward_primers_trimmed_only)
+            if self.forward_primers_trimmed_only
             else "None"
         )
         summary.append(
             f"Rows with both forward and reverse trimmed ({len(self.both_trimmed)}): {both_detail}"
         )
         summary.append(
-            f"Rows with forward trimmed ({len(self.forward_primer_trimmed)}): {forward_primer_detail}"
+            f"Rows with forward trimmed ({len(self.forward_primers_trimmed)}): {forward_primer_detail}"
         )
         summary.append(
-            f"Rows with forward trimmed only ({len(self.forward_primer_trimmed_only)}): {forward_primer_detail_only}"
+            f"Rows with forward trimmed only ({len(self.forward_primers_trimmed_only)}): {forward_primer_detail_only}"
         )
         summary.append(
-            f"Rows with suffix trimmed ({len(self.suffixes_trimmed)}): {suffix_detail}"
+            f"Rows with reverse trimmed ({len(self.reverse_primers_trimmed)}): {reverse_primer}"
         )
         summary.append(
-            f"Rows with suffix trimmed only ({len(self.suffixes_trimmed_only)}): {suffix_only_detail}"
+            f"Rows with reverse trimmed only ({len(self.reverse_primers_trimmed_only)}): {reverse_primer_only_detail}"
         )
         return "\n".join(summary)
 
@@ -332,7 +332,6 @@ class CSVHelper:
 
 class ArgsCleaner:
     _ALLOWED_DNA = "ACTG"
-    ALLOWED_SUFFIX = "ACTG"
 
     def __init__(self, namespace: argparse.Namespace):
         self._namespace = namespace
@@ -370,9 +369,9 @@ class ArgsCleaner:
         self._assert_has_validated_all()
         return self._get_arg(_ARG_FORWARD_PRIMER)
 
-    def get_clean_suffix(self) -> str:
+    def get_clean_reverse_primer(self) -> str:
         self._assert_has_validated_all()
-        return self._get_arg(_ARG_SUFFIX)
+        return self._get_arg(_ARG_REVERSE_PRIMER)
 
     def get_clean_verbose(self) -> bool:
         self._assert_has_validated_all()
@@ -399,7 +398,7 @@ class ArgsCleaner:
             self._validate_codependent_input_args,
             self._validate_output,
             self._validate_forward_primer,
-            self._validate_suffix,
+            self._validate_reverse_primer,
             self._validate_name_index,
             self._validate_sequence_index,
         ]
@@ -461,10 +460,10 @@ class ArgsCleaner:
         allowed_chars = set(self._ALLOWED_DNA.upper())
         self._assert_valid_chars(forward_primer_value, allowed_chars)
 
-    def _validate_suffix(self):
-        suffix_value: str = self._get_arg(_ARG_SUFFIX)
-        allowed_chars = set(self.ALLOWED_SUFFIX.upper())
-        self._assert_valid_chars(suffix_value, allowed_chars)
+    def _validate_reverse_primer(self):
+        reverse_primer_value: str = self._get_arg(_ARG_REVERSE_PRIMER)
+        allowed_chars = set(self._ALLOWED_DNA.upper())
+        self._assert_valid_chars(reverse_primer_value, allowed_chars)
 
     def _assert_has_validated_all(self, throw=True) -> bool:
         if not self._validated:
@@ -629,11 +628,11 @@ def get_argparser() -> argparse.ArgumentParser:
         dest=_ARG_FORWARD_PRIMER,
     )
     parser.add_argument(
-        "--suffix",
+        "--reverse",
         type=str,
         default="",
-        help=_HELP__SUFFIX,
-        dest=_ARG_SUFFIX,
+        help=_HELP__REVERSE_PRIMER,
+        dest=_ARG_REVERSE_PRIMER,
     )
 
     # Include a way to skip N rows of the input file
@@ -692,7 +691,7 @@ def main(
     output_file: t.Union[str, Path],
     verbose: bool,
     forward_primer: str,
-    suffix: str,
+    reverse_primer: str,
     name_index: int,
     sequence_index: int,
 ):
@@ -716,7 +715,7 @@ def main(
                 csv_reader, name_index=name_index, sequence_index=sequence_index
             )
             dict_rows = trim_sequences(
-                dict_rows, forward_primer=forward_primer, suffix=suffix, report=report
+                dict_rows, forward_primer=forward_primer, reverse_primer=reverse_primer, report=report
             )
             write_rows(dict_rows, output_file=temp_file, headers=output_headers)
 
@@ -757,7 +756,7 @@ def filter_rows(
 
 
 def trim_sequences(
-    dict_rows: t.Iterator[t.Dict[str, str]], forward_primer: str, suffix: str, report: Report
+    dict_rows: t.Iterator[t.Dict[str, str]], forward_primer: str, reverse_primer: str, report: Report
 ) -> t.Iterable[t.Dict[str, str]]:
     """
     Trim the forward and reverse primer from the sequence.
@@ -767,56 +766,56 @@ def trim_sequences(
     for dict_row in dict_rows:
         # Trim the sequence and update the dictionary
         sequence = dict_row[_OUTPUT_HEADER__SEQUENCE]
-        trimmed_sequence, has_trimmed_forward_primer, has_trimmed_suffix = trim_sequence(
-            sequence, forward_primer, suffix
+        trimmed_sequence, has_trimmed_forward_primer, has_trimmed_reverse_primer = trim_sequence(
+            sequence, forward_primer, reverse_primer
         )
         dict_row[_OUTPUT_HEADER__SEQUENCE] = trimmed_sequence
 
         # Update the report
         row_id = dict_row[_OUTPUT_HEADER__ID]
-        report.add_row(row_id, has_trimmed_forward_primer, has_trimmed_suffix)
+        report.add_row(row_id, has_trimmed_forward_primer, has_trimmed_reverse_primer)
         yield dict_row
 
 
-def trim_sequence(sequence: str, forward_primer: str, suffix: str) -> t.Tuple[str, bool, bool]:
+def trim_sequence(sequence: str, forward_primer: str, reverse_primer: str) -> t.Tuple[str, bool, bool]:
     """
-    Trim the forward primer and suffix from the sequence.
+    Trim the forward and reverse primer from the sequence.
 
-    Return the trimmed sequence and whether the forward primer and suffix were trimmed.
+    Return the trimmed sequence and whether the forward and reverse primer were trimmed.
     """
     start_index: int = 0
     # None is the end of the string, and works for slicing
     end_index: t.Optional[int] = None
     has_trimmed_forward_primer = False
-    trimmed_suffix = False
+    has_trimmed_reverse_primer = False
 
-    err_msg = f"The forward and reverse primer overlap in the sequence (no handling in code yet): {forward_primer=}, {suffix=}, {sequence=}"
+    err_msg = f"The forward and reverse primer overlap in the sequence (no handling in code yet): {forward_primer=}, {reverse_primer=}, {sequence=}"
 
     forward_primer_exists = len(forward_primer) and sequence.startswith(forward_primer)
-    suffix_exists = len(suffix) and sequence.endswith(suffix)
+    reverse_primer_exists = len(reverse_primer) and sequence.endswith(reverse_primer)
 
     is_overlapping = False
 
     if forward_primer_exists:
         temp_index = len(forward_primer)
-        suffix_exists_after_trimming = sequence[temp_index:].endswith(suffix)
-        is_overlapping = suffix_exists and not suffix_exists_after_trimming
+        reverse_primer_exists_after_trimming = sequence[temp_index:].endswith(reverse_primer)
+        is_overlapping = reverse_primer_exists and not reverse_primer_exists_after_trimming
         start_index = temp_index
         has_trimmed_forward_primer = True
 
-    if suffix_exists:
-        temp_index = len(sequence) - len(suffix)
+    if reverse_primer_exists:
+        temp_index = len(sequence) - len(reverse_primer)
         forward_primer_exists_after_trimming = sequence[:temp_index].startswith(forward_primer)
         is_overlapping = forward_primer_exists and not forward_primer_exists_after_trimming
         end_index = temp_index
-        trimmed_suffix = True
+        has_trimmed_reverse_primer = True
 
     if is_overlapping:
         raise NotImplementedError(err_msg)
 
     trimmed_sequence = sequence[start_index:end_index]
 
-    return (trimmed_sequence, has_trimmed_forward_primer, trimmed_suffix)
+    return (trimmed_sequence, has_trimmed_forward_primer, has_trimmed_reverse_primer)
 
 
 def write_rows(
@@ -851,7 +850,7 @@ if __name__ == "__main__":
         output_file=cleaner.get_clean_output(),
         verbose=cleaner.get_clean_verbose(),
         forward_primer=cleaner.get_clean_forward_primer(),
-        suffix=cleaner.get_clean_suffix(),
+        reverse_primer=cleaner.get_clean_reverse_primer(),
         name_index=cleaner.get_clean_name_index(),
         sequence_index=cleaner.get_clean_sequence_index(),
     )

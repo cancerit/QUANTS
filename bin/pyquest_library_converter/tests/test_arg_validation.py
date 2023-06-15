@@ -38,10 +38,10 @@ class _ArgsCleaner_Method_Tests_Mixin:
         args_cleaner = ArgsCleaner(namespace)
         args_cleaner._validate_forward_primer()
 
-    def test_validate_suffix(self):
+    def test_validate_reverse_primer(self):
         namespace = self.valid_namespace
         args_cleaner = ArgsCleaner(namespace)
-        args_cleaner._validate_suffix()
+        args_cleaner._validate_reverse_primer()
 
     def test_validate_name_index(self):
         namespace = self.valid_namespace
@@ -196,33 +196,33 @@ class _ArgsCleaner_Method_Tests_Mixin:
         # Then
         self.assertEqual(expected_forward_primer, actual_forward_primer)
 
-    def test_get_clean_suffix(self):
+    def test_get_clean_reverse_primer(self):
         # Given
-        expected_suffix = ""
+        expected_reverse_primer = ""
         namespace = self.valid_namespace
-        namespace.suffix = expected_suffix
+        namespace.reverse_primer = expected_reverse_primer
         args_cleaner = ArgsCleaner(namespace)
 
         # When
         args_cleaner.validate()
-        actual_suffix = args_cleaner.get_clean_suffix()
+        actual_reverse_primer = args_cleaner.get_clean_reverse_primer()
 
         # Then
-        self.assertEqual(expected_suffix, actual_suffix)
+        self.assertEqual(expected_reverse_primer, actual_reverse_primer)
 
-    def test_get_clean_suffix__with_chars(self):
+    def test_get_clean_reverse_primer__with_chars(self):
         # Given
-        expected_suffix = "AATTAACG"
+        expected_reverse_primer = "AATTAACG"
         namespace = self.valid_namespace
-        namespace.suffix = expected_suffix
+        namespace.reverse_primer = expected_reverse_primer
         args_cleaner = ArgsCleaner(namespace)
 
         # When
         args_cleaner.validate()
-        actual_suffix = args_cleaner.get_clean_suffix()
+        actual_reverse_primer = args_cleaner.get_clean_reverse_primer()
 
         # Then
-        self.assertEqual(expected_suffix, actual_suffix)
+        self.assertEqual(expected_reverse_primer, actual_reverse_primer)
 
     def test_get_clean_verbose(self):
         # Given
@@ -304,7 +304,7 @@ class _ExampleData1_Mixin:
             input=cls.csv_path,
             output=None,
             forward_primer="",
-            suffix="",
+            reverse_primer="",
             skip_n_rows=0,
             name_header=None,
             name_index=cls.oligo_seq_name_index,
@@ -316,7 +316,7 @@ class _ExampleData1_Mixin:
             input=cls.csv_path,
             output=None,
             forward_primer="",
-            suffix="",
+            reverse_primer="",
             skip_n_rows=0,
             name_header=cls.oligo_seq_name_header,
             name_index=None,
@@ -341,7 +341,7 @@ class _ExampleData2_Mixin:
             input=cls.csv_path,
             output=None,
             forward_primer="",
-            suffix="",
+            reverse_primer="",
             skip_n_rows=3,
             name_header=None,
             name_index=cls.oligo_seq_name_index,
@@ -353,7 +353,7 @@ class _ExampleData2_Mixin:
             input=cls.csv_path,
             output=None,
             forward_primer="",
-            suffix="",
+            reverse_primer="",
             skip_n_rows=2,
             name_header=cls.oligo_seq_name_header,
             name_index=None,

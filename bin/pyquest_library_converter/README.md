@@ -15,8 +15,8 @@ For portability this script just uses the standard library.
 ```bash
 IN="example_data_1.in.csv"
 OUT="example_data_1.out.csv"
-PREFIX="AATGATACGGCGACCACCGATCCTGCGCCTTCTCTCCTC"
-SUFFIX="CATCATGGAAGATTACTTTGCGTATCGCGGCTTTAAATACCTCAGGCTTGATGGTGAGTATGAGCCAGTGAGGCGTTTCTTACAGGGTTTTGTTGTTGTGGCTCGTATGCCGTCTTCTGCTTG"
+FORWARD="AATGATACGGCGACCACCGATCCTGCGCCTTCTCTCCTC"
+REVERSE="CATCATGGAAGATTACTTTGCGTATCGCGGCTTTAAATACCTCAGGCTTGATGGTGAGTATGAGCCAGTGAGGCGTTTCTTACAGGGTTTTGTTGTTGTGGCTCGTATGCCGTCTTCTGCTTG"
 
 # Example usage with headers
 ./pyquest_library_converter.py $IN  -o $OUT -n "oligo_name" -s "mseq" --skip 0 -v
@@ -24,14 +24,14 @@ SUFFIX="CATCATGGAAGATTACTTTGCGTATCGCGGCTTTAAATACCTCAGGCTTGATGGTGAGTATGAGCCAGTGAG
 # Example usage without headers
 ./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 -v
 
-# Example usage without headers and a suffix that needs to be removed
-./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --suffix $SUFFIX -v
+# Example usage without headers and a reverse that needs to be removed
+./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --reverse $REVERSE -v
 
-# Example usage without headers and a prefix that needs to be removed
-./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --prefix $PREFIX
+# Example usage without headers and a forward that needs to be removed
+./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --forward $FORWARD -v
 
-# Example usage without headers and a prefix and suffix that needs to be removed
-./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --prefix $PREFIX --suffix $SUFFIX -v
+# Example usage without headers and a forward and reverse that needs to be removed
+./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --forward $FORWARD --reverse $REVERSE -v
 
 ```
 
@@ -63,8 +63,8 @@ optional arguments:
                         By default, input file is overwritten with the output. You can specify a path to write to a specific file or a
                         directory (appends input filename).
   -v, --verbose         Print a summary.
-  --prefix PREFIX       DNA primer to be removed from the start of the oligo sequence if provided.
-  --suffix SUFFIX       DNA primer to be removed from the end of the oligo sequence if provided.
+  --forward FORWARD     DNA primer to be removed from the start of the oligo sequence if provided.
+  --reverse REVERSE     DNA primer to be removed from the end of the oligo sequence if provided.
   --skip SKIP_N_ROWS    Number of rows to skip in the CSV/TSV file before reading the data. By default, 1 row is skipped which assumes
                         a header row. If you use the --name-header or --sequence-header options, you can set this to 0.
   -n NAME_HEADER, --name-header NAME_HEADER
