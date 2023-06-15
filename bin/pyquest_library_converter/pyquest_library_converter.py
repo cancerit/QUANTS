@@ -99,7 +99,6 @@ class Report:
     def summary(self) -> str:
         summary = self.scanning_summary.copy()
         total = self.row_count
-        summary.append(f"Total rows selected: {total}")
         self.forward_primers_trimmed.sort()
         self.reverse_primers_trimmed.sort()
         summary.append(
@@ -310,26 +309,54 @@ class PrimerScanner:
             self._given_reverse_primer_revcomp
         ]
         predicted_fwd_primer = self.predict_forward_primer()
-        predicted_reverse_primer = self.predict_reverse_primer()
-
-        lines = [
-            f"Forward primer found {forward_cnt} times in {total} oligos scanned",
-            f"Forward primer reverse complement found {forward_revcomp_cnt} times in {total} oligos scanned",
-            f"Reverse primer found {reverse_cnt} times in {total} oligos scanned",
-            f"Reverse primer reverse complement found {reverse_revcomp_cnt} times in {total} oligos scanned",
-            self._summary_chosen_primer(
-                predicted_fwd_primer,
-                "forward",
-                original_count=forward_cnt,
-                revcomp_count=forward_revcomp_cnt,
-            ),
-            self._summary_chosen_primer(
-                predicted_reverse_primer,
-                "reverse",
-                original_count=reverse_cnt,
-                revcomp_count=reverse_revcomp_cnt,
-            ),
+        predicted_rev_primer = self.predict_reverse_primer()
+        # If a user speficies a forward primer as an empty string, then we we do not need to document the search for it
+        natural_empty_fwd_primer = (
+            predicted_fwd_primer == ""
+            and predicted_fwd_primer == self._given_forward_primer_revcomp
+        )
+        natural_empty_rev_primer = (
+            predicted_rev_primer == ""
+            and predicted_rev_primer == self._given_reverse_primer_revcomp
+        )
+        search_fwd_lines = [
+            f"Forward primer found {forward_cnt} times in {total} sequences scanned.",
+            f"Forward primer reverse complement found {forward_revcomp_cnt} times in {total} sequences scanned.",
         ]
+        search_rev_lines = [
+            f"Reverse primer found {reverse_cnt} times in {total} sequences scanned",
+            f"Reverse primer reverse complement found {reverse_revcomp_cnt} times in {total} sequences scanned.",
+        ]
+        search_fwd_lines = (
+            ["Search skipped because given forward primer was empty string."]
+            if natural_empty_fwd_primer
+            else search_fwd_lines
+        )
+        search_rev_lines = (
+            ["Search skipped because given reverse primer was empty string."]
+            if natural_empty_rev_primer
+            else search_rev_lines
+        )
+
+        chosen_fwd_line = self._summary_chosen_primer(
+            predicted_fwd_primer,
+            "forward",
+            original_count=forward_cnt,
+            revcomp_count=forward_revcomp_cnt,
+        )
+
+        chosen_rev_line = self._summary_chosen_primer(
+            predicted_rev_primer,
+            "reverse",
+            original_count=reverse_cnt,
+            revcomp_count=reverse_revcomp_cnt,
+        )
+        lines = (
+            [f"Total seqeunces processed: {total}"]
+            + search_fwd_lines
+            + search_rev_lines
+            + [chosen_fwd_line, chosen_rev_line]
+        )
         return lines
 
     def _summary_chosen_primer(
@@ -340,14 +367,14 @@ class PrimerScanner:
         revcomp_count: str,
     ) -> str:
         if not predicted_primer and original_count == 0 and revcomp_count == 0:
-            chosen_line = "WARNING: Chosen {primer_name} primer chosen is an empty string because the forward primerwas not found in any of the oligos"
+            chosen_line = f"WARNING: Chosen {primer_name} primer chosen is an empty string because the forward primer was not found in any of the sequences"
         elif not predicted_primer and not self._given_forward_primer:
-            chosen_line = "OK: Chosen {primer_name} primer chosen is an empty string"
+            chosen_line = f"Chosen {primer_name} primer chosen is an empty string"
         elif predicted_primer == self._given_forward_primer:
-            chosen_line = "OK: Chosen {primer_name} primer chosen is the same as the given {primer_name} primer"
+            chosen_line = f"Chosen {primer_name} primer chosen is the same as the given {primer_name} primer"
         elif predicted_primer == self._given_forward_primer_revcomp:
-            chosen_line = "OK: Chosen {primer_name} primer chosen is the reverse complement of the given {primer_name} primer"
-        return chosen_line + f": {predicted_primer!r}"
+            chosen_line = f"Chosen {primer_name} primer chosen is the reverse complement of the given {primer_name} primer"
+        return chosen_line + f": {predicted_primer!r}."
 
     def scan_all(self, oligos: t.List[str]) -> None:
         """
@@ -884,8 +911,8 @@ def main(
         )
         oligos_to_scan = [row[_OUTPUT_HEADER__SEQUENCE] for row in dict_rows]
         primer_scanner.scan_all(oligos_to_scan)
-        detected_forward_primer = primer_scanner.get_forward_primer()
-        detected_reverse_primer = primer_scanner.get_reverse_primer()
+        detected_forward_primer = primer_scanner.predict_forward_primer()
+        detected_reverse_primer = primer_scanner.predict_reverse_primer()
         report.add_scanning_summary(primer_scanner.summary())
 
     # Prepare closured functions for writing the output file
