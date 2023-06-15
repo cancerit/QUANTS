@@ -90,6 +90,11 @@ There are optional tool-chain dependencies for development which require Poetry:
 ## Testing
 To run the tests, run `python -m unittest` if inside a virtual environment or `python3.8 -m unittest` if not. Run this command from the directory containing this README.
 
+**OR if the optional tool-chain dependencies are installed**
+
+To run the tests, run `pytest`. Run this command from the directory containing this README.
+
+
 
 ## Tool-chain setup via Poetry
 Optional.
