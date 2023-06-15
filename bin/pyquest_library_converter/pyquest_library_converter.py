@@ -865,6 +865,16 @@ def write_rows(
         csv_writer.writerows(dict_rows)
 
 
+def reverse_compliment(sequence: str) -> str:
+    """
+    Reverse compliment the sequence (DNA only).
+    """
+    # Make the translation map
+    trans = str.maketrans("ACGT", "TGCA")
+    # Translate the sequence and reverse it
+    return sequence.translate(trans)[::-1]
+
+
 if __name__ == "__main__":
     parser = get_argparser()
     namespace = parser.parse_args()
