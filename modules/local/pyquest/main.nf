@@ -21,7 +21,6 @@ process PYQUEST {
     container "quay.io/wtsicgp/pyquest:test"
 
     input:
-        val(subcommand)
         tuple val(meta), path(reads)
         path(guides)
 
