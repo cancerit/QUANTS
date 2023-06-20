@@ -22,7 +22,7 @@ workflow QUANTIFICATION {
             //
             // MODULE: Run pyQUEST
             //
-            PYQUEST ( reads, params.oligo_library )
+            PYQUEST ( reads )
             ch_sample_library_counts = PYQUEST.out.library_counts
             ch_sample_read_counts = PYQUEST.out.read_counts
             ch_sample_stats = PYQUEST.out.stats
