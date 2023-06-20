@@ -1,0 +1,54 @@
+name: pyquest
+description: Uses exact matching to generate read sequence (library-independent) and library sequence (library-dependent) abundances with summary statistics.
+keywords:
+  - quantification
+  - counting
+tools:
+  - pyquest:
+      description: |
+        Uses exact matching to generate read sequence (library-independent) and library sequence (library-dependent) abundances with summary statistics.
+      homepage: https://github.com/cancerit/pyQUEST
+      documentation: {https://github.com/cancerit/pyQUEST}
+      licence: [GPLv3]
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - reads:
+      type: file
+      description: |
+        List of input FastQ files of size 2; i.e., paired-end data.
+  - guides:
+      type: file
+      description: |
+        Formatted tab-delimited set of sequences to quantify.
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+        e.g. [ id:'test', single_end:false ]
+  - read_counts:
+      type: file
+      description: Abundance of each unique read sequence
+      pattern: "*.read_counts.tsv"
+  - library_counts:
+      type: file
+      description: Abundance of each library sequence
+      pattern: "*.lib_counts.tsv"
+  - stats:
+      type: file
+      description: Summary statistics
+      pattern: "*.stats.json"
+  - version:
+      type: file
+      description: File containing software version
+      pattern: "*.{version.txt}"
+
+authors:
+  - "@kr2"
+  - "@lbarbon"
+  - "@vaofford"
