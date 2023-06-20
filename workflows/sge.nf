@@ -76,14 +76,14 @@ if (params.read_filtering_qc && !params.read_filtering) {
 	exit 1
 }
 
-// Check quantification library exists (if quantification set)
-if (params.quantification && !params.oligo_library) {
-    printErr("If quantification is set, a library file must be provided by oligo_library.")
+// Check quantification is set if library is provided
+if (params.oligo_library && !params.quantification) {
+    printErr("If a library file is provided by oligo_library, quantification must be set to true.")
     exit 1
 }
 
 // Check quantification software (if set)
-def quantification_software = ['pycroquet']
+def quantification_software = ['pyquest']
 if (params.quantification) {
     if ( quantification_software.contains( params.quantification ) == false ) {
 	    printErr("If quantification is set, software must be one of: " + quantification_software.join(',') + ".")
@@ -130,8 +130,7 @@ include { READ_TRANSFORM } from '../subworkflows/local/read_transform' addParams
 include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( options: [:] )
 include { READ_TRIMMING } from '../subworkflows/local/read_trimming' addParams( options: [:] )
 include { READ_FILTERING } from '../subworkflows/local/read_filtering' addParams( options: [:] )
-include { QUANTIFICATION; 
-          POST_PYCROQUET_QUANTIFICATION } from '../subworkflows/local/quantification' addParams( options: [:] )
+include { QUANTIFICATION } from '../subworkflows/local/quantification' addParams( options: [:] )
 include { SEQUENCING_QC as RAW_SEQUENCING_QC; 
           SEQUENCING_QC as MERGED_SEQUENCING_QC; 
           SEQUENCING_QC as TRIMMED_SEQUENCING_QC;
@@ -250,20 +249,11 @@ workflow SGE {
     }
 
     //
-    // SUBWORKFLOW: Run library-dependent quantification
+    // SUBWORKFLOW: Run quantification
     // Returns the number of reads assigned to each guide from a user-defined library
     //
     if (params.quantification) {
         QUANTIFICATION ( ch_reads_to_analyse )
-        ch_unique_read_counts = QUANTIFICATION.out.read_counts
-    }
-
-    //
-    // SUBWORKFLOW: Combine unique read counts (query) with library
-    // Returns the number of reads assigned to each guide from a user-defined library
-    //
-    if (params.quantification) {
-        POST_PYCROQUET_QUANTIFICATION ( ch_unique_read_counts )
     }
 
     //
