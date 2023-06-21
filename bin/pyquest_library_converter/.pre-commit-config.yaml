@@ -1,0 +1,38 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+default_language_version:
+  python: python3.8
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.4.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+        exclude: |
+          (?x)(.devcontainer/)
+      - id: check-merge-conflict
+  - repo: https://github.com/psf/black
+    rev: 23.1.0
+    hooks:
+      - id: black
+        name: Check Python code (black auto-format)
+  - repo: https://github.com/PyCQA/flake8.git
+    rev: 6.0.0
+    hooks:
+      - id: flake8
+        # E501 - line lengths are controlled by Black
+        # E266 - Flake8 forbids comments with double pound-sign
+        # W503 - Flake8 (knowingly) breaks with Black and Pep8
+        args: ["--ignore=E501,E266,W503", "--max-complexity=4"]
+        name: Check Python code (flake8 linting)
+        exclude: |
+          (?x)(
+              settings/(base|production|dev|test).py|
+              tests/|
+              migrations/|
+              cicd_scripts/
+          )
