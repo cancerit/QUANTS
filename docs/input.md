@@ -67,25 +67,7 @@ Library-dependent quantification calculates the abundances of user-specified oli
 --input '[path to samplesheet file]' --oligo_library '[path to library file]'
 ```
 
-### pyCROQUET
+### pyQUEST
 
-Information on the required library format for [pyCROQUET](https://github.com/cancerit/pycroquet) can be found [here](https://github.com/cancerit/pycroquet/wiki/Guide-library-format).
-
-As pyCROQUET is run in `long-read` mode the minimum header required will be:
-
-```
-## library-type: single
-## library-name: <name of library>
-#id	sgrna_ids	sgrna_seqs	gene_pair_id
-```
-
-A final library file consisting may look something like the one below.
-
-```
-## library-type: single
-## library-name: libraryA
-#id	sgrna_ids	sgrna_seqs	gene_pair_id
-oligo1	oligo1	ACGT	GENE1
-oligo2	oligo2	AGGT	GENE1
-```
+Information on the required library format for [pyQUEST](https://github.com/cancerit/pyQUEST) can be found [here](https://github.com/cancerit/pyQUEST#library) along with other usage details.
 

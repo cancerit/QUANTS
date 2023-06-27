@@ -46,36 +46,21 @@
 [SeqKit](https://bioinf.shenwei.me/seqkit) is a cross-platform and ultrafast toolkit for FASTA/Q file manipulation. For further reading on the `seq` subcommand see the [usage](https://bioinf.shenwei.me/seqkit/usage/#seq).
 
 
-## Library-dependent quantification
+## Quantification
 
-### pyCROQUET
+### pyQUEST
 
 <details markdown="1">
 <summary>Output files</summary>
 
-* `pycroquet/`
-    * `*.counts.tsv.gz`: Tab-delimited counts per oligo.
-    * `*.cram[.crai]`: Read to oligo sequence alignments (and index).
+* `pyquest/`
+    * `*.query_counts.tsv.gz`: library-independent counts representing the abundance of each unique read sequence.
+    * `*.lib_counts.tsv.gz`: library-dependent counts representing the abundance of each oligo template sequence (only generated when user provides a library).
     * `*.stats.json`: JSON-formatted statistics.
 
 </details>
 
-[pyCROQUET](https://github.com/cancerit/pycroquet) is a Python tool for quantifying reads from CRISPR screens. For further reading and documentation see the [pyCROQUET output file descriptions](https://github.com/cancerit/pycroquet#output-files).
-
-## Library-independent quantification
-
-### pyCROQUET
-
-<details markdown="1">
-<summary>Output files</summary>
-
-* `pycroquet/`
-    * `*.query_counts.tsv.gz`: Tab-delimited counts per unique read sequence.
-
-</details>
-
-[pyCROQUET](https://github.com/cancerit/pycroquet) is a Python tool for quantifying reads from CRISPR screens. For further reading and documentation see the [pyCROQUET output file descriptions](https://github.com/cancerit/pycroquet#output-files).
-
+[pyQUEST](https://github.com/cancerit/pyQUEST) is a Python tool for quantifying read and template sequences from SGE experiments. For further reading and documentation see the [pyQUEST output file descriptions](https://github.com/cancerit/pyQUEST#file-formats).
 
 ## Quality control
 

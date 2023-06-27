@@ -4,7 +4,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 params.options = [:]
 options        = initOptions(params.options)
 
-process PYCROQUET {
+process PYQUEST {
     label 'process_medium'
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -18,34 +18,32 @@ process PYCROQUET {
         container "quay.io/biocontainers/flash2:2.2.00--h5bf99c6_3"
     }
     */
-    container "quay.io/wtsicgp/pycroquet:1.5.0"
+    container "quay.io/wtsicgp/pyquest:1.0.0"
 
     input:
-        val(subcommand)
         tuple val(meta), path(reads)
-        path(guides)
 
     output:
-        tuple val(meta), path("*counts.tsv.gz")             , emit: library_counts
         tuple val(meta), path("*query_counts.tsv.gz")       , emit: read_counts
+        tuple val(meta), path("*lib_counts.tsv.gz")         , optional: true, emit: library_counts
         tuple val(meta), path("*.stats.json")               , optional: true, emit: stats
-        tuple val(meta), path("*.cram"), path("*.cram.crai"), optional: true, emit: cram
         path "*.version.txt"                                , emit: version
 
     script:
         def software    = getSoftwareName(task.process)
-        def queries     = guides ? "-q ${reads} -g ${guides}" : "-q ${reads}"
+        def queries     = params.oligo_library ? "-l ${params.oligo_library}" : ""
         def sample      = options.suffix ? "-s ${meta.id}${options.suffix}" : "-s ${meta.id}"
         def output      = options.suffix ? "-o ${meta.id}${options.suffix}" : "-o ${meta.id}"
+        def reads       = reads
 
     """
-    pycroquet \\
-        $subcommand \\
+    pyquest \\
         $options.args \\
         --cpus $task.cpus \\
-        $queries\\
-        $sample\\
-        $output
-    echo \$(pycroquet --version) > ${software}.version.txt
+        $queries \\
+        $sample \\
+        $output \\
+        $reads
+    echo \$(pyquest --version) > ${software}.version.txt
     """
 }
