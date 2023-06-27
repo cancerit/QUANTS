@@ -46,9 +46,7 @@
 # Library-dependent quantification options
 
 ```
---library-dependent quantification    [string]  Define whether the pipeline should run library-dependent quantification.
 --oligo_library                       [string]  Path to tab-delimited file containing information about the oligos in the experiment (only suitable when library-dependent quantification enabled). 
---pycroquet_library_dependent_options [string]  Define options for pyCROQUET (only suitable when library-dependent quantification enabled).
 ```                       
 ## Useful core options 
 
