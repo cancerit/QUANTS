@@ -28,3 +28,8 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 ## 1.2.1.1 (9th September 2022)
 
 * Remove meta id tag from pyCROQUET module
+
+## 2.0.0.0 (27th June 2023)
+
+* Replace pyCROQUET with pyQUEST version 1.0
+* Add script for converting VaLiAnT meta file (or other CSV/TSV) into pyQUEST-formatted library (not integrated into workflow)
