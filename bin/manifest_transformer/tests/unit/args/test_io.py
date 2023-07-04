@@ -25,7 +25,7 @@ NON_EXISTING_NO_PARENT_DIR = "non_existing_no_parent_dir"
 # PARAMS
 PATH_PARAMS = [
     pytest.param((FILE_SYMBOL, 0o777), id="file with rwx permissions"),
-    pytest.param((FILE_SYMBOL, 0o444), id="file with r-- permissions"),
+    pytest.param((FILE_SYMBOL, 0o111), id="file with --x permissions"),
     pytest.param((DIR_SYMBOL, 0o777), id="dir with rwx permissions"),
     pytest.param((DIR_SYMBOL, 0o555), id="dir with r-x permissions"),
 ]
