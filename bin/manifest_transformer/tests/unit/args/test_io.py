@@ -3,13 +3,24 @@ import pytest
 import os
 import tempfile
 from pathlib import Path
+import shutil
 
 from src import exceptions as exc
-from src.args.io import check_write_permissions, check_read_permissions
+from src.args.io import (
+    check_write_permissions,
+    check_read_permissions,
+    finalise_output_file,
+)
 
 # CONSTANTS
 FILE_SYMBOL = "file"
 DIR_SYMBOL = "dir"
+
+EXISTING_FILE = "existing_file"
+EXISTING_DIR = "existing_dir"
+NON_EXISTING_BUT_PARENT_DIR = "non_existing_but_parent_dir"
+NON_EXISTING_NO_PARENT_DIR = "non_existing_no_parent_dir"
+
 
 # PARAMS
 PATH_PARAMS = [
@@ -19,11 +30,60 @@ PATH_PARAMS = [
     pytest.param((DIR_SYMBOL, 0o555), id="dir with r-x permissions"),
 ]
 
+FINALISE_OUTPUT_PARAMS = [
+    pytest.param(
+        (
+            Path("input.txt"),
+            None,
+            None,
+            Path("input.txt"),
+        ),
+        id="output path is None",
+    ),
+    pytest.param(
+        (
+            Path("input.txt"),
+            Path("output.txt"),
+            EXISTING_FILE,
+            Path("output.txt"),
+        ),
+        id="output path is existing file",
+    ),
+    pytest.param(
+        (
+            Path("input.txt"),
+            Path("output_dir"),
+            EXISTING_DIR,
+            Path("output_dir/input.txt"),
+        ),
+        id="output path is existing directory",
+    ),
+    pytest.param(
+        (
+            Path("input.txt"),
+            Path("output_dir/non_existing.txt"),
+            NON_EXISTING_BUT_PARENT_DIR,
+            Path("output_dir/non_existing.txt"),
+        ),
+        id="output path doesn't exist, but parent dir does",
+    ),
+    pytest.param(
+        (
+            Path("input.txt"),
+            Path("non_existing_output_dir/output.txt"),
+            NON_EXISTING_NO_PARENT_DIR,
+            None,
+        ),
+        id="output path and parent dir don't exist",
+    ),
+]
+
 # FIXTURES
 
 
 @pytest.fixture()
-def path_with_permissions(request):
+def path_with_permissions(request, tmp_path):
+    request.addfinalizer(lambda: shutil.rmtree(tmp_path))
     path_type, permissions = request.param
     if path_type == FILE_SYMBOL:
         with tempfile.NamedTemporaryFile(delete=False) as f:
@@ -31,12 +91,46 @@ def path_with_permissions(request):
             yield Path(f.name)
         os.remove(f.name)
     elif path_type == DIR_SYMBOL:
-        dir_name = tempfile.mkdtemp()
+        dir_name = tmp_path / "temp_dir"
+        dir_name.mkdir()
         os.chmod(dir_name, permissions)
         yield Path(dir_name)
-        os.rmdir(dir_name)
+        os.chmod(dir_name, 0o755)
     else:
         raise ValueError(f"Unknown path type: {path_type}")
+
+
+@pytest.fixture()
+def path_setup(request, tmp_path) -> t.Generator[t.Tuple[Path, Path, str], None, None]:
+    # Setup
+    input_path, output_path, file_or_dir, expected = request.param
+
+    # Create a temporary directory for the tests
+    temp_dir = tmp_path / "temp_dir"
+    temp_dir.mkdir()
+    input_path = temp_dir / input_path
+
+    # Create the input file
+    with open(input_path, "w") as f:
+        f.write("example text")
+
+    # Handle the output path
+    if output_path is not None:
+        if file_or_dir == EXISTING_FILE:
+            # The output path would be overwritten, so create a file
+            output_path = temp_dir / output_path
+            with open(output_path, "w") as f:
+                f.write("example text")
+        elif file_or_dir == EXISTING_DIR:
+            output_path = temp_dir / output_path
+            output_path.mkdir()
+        elif file_or_dir == NON_EXISTING_BUT_PARENT_DIR:
+            output_path = temp_dir / output_path
+            output_path.parent.mkdir()
+        elif file_or_dir == NON_EXISTING_NO_PARENT_DIR:
+            output_path = temp_dir / output_path
+
+    yield input_path, output_path, expected
 
 
 # TESTS
@@ -70,3 +164,24 @@ def test_check_read_permissions(path_with_permissions):
         # Given file is not readable, so an exception is expected
         with pytest.raises(exc.ValidationError):
             check_read_permissions(path_with_permissions)
+
+
+@pytest.mark.parametrize("path_setup", FINALISE_OUTPUT_PARAMS, indirect=True)
+def test_finalise_output_file(path_setup):
+    # Given - inputs are set by path_setup
+    input_path, output_path, expected = path_setup
+    should_not_throw = (
+        output_path is None or output_path.exists() or output_path.parent.exists()
+    )
+
+    if should_not_throw:
+        # When
+        actual = finalise_output_file(input_path, output_path)
+        relative_actual = actual.relative_to(input_path.parent)
+
+        # Then
+        assert relative_actual == expected
+    else:
+        # When and then
+        with pytest.raises(exc.ValidationError):
+            finalise_output_file(input_path, output_path)
