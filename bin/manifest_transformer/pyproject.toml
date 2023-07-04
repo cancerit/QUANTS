@@ -19,3 +19,20 @@ pandas = "^2.0.3"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]  # https://docs.pytest.org/en/stable/customize.html#pyproject-toml
+minversion = "6.0"
+testpaths = ["tests"]
+
+addopts = [
+    "--disable-pytest-warnings",
+    "--color=yes",
+]
+
+# Ensure each individual test does not take more than the specified number of seconds.
+timeout = 30
+
+# Tests marked with xfail are tests that are expected to fail: these may be
+# stubs or features not yet written. xfails do not fail the test framework, but
+# unexpected passing of xfail-marked tests should fail. xfail should strictly fail.
+xfail_strict = true
