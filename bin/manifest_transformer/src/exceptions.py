@@ -7,3 +7,11 @@ class ValidationError(Exception):
 
 class UndevelopedFeatureError(NotImplementedError):
     pass
+
+
+class DelimiterError(ValidationError):
+    pass
+
+
+class UserInterventionRequired(ValidationError):
+    pass

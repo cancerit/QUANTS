@@ -3,9 +3,9 @@ import typing as t
 from dataclasses import dataclass, field
 from csv import Dialect
 import functools
-
-
 from pathlib import Path
+
+from src.exceptions import DelimiterError, UserInterventionRequired
 
 _CHUNK_SIZE_1MB = 1024 * 1024
 _FILE_HEADER_LINE_PREFIX = "##"
@@ -14,8 +14,10 @@ _FILE_HEADER_LINE_PREFIX = "##"
 @dataclass
 class CSVFileProperties:
     dialect: t.Optional[Dialect] = field(repr=False, compare=False)
+    _delimiter: str = field(repr=False, compare=False)
     file_offset: int = field(repr=True)
     column_headers_line_index: int = field(repr=True)
+    _forced_column_headers: bool = field(repr=False, compare=False)
     file_headers_line_indices: t.Tuple[int, ...] = field(
         default_factory=tuple,
         repr=True,
@@ -25,13 +27,43 @@ class CSVFileProperties:
     def __post_init__(self):
         self.file_headers_line_indices = tuple(self.file_headers_line_indices)
 
+    def is_forced_delimiter(self) -> bool:
+        """
+        Return True if the delimiter was forced, False if it was programmatically detected.
+
+        If the delimiter was forced, it is not guaranteed to be the correct
+        delimiter. This may come arise from the Python CSV sniffer not being
+        able to detect the delimiter and falling back to the delimeter specified
+        by the user.
+        """
+        return self.dialect is None
+
+    def is_forced_column_headers_line_index(self) -> bool:
+        """
+        Return True if the column headers line index was forced, False if it was programmatically detected.
+        """
+        return self._forced_column_headers
+
+    @property
+    def delimiter(self) -> str:
+        return self._delimiter
+
+    @property
+    def has_file_headers(self) -> bool:
+        return len(self.file_headers_line_indices) > 0
+
+    @property
+    def has_column_headers(self) -> bool:
+        return self.column_headers_line_index >= 0
+
     @classmethod
     def from_csv_file(
         cls,
         csv_file_path: t.Union[str, Path],
         prefix: t.Optional[str] = None,
         column_names: t.Optional[t.Sequence[str]] = None,
-        delimiter: t.Optional[str] = None,
+        forced_delimiter: t.Optional[str] = None,
+        forced_column_headers_line_index: t.Optional[int] = None,
     ) -> "CSVFileProperties":
         """
         Create a CSVFileProperties object from a CSV file.
@@ -42,8 +74,12 @@ class CSVFileProperties:
             headers line index is searched for using a heuristic. Matching is
             more accurate than the heuristic.
             For more information, see the documentation of find_column_headers().
-        delimiter: Optional. If provided, it is used to make the CSV dialect more accurate.
-
+        forced_delimiter: Optional. If provided, it is used to make the CSV
+            dialect more accurate or in case the delimiter cannot be detected it
+            will coerces the delimiter.
+        forced_column_headers_line_index: Optional. If provided, it will coerce headers
+            line index rather than using the heuristic or matching methods to find
+            the headers line index.
         """
         if prefix is None:
             prefix = _FILE_HEADER_LINE_PREFIX
@@ -51,26 +87,83 @@ class CSVFileProperties:
         _first_line, file_offset = find_first_tabular_line_index_and_offset(
             csv_file_path, prefix=prefix
         )
-        dialect = find_csv_dialect(csv_file_path, prefix=prefix, delimiters=delimiter)
-        file_headers_line_indices = find_file_headers(csv_file_path, prefix=prefix)
-        column_headers_line_index = find_column_headers(
-            csv_file_path, prefix=prefix, column_names=column_names
+
+        dialect, safe_delimiter = cls._get_safe_dialect_and_delimeter(
+            csv_file_path, prefix=prefix, forced_delimiter=forced_delimiter
         )
+
+        (
+            safe_column_headers_line_index,
+            _forced_column_headers,
+        ) = cls._get_safe_column_headers(
+            csv_file_path,
+            prefix=prefix,
+            column_names=column_names,
+            forced_index=forced_column_headers_line_index,
+        )
+
+        file_headers_line_indices = tuple(
+            find_file_headers(csv_file_path, prefix=prefix)
+        )
+
         obj = cls(
             dialect=dialect,
+            _delimiter=safe_delimiter,
             file_offset=file_offset,
             file_headers_line_indices=file_headers_line_indices,
-            column_headers_line_index=column_headers_line_index,
+            _forced_column_headers=_forced_column_headers,
+            column_headers_line_index=safe_column_headers_line_index,
         )
         return obj
 
-    @property
-    def has_file_headers(self) -> bool:
-        return len(self.file_headers_line_indices) > 0
+    @staticmethod
+    def _get_safe_dialect_and_delimeter(
+        csv_file_path: t.Union[str, Path],
+        prefix: str,
+        forced_delimiter: t.Optional[str],
+    ) -> t.Tuple[t.Optional[Dialect], str]:
+        """
+        Return the dialect and delimiter, or the forced delimiter if the dialect cannot be detected.
+        """
+        try:
+            dialect = find_csv_dialect(
+                csv_file_path, prefix=prefix, delimiters=forced_delimiter
+            )
+            safe_delimiter = dialect.delimiter
+        except DelimiterError as err:
+            if forced_delimiter is None:
+                msg = f"{str(err)} You must force the delimiter. See --help for more information."
+                raise UserInterventionRequired(msg) from None
+            else:
+                dialect = None
+                safe_delimiter = forced_delimiter
+        return dialect, safe_delimiter
 
-    @property
-    def has_column_headers(self) -> bool:
-        return self.column_headers_line_index >= 0
+    @staticmethod
+    def _get_safe_column_headers(
+        csv_file_path: t.Union[str, Path],
+        prefix: str,
+        column_names: t.Optional[t.Sequence[str]],
+        forced_index: t.Optional[int],
+    ) -> t.Tuple[int, bool]:
+        """
+        Return the column headers line index and whether the value was forced.
+        """
+        if forced_index is not None:
+            return (forced_index, True)
+
+        try:
+            column_headers_line_index = find_column_headers(
+                csv_file_path, prefix=prefix, column_names=column_names
+            )
+        except csv.Error:
+            msg = (
+                "It is not possible to identify the column headers line index, "
+                "as the CSV delimiter could not be detected. You must force the header line index. "
+                "See --help for more information."
+            )
+            raise UserInterventionRequired(msg) from None
+        return (column_headers_line_index, False)
 
 
 def find_csv_dialect(
@@ -87,13 +180,30 @@ def find_csv_dialect(
     if prefix is None:
         prefix = _FILE_HEADER_LINE_PREFIX
     _, offset = find_first_tabular_line_index_and_offset(csv_file_path, prefix=prefix)
-    with open(csv_file_path, newline="") as csv_file:
-        csv_file.seek(offset)
-        # Read the first 1MB of the file
-        chunk = csv_file.read(_CHUNK_SIZE_1MB)
-        dialect = csv.Sniffer().sniff(chunk, delimiters=delimiters)
+    dialect = _find_csv_dialect(csv_file_path, offset=offset, delimiters=delimiters)
+    return dialect
+
+
+def _find_csv_dialect(
+    csv_file_path: t.Union[str, Path],
+    offset: int,
+    delimiters: t.Optional[str] = None,
+) -> Dialect:  # noqa: C901
+    err_msg = f"Could not determine CSV delimeter for file {str(csv_file_path)!r}"
+    if delimiters is None:
+        err_msg = f"{err_msg}. Please provide a possible delimiter."
+    else:
+        err_msg = f"{err_msg} despite tying delimiters {delimiters!r}. This suggests that the file is not a tabular file or the file has a syntax error (e.g. differing numbers of column counts across many rows)."
+    try:
+        with open(csv_file_path, newline="") as csv_file:
+            csv_file.seek(offset)
+            # Read the first 1MB of the file
+            chunk = csv_file.read(_CHUNK_SIZE_1MB)
+            dialect = csv.Sniffer().sniff(chunk, delimiters=delimiters)
+    except csv.Error as e:
+        raise DelimiterError(err_msg) from e
     if dialect is None:
-        raise ValueError("Could not detect CSV dialect")
+        raise DelimiterError(err_msg)
     return dialect
 
 
