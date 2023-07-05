@@ -8,7 +8,7 @@ This file contains functions that return the paths to the example data files.
 You can import the functions individually or import the whole module, but it
 will be more convenient to import do
 >>> from tests import test_data
->>> test_data.get.example_data_1_csv()
+>>> test_data.files.example_data_1_csv()
 """
 
 

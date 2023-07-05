@@ -7,108 +7,49 @@ import pytest
 
 from src.csv import properties as csv_props
 from src.exceptions import UserInterventionRequired, DelimiterError
-from tests.test_data import get
+from tests.test_data import files
 
 # CONSTANTS
 
-CSV1_COLUMN_HEADERS = [
-    "oligo_name",
-    "species",
-    "assembly",
-    "gene_id",
-    "transcript_id",
-    "src_type",
-    "ref_chr",
-    "ref_strand",
-    "ref_start",
-    "ref_end",
-    "revc",
-    "ref_seq",
-    "pam_seq",
-    "vcf_alias",
-    "vcf_var_id",
-    "mut_position",
-    "ref",
-    "new",
-    "ref_aa",
-    "alt_aa",
-    "mut_type",
-    "mutator",
-    "oligo_length",
-    "mseq",
-]
-CSV2_COLUMN_HEADERS = [
-    "#id",
-    "new",
-    "ref_aa",
-    "alt_aa",
-]
-CSV3_COLUMN_HEADERS = [
-    "#oligo_name",
-    "species",
-    "assembly",
-    "gene_id",
-    "transcript_id",
-    "src_type",
-    "ref_chr",
-    "ref_strand",
-    "ref_start",
-    "ref_end",
-    "revc",
-    "ref_seq",
-    "pam_seq",
-    "vcf_alias",
-    "vcf_var_id",
-    "mut_position",
-    "ref",
-    "new",
-    "ref_aa",
-    "alt_aa",
-    "mut_type",
-    "mutator",
-    "oligo_length",
-    "mseq",
-]
-
 MAPPING_HEADER_NAMES = {
-    get.example_csv_1_with_column_headers(): ["oligo_name", "species", "assembly"],
-    get.example_csv_1_without_headers(): ["new", "ref_aa", "alt_aa"],
-    get.example_tsv_2_with_column_headers(): [
+    files.example_csv_1_with_column_headers(): ["oligo_name", "species", "assembly"],
+    files.example_csv_1_without_headers(): ["new", "ref_aa", "alt_aa"],
+    files.example_tsv_2_with_column_headers(): [
         "sgrna_ids",
         "sgrna_seqs",
         "gene_pair_id",
     ],
-    get.example_tsv_2_with_file_and_column_headers(): [
+    files.example_tsv_2_with_file_and_column_headers(): [
         "#id",
         "sgrna_seqs",
         "gene_pair_id",
     ],
-    get.example_tsv_2_without_headers(): ["sgrna_seqs", "gene_pair_id"],
-    get.example_csv_3_with_file_and_column_headers(): [
+    files.example_tsv_2_without_headers(): ["sgrna_seqs", "gene_pair_id"],
+    files.example_csv_3_with_file_and_column_headers(): [
         "#oligo_name",
         "species",
         "assembly",
     ],
-    get.example_csv_3_with_column_headers(): [
+    files.example_csv_3_with_column_headers(): [
         "ref_start",
         "ref_end",
         "revc",
     ],
-    get.example_csv_3_without_headers(): [
+    files.example_csv_3_without_headers(): [
         "mutator",
         "oligo_length",
         "mseq",
     ],
 }
 MAPPING_DELIMETER = {
-    get.example_csv_1_with_column_headers(): ",",
-    get.example_csv_1_without_headers(): ",",
-    get.example_tsv_2_with_column_headers(): "\t",
-    get.example_tsv_2_with_file_and_column_headers(): "\t",
-    get.example_tsv_2_without_headers(): "\t",
-    get.example_csv_3_with_file_and_column_headers(): ",",
-    get.example_csv_3_with_column_headers(): ",",
-    get.example_csv_3_without_headers(): ",",
+    files.example_csv_1_with_column_headers(): ",",
+    files.example_csv_1_without_headers(): ",",
+    files.example_tsv_2_with_column_headers(): "\t",
+    files.example_tsv_2_with_file_and_column_headers(): "\t",
+    files.example_tsv_2_without_headers(): "\t",
+    files.example_csv_3_with_file_and_column_headers(): ",",
+    files.example_csv_3_with_column_headers(): ",",
+    files.example_csv_3_without_headers(): ",",
 }
 
 # HELPERS
@@ -126,7 +67,7 @@ class MockCSVFileProperties:
 
 TEST_CASES = [
     (
-        get.example_csv_1_with_column_headers(),
+        files.example_csv_1_with_column_headers(),
         MockCSVFileProperties(
             dialect=None,
             file_offset=0,
@@ -136,7 +77,7 @@ TEST_CASES = [
         "csv 1 with column headers",
     ),
     (
-        get.example_csv_1_without_headers(),
+        files.example_csv_1_without_headers(),
         MockCSVFileProperties(
             dialect=None,
             file_offset=0,
@@ -146,7 +87,7 @@ TEST_CASES = [
         "csv 1 without column headers",
     ),
     (
-        get.example_tsv_2_with_file_and_column_headers(),
+        files.example_tsv_2_with_file_and_column_headers(),
         MockCSVFileProperties(
             dialect=None,
             file_offset=136,
@@ -156,7 +97,7 @@ TEST_CASES = [
         "csv 2 with file and column headers",
     ),
     (
-        get.example_tsv_2_with_column_headers(),
+        files.example_tsv_2_with_column_headers(),
         MockCSVFileProperties(
             dialect=None,
             file_offset=0,
@@ -166,7 +107,7 @@ TEST_CASES = [
         "csv 2 with column headers",
     ),
     (
-        get.example_tsv_2_without_headers(),
+        files.example_tsv_2_without_headers(),
         MockCSVFileProperties(
             dialect=None,
             file_offset=0,
@@ -176,7 +117,7 @@ TEST_CASES = [
         "csv 2 without column headers",
     ),
     (
-        get.example_csv_3_with_file_and_column_headers(),
+        files.example_csv_3_with_file_and_column_headers(),
         MockCSVFileProperties(
             dialect=None,
             file_offset=100,
@@ -186,7 +127,7 @@ TEST_CASES = [
         "csv 3 with file and column headers",
     ),
     (
-        get.example_csv_3_with_column_headers(),
+        files.example_csv_3_with_column_headers(),
         MockCSVFileProperties(
             dialect=None,
             file_offset=0,
@@ -196,7 +137,7 @@ TEST_CASES = [
         "csv 3 with column headers",
     ),
     (
-        get.example_csv_3_without_headers(),
+        files.example_csv_3_without_headers(),
         MockCSVFileProperties(
             dialect=None,
             file_offset=0,
@@ -227,6 +168,8 @@ def test_CSVFileProperties__from_csv_file(
     # Given
     expected_properties.dialect = csv_props.find_csv_dialect(csv_file)
     expected_dialect = expected_properties.dialect
+    expected_has_column_headers = expected_properties.column_headers_line_index >= 0
+    expected_has_file_headers = len(expected_properties.file_headers_line_indices) > 0
 
     # When
     actual_properties = csv_props.CSVFileProperties.from_csv_file(csv_file)
@@ -255,6 +198,8 @@ def test_CSVFileProperties__from_csv_file(
     assert eq_dialect
     assert actual_properties.is_forced_delimiter() == False
     assert actual_properties.is_forced_column_headers_line_index() == False
+    assert actual_properties.has_column_headers() == expected_has_column_headers
+    assert actual_properties.has_file_headers() == expected_has_file_headers
 
 
 def test_CSVFileProperties__from_csv_file__with_errorneous_csv(make_csv_file):
@@ -290,6 +235,8 @@ def test_CSVFileProperties__from_csv_file__with_errorneous_csv(make_csv_file):
     )
     assert properties.is_forced_delimiter() == True
     assert properties.is_forced_column_headers_line_index() == True
+    assert properties.has_column_headers() == True
+    assert properties.has_file_headers() == True
 
 
 @pytest.mark.parametrize("csv_file, expected_properties", PROPERTIES_PARAMS)

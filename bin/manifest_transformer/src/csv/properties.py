@@ -48,11 +48,9 @@ class CSVFileProperties:
     def delimiter(self) -> str:
         return self._delimiter
 
-    @property
     def has_file_headers(self) -> bool:
         return len(self.file_headers_line_indices) > 0
 
-    @property
     def has_column_headers(self) -> bool:
         return self.column_headers_line_index >= 0
 
