@@ -10,6 +10,10 @@ HELP__JSON_INPUT_FILE = (
 )
 
 HELP__OUTPUT_FILE = "By default, input file is overwritten with the output. You can specify a path to write to a specific file or a directory (appends input filename)."
+HELP__SUMMARY_FILE = "By default, no runtime summary JSON file is written. You can specify a path to write to a specific file or a directory (appends script+timestamp filename)."
+HELP__CAST_OUTPUT_AS_TSV = (
+    "Write output file as a TSV. By default, the output file is a CSV."
+)
 HELP__VERSION = "Show the script's version and exit."
 HELP__FORCE_COMMA_DELIMITER = "Force input file delimiter to be a comma ','. By default, the script auto-detects the delimiter."
 HELP__FORCE_TAB_DELIMITER = "Force input file delimiter to be a tab '\\t'. By default, the script auto-detects the delimiter."
@@ -28,11 +32,20 @@ HELP__REHEADER_BY_INDEX = "Reheader columns. Provide a list of column names indi
 ARG_SUBCOMMAND = "subcommand"
 ARG_INPUT = "input"
 ARG_OUTPUT = "output"
+ARG_SUMMARY = "summary"
+ARG_CAST_OUTPUT_AS_TSV = "cast_output_as_tsv"
 ARG_FORCE_DELIMITER = "force_delimiter"
 ARG_FORCE_HEADER_ROW_INDEX = "force_header_row_index"
-ARG_REQUIRED_COLUMNS = "required_columns"
-ARG_OPTIONAL_COLUMNS = "optional_columns"
+ARG_COLUMNS = "columns"
 ARG_REHEADER = "reheader"
+
+ARGPREFIX__REQUIRED_COLUMN = "REQUIRED_COLUMN:"
+ARGPREFIX__OPTIONAL_COLUMN = "OPTIONAL_COLUMN:"
+
+SUBCOMMAND__COLUMN_NAMES = "column-names"
+SUBCOMMAND__COLUMN_INDICES = "column-indices"
+SUBCOMMAND__JSON = "json"
+
 
 FILE_HEADER_LINE_PREFIX = "##"
 NULL_VALUE__NA = "NA"

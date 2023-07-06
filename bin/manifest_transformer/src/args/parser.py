@@ -1,3 +1,4 @@
+import typing as t
 import argparse
 from pathlib import Path
 
@@ -23,17 +24,17 @@ def get_argparser() -> argparse.ArgumentParser:
         required=False,
     )
     subparser_cli_col_names = subparsers.add_parser(
-        "column-names",
+        const.SUBCOMMAND__COLUMN_NAMES,
         description=const.HELP__PROG_DESCRIPTION,
         help="Execution from command line arguments (specifing column names).",
     )
     subparser_cli_col_indices = subparsers.add_parser(
-        "column-indices",
+        const.SUBCOMMAND__COLUMN_INDICES,
         description=const.HELP__PROG_DESCRIPTION,
         help="Execution from command line arguments (specifing column indices).",
     )
     subparser_json = subparsers.add_parser(
-        "json",
+        const.SUBCOMMAND__JSON,
         description=const.HELP__PROG_DESCRIPTION,
         help="Execution from a JSON parameter file instead of command line arguments.",
     )
@@ -74,14 +75,32 @@ def _add_common_arguments_to_parser(parser, use_name: bool):
         dest=const.ARG_OUTPUT,
         metavar="OUTPUT",
     )
+    parser.add_argument(
+        "--output-as-tsv",
+        action="store_true",
+        help=const.HELP__CAST_OUTPUT_AS_TSV,
+        dest=const.ARG_CAST_OUTPUT_AS_TSV,
+    )
+    parser.add_argument(
+        "-s",
+        "--summary",
+        type=Path,
+        default=None,
+        help=const.HELP__SUMMARY_FILE,
+        dest=const.ARG_SUMMARY,
+        metavar="SUMMARY",
+    )
+
     # Required columns
     parser.add_argument(
         "-c",
         "--columns",
         nargs="+",
         default=None,
+        action="extend",
+        type=lambda x: _label_required_column(x),
         help=required_columns_help,
-        dest=const.ARG_REQUIRED_COLUMNS,
+        dest=const.ARG_COLUMNS,
         metavar=iterable_metavar,
         required=True,
     )
@@ -96,9 +115,11 @@ def _add_common_arguments_to_parser(parser, use_name: bool):
         "-C",
         "--optional-columns",
         nargs="+",
+        type=lambda x: _label_optional_column(x),
         default=None,
+        action="extend",
         help=optional_columns_help,
-        dest=const.ARG_OPTIONAL_COLUMNS,
+        dest=const.ARG_COLUMNS,
         metavar=iterable_metavar,
     )
     # Reheader
@@ -117,7 +138,6 @@ def _add_common_arguments_to_parser(parser, use_name: bool):
     )
 
     # Forced delimiter argument mutually exclusive group (only one can be used) for comma and tab
-
     forced_delimiter_group = parser.add_mutually_exclusive_group(required=False)
     forced_delimiter_group.add_argument(
         "--force-comma",
@@ -146,3 +166,21 @@ def _add_common_arguments_to_parser(parser, use_name: bool):
         metavar="INDEX",
     )
     return
+
+
+def _label_required_column(
+    column: t.Union[str, int],
+) -> str:
+    column_str = str(column)
+    return _prefix_column(column_str, const.ARGPREFIX__REQUIRED_COLUMN)
+
+
+def _label_optional_column(
+    column: t.Union[str, int],
+) -> str:
+    column_str = str(column)
+    return _prefix_column(column_str, const.ARGPREFIX__OPTIONAL_COLUMN)
+
+
+def _prefix_column(column: str, prefix: str) -> str:
+    return f"{prefix}{str(column)}"
