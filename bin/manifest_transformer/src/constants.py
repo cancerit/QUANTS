@@ -1,15 +1,38 @@
 # -*- coding: utf-8 -*-
 import typing as t
 
-HELP__INPUT_FILE = "Input file path."
-HELP__OUTPUT_FILE = "By default, input file is overwritten with the output. You can specify a path to write to a specific file or a directory (appends input filename)."
-HELP__SKIP_N_ROWS = "Number of rows to skip in the CSV/TSV file before reading the data. By default, 1 row is skipped which assumes a header row. If you use the --name-header or --sequence-header options, you can set this to 0."
+HELP__PROG_DESCRIPTION = (
+    "A script to prepare, validate, trim and re-header tabular manifest files."
+)
+HELP__INPUT_FILE = "Input file path to a tabular manifest file (CSV/TSV)."
+HELP__JSON_INPUT_FILE = (
+    "Input file path to a JSON file containing parameters for the script."
+)
 
+HELP__OUTPUT_FILE = "By default, input file is overwritten with the output. You can specify a path to write to a specific file or a directory (appends input filename)."
+HELP__VERSION = "Show the script's version and exit."
+HELP__FORCE_COMMA_DELIMITER = "Force input file delimiter to be a comma ','. By default, the script auto-detects the delimiter."
+HELP__FORCE_TAB_DELIMITER = "Force input file delimiter to be a tab '\\t'. By default, the script auto-detects the delimiter."
+HELP__FORCE_HEADER_ROW_INDEX = "Force the input file parser to use this index for the column header row (1-index). By default, the script auto-detects the index of column header row, if any."
+HELP__REQUIRED_COLUMNS_BY_NAME = "Required columns identified by column header name."
+HELP__REQUIRED_COLUMNS_BY_INDEX = (
+    "Required columns identified by column index (1-index)."
+)
+HELP__OPTIONAL_COLUMNS_BY_NAME = "Optional columns identified by column header name."
+HELP__OPTIONAL_COLUMNS_BY_INDEX = (
+    "Optional columns identified by column index (1-index)."
+)
+HELP__REHEADER_BY_NAME = "Reheader columns. Provide a list of column names mappings to reheadder the output file. The format is: --reheader col1=COL1 col2=COL2 col3=COL3"
+HELP__REHEADER_BY_INDEX = "Reheader columns. Provide a list of column names indices to reheadder the output file. The format is: --reheader 1=COL1 2=COL2 3=COL3"
+
+ARG_SUBCOMMAND = "subcommand"
 ARG_INPUT = "input"
 ARG_OUTPUT = "output"
-ARG_NAME_HEADER = "name_header"
-ARG_NAME_INDEX = "name_index"
-ARG_SKIP_N_ROWS = "skip_n_rows"
+ARG_FORCE_DELIMITER = "force_delimiter"
+ARG_FORCE_HEADER_ROW_INDEX = "force_header_row_index"
+ARG_REQUIRED_COLUMNS = "required_columns"
+ARG_OPTIONAL_COLUMNS = "optional_columns"
+ARG_REHEADER = "reheader"
 
 FILE_HEADER_LINE_PREFIX = "##"
 NULL_VALUE__NA = "NA"
