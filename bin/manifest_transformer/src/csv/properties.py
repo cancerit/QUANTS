@@ -6,9 +6,9 @@ import functools
 from pathlib import Path
 
 from src.exceptions import DelimiterError, UserInterventionRequired
+from src.csv import constants as const
 
 _CHUNK_SIZE_1MB = 1024 * 1024
-_FILE_HEADER_LINE_PREFIX = "##"
 
 
 @dataclass
@@ -80,7 +80,7 @@ class CSVFileProperties:
             the headers line index.
         """
         if prefix is None:
-            prefix = _FILE_HEADER_LINE_PREFIX
+            prefix = const.FILE_HEADER_LINE_PREFIX
 
         _first_line, file_offset = find_first_tabular_line_index_and_offset(
             csv_file_path, prefix=prefix
@@ -176,7 +176,7 @@ def find_csv_dialect(
     delimiters: A string containing possible delimiters, e.g. ',;\t'. This is opional, as the dialect can be detected without it.
     """
     if prefix is None:
-        prefix = _FILE_HEADER_LINE_PREFIX
+        prefix = const.FILE_HEADER_LINE_PREFIX
     _, offset = find_first_tabular_line_index_and_offset(csv_file_path, prefix=prefix)
     dialect = _find_csv_dialect(csv_file_path, offset=offset, delimiters=delimiters)
     return dialect
@@ -217,7 +217,7 @@ def find_file_headers(
     max_line: The maximum number of lines to read from the CSV file, if None, read the entire file.
     """
     if prefix is None:
-        prefix = _FILE_HEADER_LINE_PREFIX
+        prefix = const.FILE_HEADER_LINE_PREFIX
     with open(csv_file_path, "r") as csv_file:
         file_header_indices = _find_file_headers(
             csv_file, prefix=prefix, max_line=max_line
@@ -230,7 +230,7 @@ def _find_file_headers(
     prefix: t.Optional[str] = None,
     max_line: t.Optional[int] = 20,
 ) -> t.List[int]:
-    prefix = _FILE_HEADER_LINE_PREFIX if prefix is None else prefix
+    prefix = const.FILE_HEADER_LINE_PREFIX if prefix is None else prefix
     file_header_indices = []
     line_idx = 0
     while True:
@@ -265,7 +265,7 @@ def find_column_headers(
 
     For more information, see: find_column_headers_by_heuristic and find_column_headers_by_name
     """
-    prefix = _FILE_HEADER_LINE_PREFIX if prefix is None else prefix
+    prefix = const.FILE_HEADER_LINE_PREFIX if prefix is None else prefix
     if column_names is None:
         idx = find_column_headers_by_heuristic(csv_file_path, prefix=prefix)
     else:
@@ -347,7 +347,7 @@ def find_column_headers_by_heuristic(
     - the second through n-th rows contain strings where at least one value's length
         differs from that of the putative header of that column.
     """
-    prefix = _FILE_HEADER_LINE_PREFIX if prefix is None else prefix
+    prefix = const.FILE_HEADER_LINE_PREFIX if prefix is None else prefix
     first_line, offset = find_first_tabular_line_index_and_offset(
         csv_file_path, prefix=prefix
     )
@@ -374,7 +374,7 @@ def find_first_tabular_line_index_and_offset(
     csv_file_path: The path to the CSV file. prefix: The prefix of any file
     header line, typically '##'.
     """
-    prefix = _FILE_HEADER_LINE_PREFIX if prefix is None else prefix
+    prefix = const.FILE_HEADER_LINE_PREFIX if prefix is None else prefix
     file_header_idxs = find_file_headers(csv_file_path, prefix=prefix)
     stop_row_idx = max(file_header_idxs) + 1 if file_header_idxs else 0  # 0-indexed
 
