@@ -1,9 +1,154 @@
 import typing as t
 import argparse
 from pathlib import Path
+from dataclasses import dataclass
 
 from src import constants as const
 from src import version
+from src import exceptions
+
+
+@dataclass
+class ParsedColumns:
+    column_order: t.Tuple[str, ...]
+    required_columns: t.Tuple[str, ...]
+    optional_columns: t.Tuple[str, ...]
+
+    def assert_valid(self):
+        """
+        Assert the columns are valid.
+
+        Checks that:
+        1. There are no duplicate columns
+        2. The column_order columns are only from required_columns and optional_columns
+        3. The required_columns and optional_columns are disjoint (no overlap)
+        4. There are no labels in the columns
+        """
+        callables = [
+            self._assert_no_duplicates,
+            self._assert_column_order_valid,
+            self._assert_required_optional_disjoint,
+            self._assert_no_labels_in_column,
+        ]
+        for callable_ in callables:
+            callable_()
+
+    def _assert_no_duplicates(self):
+        """
+        Assert there are no duplicate columns.
+        """
+        column_containers = {
+            "required columns": self.required_columns,
+            "optional columns": self.optional_columns,
+            "column order": self.column_order,
+        }
+        for name, column_container in column_containers.items():
+            if len(column_container) != len(set(column_container)):
+                msg = f"Duplicate columns found in {name}: {column_container}"
+                raise exceptions.ValidationError(msg)
+
+    def _assert_column_order_valid(self):
+        """
+        Assert the column_order columns are consist of columns only in required
+        columns and optional columns.
+        """
+        order = set(self.column_order)
+        required = set(self.required_columns)
+        optional = set(self.optional_columns)
+        is_valid = set(order) == set(required) | set(optional)
+        if not is_valid:
+            not_subset_columns = order - (required | optional)
+            detail = ", ".join(not_subset_columns)
+            msg = (
+                "Column order columns must be a subset of required columns and optional columns, "
+                f"but the following columns were not found in either: {detail}"
+            )
+            raise exceptions.ValidationError(msg)
+
+    def _assert_required_optional_disjoint(self):
+        """
+        Assert the required_columns and optional_columns are disjoint (no overlap).
+        """
+        required = set(self.required_columns)
+        optional = set(self.optional_columns)
+        is_valid = required.isdisjoint(optional)
+        if not is_valid:
+            detail = ", ".join(required & optional)
+            msg = (
+                "Required columns and optional columns must be disjoint, "
+                f"but the following columns were found in both: {detail}"
+            )
+            raise exceptions.ValidationError(msg)
+
+    def _assert_no_labels_in_column(self):
+        """
+        Assert there are no labels in the columns.
+        """
+        required_label = const.ARGPREFIX__REQUIRED_COLUMN
+        optional_label = const.ARGPREFIX__OPTIONAL_COLUMN
+        for column in self.column_order:
+            has_required_label = column.startswith(required_label)
+            has_optional_label = column.startswith(optional_label)
+            if has_required_label or has_optional_label:
+                msg = (
+                    f"Encountered a labelled column name: {column!r}, "
+                    f"but all column names must be unlabelled."
+                )
+                raise exceptions.ValidationError(msg)
+
+    def is_valid(self) -> bool:
+        """
+        Checks if the columns are valid.
+
+        Checks that:
+        1. There are no duplicate columns
+        2. The column_order columns are only from required_columns and optional_columns
+        3. The required_columns and optional_columns are disjoint (no overlap)
+        4. There are no labels in the columns
+        """
+        try:
+            self.assert_valid()
+        except exceptions.ValidationError:
+            return False
+        else:
+            return True
+
+    @classmethod
+    def from_labelled_columns(
+        cls, labelled_columns: t.Iterable[str]
+    ) -> "ParsedColumns":
+        """
+        Create a ParsedColumns object from a list of labelled columns, typically from the argparser namespace.
+        """
+        column_order = []
+        required_columns = []
+        optional_columns = []
+        label_required = const.ARGPREFIX__REQUIRED_COLUMN
+        label_optional = const.ARGPREFIX__OPTIONAL_COLUMN
+        for labelled_column in labelled_columns:
+            is_required = labelled_column.startswith(label_required)
+            is_optional = labelled_column.startswith(label_optional)
+            if is_required:
+                column = labelled_column.replace(label_required, "", 1)
+                required_columns.append(column)
+            elif is_optional:
+                column = labelled_column.replace(label_optional, "", 1)
+                optional_columns.append(column)
+            else:
+                msg = (
+                    f"Encountered an unlabelled column name: {labelled_column!r}, "
+                    f"but all column names must be labelled with either {label_required!r} "
+                    f"or {label_optional!r}."
+                )
+                raise ValueError(msg)
+            column_order.append(column)
+
+        obj = cls(
+            tuple(column_order),
+            tuple(required_columns),
+            tuple(optional_columns),
+        )
+        return obj
 
 
 def get_argparser() -> argparse.ArgumentParser:
