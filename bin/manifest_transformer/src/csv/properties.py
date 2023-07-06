@@ -6,7 +6,7 @@ import functools
 from pathlib import Path
 
 from src.exceptions import DelimiterError, UserInterventionRequired
-from src.csv import constants as const
+from src import constants as const
 
 _CHUNK_SIZE_1MB = 1024 * 1024
 

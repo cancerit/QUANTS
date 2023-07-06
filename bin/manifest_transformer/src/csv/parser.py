@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from pathlib import Path
 from collections import Counter
 
-from src.csv import constants as const
+from src import constants as const
 
 if t.TYPE_CHECKING:
     import _csv
