@@ -1,7 +1,8 @@
+import typing as t
 import sys
 
 
-def display_error(error: Exception, prefix: str = "Error: ") -> None:
+def display_error(error: t.Union[str, Exception], prefix: str = "Error: ") -> None:
     """
     Prints an error message to stderr, prefixed with "Error: ".
     """
