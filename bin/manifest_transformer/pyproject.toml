@@ -15,6 +15,7 @@ pre-commit = "^3.3.2"
 ipython = "^8"
 pytest = "^7.3.2"
 pandas = "^2.0.3"
+toml = "^0.10.2"
 
 [build-system]
 requires = ["poetry-core"]
