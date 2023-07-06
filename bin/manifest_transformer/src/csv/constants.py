@@ -22,12 +22,17 @@ def get_null_values() -> t.List[str]:
 
 
 def get_null_values__all_cases() -> t.List:
+    nulls = get_null_values()
+    nulls__all_cases = transform_to_many_cases(nulls)
+    return nulls__all_cases.copy()
+
+
+def transform_to_many_cases(values: t.Iterable[str]) -> t.List[str]:
     funcs = [
         lambda x: x,  # do nothing - preserve case
         str.lower,
         str.upper,
         str.title,
     ]
-    nulls = get_null_values()
-    nulls__all_cases = [func(null) for null in nulls for func in funcs]
-    return nulls__all_cases.copy()
+    values__all_cases = [func(value) for value in values for func in funcs]
+    return values__all_cases

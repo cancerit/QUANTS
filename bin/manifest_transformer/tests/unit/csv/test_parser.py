@@ -325,3 +325,54 @@ def test_CSVParser_count_columns_comprehensively__via_CSVFileProperties(
     # Then
     assert actual_simple_count == expected[0]
     assert actual_comp_count == expected
+
+
+@pytest.mark.parametrize("has_null_values", [True, False])
+@pytest.mark.parametrize(
+    "null_value",
+    ["NA", "NULL", "", "N/A", "NAN", "NaN", "na", "Na", "n/a", "Nan", "nan"],
+)
+def test_CSVParser_find_rows_with_nulls(make_csv_file, has_null_values, null_value):
+    # Given
+    csv_file_path = make_csv_file(
+        is_erroneous=False,
+        columns=5,
+        include_file_header=True,
+        include_column_header=True,
+        include_null_values=has_null_values,
+        null_value=null_value,
+    )
+    csv_properties = CSVFileProperties.from_csv_file(csv_file_path)
+    expected = set(range(1, 11)) if has_null_values else set([0])
+
+    # When
+    parser = CSVParser.from_csv_file_properties(csv_file_path, csv_properties)
+    null_rows = parser.find_rows_with_nulls()
+
+    # Then
+    assert len(null_rows) in expected, csv_file_path.read_text()
+
+
+@pytest.mark.parametrize("has_null_values", [True, False])
+@pytest.mark.parametrize("null_value", ["none", "nil", " "])
+def test_CSVParser_find_rows_with_nulls__using_non_default_null_values(
+    make_csv_file, has_null_values, null_value
+):
+    # Given
+    csv_file_path = make_csv_file(
+        is_erroneous=False,
+        columns=5,
+        include_file_header=True,
+        include_column_header=True,
+        include_null_values=has_null_values,
+        null_value=null_value,
+    )
+    csv_properties = CSVFileProperties.from_csv_file(csv_file_path)
+    expected = set(range(1, 11)) if has_null_values else set([0])
+
+    # When
+    parser = CSVParser.from_csv_file_properties(csv_file_path, csv_properties)
+    null_rows = parser.find_rows_with_nulls(extra_null_values=[null_value])
+
+    # Then
+    assert len(null_rows) in expected, csv_file_path.read_text()

@@ -6,6 +6,8 @@ from contextlib import contextmanager
 from pathlib import Path
 from collections import Counter
 
+from src.csv import constants as const
+
 if t.TYPE_CHECKING:
     import _csv
     from src.csv.properties import CSVFileProperties
@@ -182,3 +184,38 @@ class CSVParser:
             column_count, row_freq = counter.most_common(1)[0]
             same_column_count_for_all_rows = row_freq == row_count
         return (column_count, same_column_count_for_all_rows)
+
+    def find_rows_with_nulls(
+        self, extra_null_values: t.Optional[t.List[str]] = None
+    ) -> t.List[int]:
+        """
+        Find rows that have null values, skipping the header row if present.
+
+        Null values:
+         - '', 'N/A', 'NA', 'NAN', 'NaN', 'NULL'
+         - in these cases, as well as lower, upper, and title case variants
+
+        Args:
+            extra_null_values: A list of extra null values to check for.
+
+        Returns:
+            A list of row indices that are completely empty.
+        """
+        # Prepare null values
+        null_values: t.List[str] = const.get_null_values()
+        if extra_null_values is not None:
+            null_values.extend(extra_null_values)
+        null_values = const.transform_to_many_cases(null_values)
+        null_values_set = set(null_values)
+
+        # Find null containing rows
+        null_rows = []
+        with self.get_csv_reader() as reader:
+            start_idx = 0
+            if self._has_header:
+                next(reader)
+                start_idx += 1
+            for idx, row in enumerate(reader, start=start_idx):
+                if any(cell in null_values_set for cell in row):
+                    null_rows.append(idx)
+        return null_rows
