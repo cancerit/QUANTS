@@ -1,8 +1,7 @@
 import typing as t
 import datetime
+from pathlib import Path
 
-if t.TYPE_CHECKING:
-    from pathlib import Path
 
 from src.args._io import (
     finalise_output_file,
@@ -19,8 +18,8 @@ class InputFile:
     A clean input file is a file that exists and is readable.
     """
 
-    def __init__(self, input_file: "Path"):
-        self._input_file: "Path" = input_file
+    def __init__(self, input_file: t.Union["Path", str]):
+        self._input_file: "Path" = Path(input_file)
 
     @property
     def clean(self) -> "Path":
@@ -42,9 +41,15 @@ class OutputFile:
         filename are concatenated as clean output file.
     """
 
-    def __init__(self, input_file: "Path", output_file: t.Optional["Path"]):
-        self._input_file: "InputFile" = InputFile(input_file)
-        self._output_file: t.Optional["Path"] = output_file
+    def __init__(
+        self,
+        input_file: t.Union["Path", str],
+        output_file: t.Optional[t.Union["Path", str]],
+    ):
+        self._input_file: "InputFile" = InputFile(Path(input_file))
+        self._output_file: t.Optional["Path"] = (
+            Path(output_file) if output_file is not None else None
+        )
 
     @property
     def clean(self) -> "Path":
@@ -71,9 +76,15 @@ class SummaryFile:
         filename are concatenated as clean summary file.
     """
 
-    def __init__(self, input_file: "Path", summary_file: t.Optional["Path"]):
-        self._input_file: "InputFile" = InputFile(input_file)
-        self._summary_file: t.Optional["Path"] = summary_file
+    def __init__(
+        self,
+        input_file: "t.Union[str, Path]",
+        summary_file: t.Optional[t.Union["Path", str]],
+    ):
+        self._input_file: "InputFile" = InputFile(Path(input_file))
+        self._summary_file: t.Optional["Path"] = (
+            Path(summary_file) if summary_file is not None else None
+        )
 
     def _summary_name(self, input_path: "Path") -> str:
         now = datetime.datetime.now()

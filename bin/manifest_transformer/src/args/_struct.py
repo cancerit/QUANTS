@@ -243,12 +243,10 @@ class CleanArgs:
             optional_columns=optional_columns__raw,
         )
         parsed_columns.assert_valid()
-        input_file__clean = _clean.InputFile(Path(input_file__raw)).clean
-        output_file__clean = _clean.OutputFile(
-            Path(input_file__raw), Path(output_file__raw)
-        ).clean
+        input_file__clean = _clean.InputFile(input_file__raw).clean
+        output_file__clean = _clean.OutputFile(input_file__raw, output_file__raw).clean
         summary_file__clean = _clean.SummaryFile(
-            Path(input_file__raw), Path(summary_file__raw)
+            input_file__raw, summary_file__raw
         ).clean
         output_file_delimiter__clean = _clean.clean_output_delimiter(
             output_file_delimiter__raw
