@@ -61,3 +61,13 @@ def example_csv_3_with_file_and_column_headers() -> Path:
 @_file_exists
 def example_csv_3_without_headers() -> Path:
     return Path(resource_filename(__name__, "example_data_3_wo_headers.csv"))
+
+
+@_file_exists
+def example_json_params_1_column_indices() -> Path:
+    return Path(resource_filename(__name__, "example_params_1.column_indices.json"))
+
+
+@_file_exists
+def example_json_params_1_column_names() -> Path:
+    return Path(resource_filename(__name__, "example_params_1.column_names.json"))

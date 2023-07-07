@@ -331,10 +331,12 @@ def _prefix_column(column: str, prefix: str) -> str:
     return f"{prefix}{str(column)}"
 
 
-def parse_reheader_columns(columns: t.List[str]) -> t.Dict[str, str]:
+def parse_reheader_columns(columns: t.Optional[t.List[str]]) -> t.Dict[str, str]:
     """
     Parses a list of strings of the format ["col1=COL1", "col2=COL2"]
     into a dictionary like {"col1": "COL1", "col2": "COL2"}
+
+    If columns is None, returns an empty dictionary.
 
     Args:
         columns: A list of strings formatted as "column_name=mapped_column_name"
@@ -342,6 +344,8 @@ def parse_reheader_columns(columns: t.List[str]) -> t.Dict[str, str]:
     Returns:
         A dictionary where key is column_name and value is mapped_column_name
     """
+    if columns is None:
+        return {}
     seperator = "="
     mappings = {}
     for column in columns:

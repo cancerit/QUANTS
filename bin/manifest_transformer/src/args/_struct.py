@@ -5,8 +5,10 @@ import copy
 
 from src.enums import ColumnMode
 from src import constants as const
+from src import exceptions as exc
 from src.args import _parser
 from src.args import _clean
+from src.args import _json_helper
 
 if t.TYPE_CHECKING:
     from argparse import Namespace
@@ -106,6 +108,16 @@ class CleanArgs:
 
     @classmethod
     def from_namespace(cls, namespace: "Namespace") -> "CleanArgs":
+        subcommand = getattr(namespace, const.ARG_SUBCOMMAND)
+        if subcommand == const.SUBCOMMAND__JSON:
+            json_param_file = getattr(namespace, const.ARG_INPUT)
+            clean_args = cls.from_json_params(json_param_file)
+        else:
+            clean_args = cls._from_namespace(namespace)
+        return clean_args
+
+    @classmethod
+    def _from_namespace(cls, namespace: "Namespace") -> "CleanArgs":
         is_1_indexed = True
 
         # Get raw values from namespace
@@ -150,6 +162,103 @@ class CleanArgs:
             forced_header_row_index__raw
         )
         reheader_mapping__raw = _parser.parse_reheader_columns(reheader_mapping__raw)
+
+        # Normalize string columns to int columns, if necessary
+        if mode == ColumnMode.COLUMN_INDICES:
+            column_order__clean = cls._parse_and_clean_column_tuple(
+                column_order__raw, is_1_indexed
+            )
+            required_columns__clean = cls._parse_and_clean_column_tuple(
+                required_columns__raw, is_1_indexed
+            )
+            optional_columns__clean = cls._parse_and_clean_column_tuple(
+                optional_columns__raw, is_1_indexed
+            )
+            reheader_mapping__clean = cls._parse_and_clean_column_dict(
+                reheader_mapping__raw, is_1_indexed
+            )
+        else:
+            column_order__clean = column_order__raw
+            required_columns__clean = required_columns__raw
+            optional_columns__clean = optional_columns__raw
+            reheader_mapping__clean = reheader_mapping__raw
+
+        # Create instance
+        instance = cls(
+            is_1_indexed=True,
+            mode=mode,
+            input_file=input_file__clean,
+            output_file=output_file__clean,
+            summary_file=summary_file__clean,
+            column_order=column_order__clean,
+            required_columns=required_columns__clean,
+            optional_columns=optional_columns__clean,
+            output_file_delimiter=output_file_delimiter__clean,
+            forced_intput_file_delimiter=forced_intput_file_delimiter__clean,
+            forced_header_row_index=forced_header_row_index__clean,
+            reheader_mapping=reheader_mapping__clean,
+        )
+        return instance
+
+    @classmethod
+    def from_json_params(cls, json_params: Path) -> "CleanArgs":
+        data = _json_helper.read_json_file(json_params)
+        try:
+            instance = cls._from_json_param(data)
+        except KeyError as e:
+            msg = f"Missing key in JSON file: {e}"
+            raise exc.ValidationError(msg) from None
+        return instance
+
+    @classmethod
+    def _from_json_param(cls, data: t.Dict[str, t.Any]) -> "CleanArgs":
+        is_1_indexed = True
+
+        # Get raw values from JSON
+        mode__raw = data[const.JSON_PARAM__MODE]
+        input_file__raw = data[const.JSON_PARAM__INPUT_FILE]
+        output_file__raw = data[const.JSON_PARAM__OUTPUT_FILE]
+        summary_file__raw = data[const.JSON_PARAM__SUMMARY_FILE]
+        column_order__raw = tuple(
+            [str(elem) for elem in data[const.JSON_PARAM__COLUMN_ORDER]]
+        )
+        required_columns__raw = tuple(
+            [str(elem) for elem in data[const.JSON_PARAM__REQUIRED_COLUMNS]]
+        )
+        optional_columns__raw = tuple(
+            [str(elem) for elem in data[const.JSON_PARAM__OPTIONAL_COLUMNS]]
+        )
+        reheader_mapping__raw = data[const.JSON_PARAM__REHEADER]
+        output_file_delimiter__raw = data[const.JSON_PARAM__OUTPUT_DELIMITER]
+        forced_intput_file_delimiter__raw = data[
+            const.JSON_PARAM__FORCED_INPUT_DELIMITER
+        ]
+        forced_header_row_index__raw = data[const.JSON_PARAM__FORCED_HEADER_ROW_INDEX]
+
+        # Clean raw values
+        mode = ColumnMode(mode__raw)
+        parsed_columns = _parser.ParsedColumns(
+            column_order=column_order__raw,
+            required_columns=required_columns__raw,
+            optional_columns=optional_columns__raw,
+        )
+        parsed_columns.assert_valid()
+        input_file__clean = _clean.InputFile(Path(input_file__raw)).clean
+        output_file__clean = _clean.OutputFile(
+            Path(input_file__raw), Path(output_file__raw)
+        ).clean
+        summary_file__clean = _clean.SummaryFile(
+            Path(input_file__raw), Path(summary_file__raw)
+        ).clean
+        output_file_delimiter__clean = _clean.clean_output_delimiter(
+            output_file_delimiter__raw
+        )
+        forced_intput_file_delimiter__clean = _clean.clean_input_delimiter(
+            forced_intput_file_delimiter__raw
+        )
+        forced_header_row_index__clean = _clean.clean_index(
+            forced_header_row_index__raw
+        )
 
         # Normalize string columns to int columns, if necessary
         if mode == ColumnMode.COLUMN_INDICES:

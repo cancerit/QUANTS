@@ -58,6 +58,18 @@ NULL_VALUE__EMPTY = ""
 DELIMITER__COMMA = ","
 DELIMITER__TAB = "\t"
 
+JSON_PARAM__MODE = "mode"
+JSON_PARAM__INPUT_FILE = "input_file"
+JSON_PARAM__OUTPUT_FILE = "output_file"
+JSON_PARAM__SUMMARY_FILE = "summary_file"
+JSON_PARAM__COLUMN_ORDER = "column_order"
+JSON_PARAM__REQUIRED_COLUMNS = "required_columns"
+JSON_PARAM__OPTIONAL_COLUMNS = "optional_columns"
+JSON_PARAM__REHEADER = "reheader_mapping"
+JSON_PARAM__OUTPUT_DELIMITER = "output_file_delimiter"
+JSON_PARAM__FORCED_INPUT_DELIMITER = "forced_input_file_delimiter"
+JSON_PARAM__FORCED_HEADER_ROW_INDEX = "forced_header_row_index"
+
 
 def get_null_values() -> t.List[str]:
     nulls = [

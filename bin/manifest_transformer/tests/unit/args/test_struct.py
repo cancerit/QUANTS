@@ -4,6 +4,8 @@ from src.args import _parser
 from src.args import _struct
 from src.enums import ColumnMode
 
+from tests.test_data import files
+
 # TESTS
 
 
@@ -70,6 +72,83 @@ def test_CleanArgs__with_column_indices(make_csv_file):
     # When
     namespace = _parser.get_argparser().parse_args(cmd.split())
     actual = _struct.CleanArgs.from_namespace(namespace)
+
+    # Then
+    assert actual == expected
+
+
+def test_CleanArgs__from_json_params__with_column_names():
+    # Given
+    json_param = files.example_json_params_1_column_names()
+    expected = _struct.CleanArgs(
+        is_1_indexed=True,
+        mode=ColumnMode.COLUMN_NAMES,
+        input_file=Path("tests/test_data/example_data_1_w_column_headers.csv"),
+        output_file=Path("example_data_1_w_column_headers.output.csv"),
+        summary_file=Path("example_data_1_w_column_headers.summary.json"),
+        column_order=(
+            "oligo_name",
+            "species",
+            "assembly",
+            "gene_id",
+            "transcript_id",
+            "src_type",
+            "ref_chr",
+            "ref_strand",
+            "ref_start",
+            "ref_end",
+        ),
+        required_columns=(
+            "oligo_name",
+            "species",
+            "assembly",
+            "gene_id",
+            "transcript_id",
+        ),
+        optional_columns=("src_type", "ref_chr", "ref_strand", "ref_start", "ref_end"),
+        output_file_delimiter=",",
+        forced_intput_file_delimiter=None,
+        forced_header_row_index=None,
+        reheader_mapping={
+            "oligo_name": "OLIGO_NAME",
+            "species": "SPECIES",
+            "assembly": "ASSEMBLY",
+            "gene_id": "GENE_ID",
+        },
+    )
+
+    # When
+    actual = _struct.CleanArgs.from_json_params(json_param)
+
+    # Then
+    assert actual == expected
+
+
+def test_CleanArgs__from_json_params__with_column_indices():
+    # Given
+    json_param = files.example_json_params_1_column_indices()
+    expected = _struct.CleanArgs(
+        is_1_indexed=True,
+        mode=ColumnMode.COLUMN_INDICES,
+        input_file=Path("tests/test_data/example_data_1_w_column_headers.csv"),
+        output_file=Path("example_data_1_w_column_headers.output.csv"),
+        summary_file=Path("example_data_1_w_column_headers.summary.json"),
+        column_order=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10),
+        required_columns=(1, 2, 3, 4, 5),
+        optional_columns=(6, 7, 8, 9, 10),
+        output_file_delimiter=",",
+        forced_intput_file_delimiter=None,
+        forced_header_row_index=None,
+        reheader_mapping={
+            1: "OLIGO_NAME",
+            2: "SPECIES",
+            3: "ASSEMBLY",
+            4: "GENE_ID",
+        },
+    )
+
+    # When
+    actual = _struct.CleanArgs.from_json_params(json_param)
 
     # Then
     assert actual == expected

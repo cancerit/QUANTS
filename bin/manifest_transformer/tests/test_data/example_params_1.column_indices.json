@@ -1,0 +1,41 @@
+{
+    "mode": "column-indices",
+    "input_file": "tests/test_data/example_data_1_w_column_headers.csv",
+    "output_file": "example_data_1_w_column_headers.output.csv",
+    "summary_file": "example_data_1_w_column_headers.summary.json",
+    "column_order": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+    ],
+    "required_columns": [
+        1,
+        2,
+        3,
+        4,
+        5
+    ],
+    "optional_columns": [
+        6,
+        7,
+        8,
+        9,
+        10
+    ],
+    "reheader_mapping": {
+        "1": "OLIGO_NAME",
+        "2": "SPECIES",
+        "3": "ASSEMBLY",
+        "4": "GENE_ID"
+    },
+    "output_file_delimiter": ",",
+    "forced_input_file_delimiter": null,
+    "forced_header_row_index": null
+}
