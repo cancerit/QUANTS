@@ -55,6 +55,9 @@ NULL_VALUE__N_SLASH_A = "N/A"
 NULL_VALUE__NULL = "NULL"
 NULL_VALUE__EMPTY = ""
 
+DELIMITER__COMMA = ","
+DELIMITER__TAB = "\t"
+
 
 def get_null_values() -> t.List[str]:
     nulls = [

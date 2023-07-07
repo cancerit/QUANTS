@@ -4,6 +4,7 @@ import pytest
 
 from src.args import parser
 from src import constants as const
+from src.exceptions import ValidationError
 
 
 @pytest.mark.parametrize(
@@ -195,3 +196,95 @@ def test__label_optional_column():
 
     # Then
     assert actual == expected
+
+
+def test_parse_reheader_columns_valid():
+    # Given
+    columns = ["col1=COL1", "col2=COL2"]
+    expected = {"col1": "COL1", "col2": "COL2"}
+
+    # When
+    actual = parser.parse_reheader_columns(columns)
+
+    # Then
+    assert actual == expected
+
+
+def test_parse_reheader_columns_valid_multiple_equals():
+    # Given
+    columns = ["col1=COL1=Extra", "col2=COL2"]
+    expected = {"col1": "COL1=Extra", "col2": "COL2"}
+
+    # When
+    actual = parser.parse_reheader_columns(columns)
+
+    # Then
+    assert actual == expected
+
+
+# Test for invalid column mappings - no equal signs
+def test_parse_reheader_columns_invalid_no_equals():
+    # Given
+    columns = ["col1COL1", "col2=COL2"]
+
+    # When
+    with pytest.raises(ValidationError):
+        parser.parse_reheader_columns(columns)
+
+
+@pytest.mark.parametrize(
+    "input_list,expected",
+    [
+        # Testing valid cases
+        (["1", "2", "3"], [1, 2, 3]),
+        (["0", "-2", "5"], [0, -2, 5]),
+        ([], []),
+    ],
+)
+def test_parse_integer_like_list_valid_cases(input_list, expected):
+    # When
+    actual = parser.parse_integer_like_list(input_list)
+
+    # Then
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "input_list",
+    [(["1", "2", "a"])],
+)
+def test_parse_integer_like_list_invalid_cases(input_list):
+    # When
+    with pytest.raises(ValidationError):
+        parser.parse_integer_like_list(input_list)
+
+
+@pytest.mark.parametrize(
+    "input_dict,expected",
+    [
+        # Testing valid cases
+        ({"1": "col1", "2": "col2", "3": "col3"}, {1: "col1", 2: "col2", 3: "col3"}),
+        ({"0": "col1", "-2": "col2", "5": "col3"}, {0: "col1", -2: "col2", 5: "col3"}),
+        ({}, {}),
+    ],
+)
+def test_parse_integer_like_dict_valid_cases(input_dict, expected):
+    # When
+    actual = parser.parse_integer_like_dict(input_dict)
+
+    # Then
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "input_dict",
+    [
+        # Testing invalid cases
+        ({"1": "col1", "2": "col2", "a": "col3"}),
+        ({"1": "col1", "2": "col2", "": "col3"}),
+    ],
+)
+def test_parse_integer_like_dict_invalid_cases(input_dict):
+    # When
+    with pytest.raises(ValidationError):
+        parser.parse_integer_like_dict(input_dict)

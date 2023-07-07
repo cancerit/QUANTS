@@ -287,7 +287,7 @@ def _add_common_arguments_to_parser(parser, use_name: bool):
     forced_delimiter_group.add_argument(
         "--force-comma",
         action="store_const",
-        const=",",
+        const=const.DELIMITER__COMMA,
         default=None,
         help=const.HELP__FORCE_COMMA_DELIMITER,
         dest=const.ARG_FORCE_DELIMITER,
@@ -295,7 +295,7 @@ def _add_common_arguments_to_parser(parser, use_name: bool):
     forced_delimiter_group.add_argument(
         "--force-tab",
         action="store_const",
-        const="\t",
+        const=const.DELIMITER__TAB,
         default=None,
         help=const.HELP__FORCE_TAB_DELIMITER,
         dest=const.ARG_FORCE_DELIMITER,
@@ -329,3 +329,56 @@ def _label_optional_column(
 
 def _prefix_column(column: str, prefix: str) -> str:
     return f"{prefix}{str(column)}"
+
+
+def parse_reheader_columns(columns: t.List[str]) -> t.Dict[str, str]:
+    """
+    Parses a list of strings of the format ["col1=COL1", "col2=COL2"]
+    into a dictionary like {"col1": "COL1", "col2": "COL2"}
+
+    Args:
+        columns: A list of strings formatted as "column_name=mapped_column_name"
+
+    Returns:
+        A dictionary where key is column_name and value is mapped_column_name
+    """
+    seperator = "="
+    mappings = {}
+    for column in columns:
+        parts = column.split(seperator, 1)
+        if len(parts) != 2:
+            msg = f"Invalid reheader column syntax: {column}"
+            raise exceptions.ValidationError(msg)
+        column_name, mapped_name = parts
+        mappings[column_name] = mapped_name
+    return mappings
+
+
+def parse_integer_like_list(integer_list: t.List[str]) -> t.List[int]:
+    """
+    Parses a list of strings of the format ["1", "2", "3"] into a list of
+    integers [1, 2, 3]
+    """
+    parsed_list = []
+    for integer_like in integer_list:
+        try:
+            parsed_list.append(int(integer_like))
+        except ValueError:
+            msg = f"Column does not resemble an index, as it is not an integer-like value: {integer_like}"
+            raise exceptions.ValidationError(msg) from None
+    return parsed_list
+
+
+def parse_integer_like_dict(integer_dict: t.Dict[str, str]) -> t.Dict[int, str]:
+    """
+    Parses a dictionary of strings of the format {"1": "col1", "2": "col2", "3":
+    "col3"} into a dictionary of integers {1: "col1", 2: "col2", 3: "col3"}
+    """
+    parsed_dict = {}
+    for key, value in integer_dict.items():
+        try:
+            parsed_dict[int(key)] = value
+        except ValueError:
+            msg = f"Column does not resemble an index, as it is not an integer-like value: {key}"
+            raise exceptions.ValidationError(msg) from None
+    return parsed_dict

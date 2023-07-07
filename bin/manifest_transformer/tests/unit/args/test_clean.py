@@ -40,6 +40,79 @@ def example_dir_setup(tmp_path):
 # TESTS
 
 
+@pytest.mark.parametrize(
+    "index, is_1_indexed, expected",
+    [
+        # Testing 1-indexed input
+        (1, True, 1),
+        (2, True, 2),
+        (None, True, None),
+        # Testing 0-indexed input
+        (0, False, 0),
+        (1, False, 1),
+        (None, False, None),
+    ],
+)
+def test_clean_index_valid_cases(index, is_1_indexed, expected):
+    # When
+    actual = clean.clean_index(index, is_1_indexed)
+
+    # Then
+    assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "index, is_1_indexed",
+    [
+        # Testing 1-indexed input
+        (0, True),
+        (-1, True),
+        # Testing 0-indexed input
+        (-1, False),
+    ],
+)
+def test_clean_index_invalid_cases(index, is_1_indexed):
+    # When
+    with pytest.raises(exc.ValidationError) as e:
+        clean.clean_index(index, is_1_indexed)
+
+
+@pytest.mark.parametrize("delimiter", ["\t", ",", None])
+def test_clean_input_delimiter_valid(delimiter):
+    # Given
+    expected = delimiter
+
+    # When
+    actual = clean.clean_input_delimiter(delimiter)
+
+    # Then
+    assert actual == expected
+
+
+# Testing for invalid delimiters
+@pytest.mark.parametrize("delimiter", [";", ":", "|", " "])
+def test_clean_input_delimiter_invalid(delimiter):
+    # When
+    with pytest.raises(exc.ValidationError):
+        clean.clean_input_delimiter(delimiter)
+
+
+@pytest.mark.parametrize("delimiter, expected", [(None, ","), ("\t", "\t"), (",", ",")])
+def test_clean_cast_output_delimiter_valid(delimiter, expected):
+    # When
+    actual = clean.clean_output_delimiter(delimiter)
+
+    # Then
+    assert actual == expected
+
+
+@pytest.mark.parametrize("forbidden_delimiter", [";", ":", "|", " "])
+def test_clean_cast_output_delimiter_invalid(forbidden_delimiter):
+    # When
+    with pytest.raises(exc.ValidationError):
+        clean.clean_output_delimiter(forbidden_delimiter)
+
+
 def test_InputFile_clean(input_file_setup):
     # Given
     input_file = input_file_setup

@@ -8,6 +8,8 @@ from src.args.io import (
     finalise_output_file,
 )
 from src.args import validate
+from src import exceptions
+from src import constants as const
 
 
 class InputFile:
@@ -92,3 +94,47 @@ class SummaryFile:
         inferred_file = clean_input_file.with_name(self._summary_name(clean_input_file))
         summary_file = finalise_output_file(inferred_file, self._summary_file)
         return validate.assert_valid_output_file(summary_file)
+
+
+def strict_clean_index(index: int, is_1_indexed: bool = True) -> int:
+    if is_1_indexed and index < 1:
+        msg = f"Index must be greater than 0, not '{index}' - remember that indices are 1-indexed"
+        raise exceptions.ValidationError(msg)
+    if not is_1_indexed and index < 0:
+        msg = f"Index must be greater than or equal to 0, not '{index}' - remember that indices are 0-indexed"
+        raise exceptions.ValidationError(msg)
+    return index
+
+
+def clean_index(index: t.Optional[int], is_1_indexed: bool = True) -> t.Optional[int]:
+    if index is None:
+        return None
+    return strict_clean_index(index, is_1_indexed=is_1_indexed)
+
+
+def clean_input_delimiter(delimiter: t.Optional[str]) -> t.Optional[str]:
+    """
+    Validates & cleans the input delimiter. If the delimiter is None, None is returned.
+    """
+    if delimiter is None:
+        return None
+    allowed_delimiters = [const.DELIMITER__TAB, const.DELIMITER__COMMA]
+    if delimiter not in allowed_delimiters:
+        msg = f"Output file delimiter must be a tab or comma, not '{delimiter}'"
+        raise exceptions.ValidationError(msg)
+    return delimiter
+
+
+def clean_output_delimiter(delimiter: t.Optional[str], default=",") -> str:
+    """
+    Validates & cleans the output delimiter. If the delimiter is None, the default is returned.
+    """
+    allowed_delimiters = [const.DELIMITER__TAB, const.DELIMITER__COMMA]
+    if delimiter is None:
+        clean_delimiter = default
+    else:
+        clean_delimiter = delimiter
+    if clean_delimiter not in allowed_delimiters:
+        msg = f"Output file delimiter must be a tab or comma, not '{delimiter}'"
+        raise exceptions.ValidationError(msg)
+    return clean_delimiter
