@@ -3,7 +3,7 @@ import typing as t
 if t.TYPE_CHECKING:
     from pathlib import Path
 
-from src.args.io import (
+from src.args._io import (
     check_write_permissions,
     check_read_permissions,
 )

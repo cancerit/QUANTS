@@ -3,7 +3,7 @@ from shutil import rmtree
 import datetime
 from pathlib import Path
 
-from src.args import clean
+from src.args import _clean
 from src import exceptions as exc
 
 # CONSTANTS
@@ -55,7 +55,7 @@ def example_dir_setup(tmp_path):
 )
 def test_clean_index_valid_cases(index, is_1_indexed, expected):
     # When
-    actual = clean.clean_index(index, is_1_indexed)
+    actual = _clean.clean_index(index, is_1_indexed)
 
     # Then
     assert actual == expected
@@ -74,7 +74,7 @@ def test_clean_index_valid_cases(index, is_1_indexed, expected):
 def test_clean_index_invalid_cases(index, is_1_indexed):
     # When
     with pytest.raises(exc.ValidationError) as e:
-        clean.clean_index(index, is_1_indexed)
+        _clean.clean_index(index, is_1_indexed)
 
 
 @pytest.mark.parametrize("delimiter", ["\t", ",", None])
@@ -83,7 +83,7 @@ def test_clean_input_delimiter_valid(delimiter):
     expected = delimiter
 
     # When
-    actual = clean.clean_input_delimiter(delimiter)
+    actual = _clean.clean_input_delimiter(delimiter)
 
     # Then
     assert actual == expected
@@ -94,13 +94,13 @@ def test_clean_input_delimiter_valid(delimiter):
 def test_clean_input_delimiter_invalid(delimiter):
     # When
     with pytest.raises(exc.ValidationError):
-        clean.clean_input_delimiter(delimiter)
+        _clean.clean_input_delimiter(delimiter)
 
 
 @pytest.mark.parametrize("delimiter, expected", [(None, ","), ("\t", "\t"), (",", ",")])
 def test_clean_cast_output_delimiter_valid(delimiter, expected):
     # When
-    actual = clean.clean_output_delimiter(delimiter)
+    actual = _clean.clean_output_delimiter(delimiter)
 
     # Then
     assert actual == expected
@@ -110,7 +110,7 @@ def test_clean_cast_output_delimiter_valid(delimiter, expected):
 def test_clean_cast_output_delimiter_invalid(forbidden_delimiter):
     # When
     with pytest.raises(exc.ValidationError):
-        clean.clean_output_delimiter(forbidden_delimiter)
+        _clean.clean_output_delimiter(forbidden_delimiter)
 
 
 def test_InputFile_clean(input_file_setup):
@@ -118,7 +118,7 @@ def test_InputFile_clean(input_file_setup):
     input_file = input_file_setup
 
     # When
-    actual = clean.InputFile(input_file).clean
+    actual = _clean.InputFile(input_file).clean
 
     # Then
     assert actual == input_file
@@ -126,7 +126,7 @@ def test_InputFile_clean(input_file_setup):
     # Finally
     input_file.unlink()
     with pytest.raises(exc.ValidationError):
-        clean.InputFile(input_file).clean
+        _clean.InputFile(input_file).clean
 
 
 def test_OutputFile__with_a_file_path(input_file_setup, example_dir_setup):
@@ -136,7 +136,7 @@ def test_OutputFile__with_a_file_path(input_file_setup, example_dir_setup):
     expected = output_file
 
     # When
-    actual = clean.OutputFile(input_file, output_file).clean
+    actual = _clean.OutputFile(input_file, output_file).clean
 
     # Then
     assert not output_file.exists()
@@ -151,7 +151,7 @@ def test_OutputFile__with_a_prexisting_file_path(input_file_setup, example_dir_s
     expected = output_file
 
     # When
-    actual = clean.OutputFile(input_file, output_file).clean
+    actual = _clean.OutputFile(input_file, output_file).clean
 
     # Then
     assert output_file.exists()
@@ -165,7 +165,7 @@ def test_OutputFile__with_a_dir_path(input_file_setup, example_dir_setup):
     expected = output_dir / "input_file.txt"
 
     # When
-    actual = clean.OutputFile(input_file, output_dir).clean
+    actual = _clean.OutputFile(input_file, output_dir).clean
 
     # Then
     assert actual == expected
@@ -173,7 +173,7 @@ def test_OutputFile__with_a_dir_path(input_file_setup, example_dir_setup):
     # Finally
     rmtree(output_dir.parent)
     with pytest.raises(exc.ValidationError):
-        clean.OutputFile(input_file, output_dir).clean
+        _clean.OutputFile(input_file, output_dir).clean
 
 
 def test_OutputFile__without_a_path_specified(input_file_setup):
@@ -182,7 +182,7 @@ def test_OutputFile__without_a_path_specified(input_file_setup):
     expected = input_file
 
     # When
-    actual = clean.OutputFile(input_file, None).clean
+    actual = _clean.OutputFile(input_file, None).clean
 
     # Then
     assert actual == expected
@@ -198,7 +198,7 @@ def test_SummaryFile__with_a_file_path(
     expected = example_dir_setup / expected_name
 
     # When
-    actual = clean.SummaryFile(input_file, summary_file).clean
+    actual = _clean.SummaryFile(input_file, summary_file).clean
 
     # Then
     assert actual == expected
@@ -215,7 +215,7 @@ def test_SummaryFile__with_a_preexisting_file_path(
     expected = example_dir_setup / expected_name
 
     # When
-    actual = clean.SummaryFile(input_file, summary_file).clean
+    actual = _clean.SummaryFile(input_file, summary_file).clean
 
     # Then
     assert actual == expected
@@ -231,7 +231,7 @@ def test_SummaryFile__with_a_dir_path(
     expected = summary_dir / expected_name
 
     # When
-    actual = clean.SummaryFile(input_file, summary_dir).clean
+    actual = _clean.SummaryFile(input_file, summary_dir).clean
 
     # Then
     assert actual == expected
@@ -244,7 +244,7 @@ def test_SummaryFile__without_a_path_specified(input_file_setup, fixed_datetime)
     expected = input_file.parent / expected_name
 
     # When
-    actual = clean.SummaryFile(input_file, None).clean
+    actual = _clean.SummaryFile(input_file, None).clean
 
     # Then
     assert actual == expected

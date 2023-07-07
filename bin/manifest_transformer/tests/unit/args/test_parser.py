@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from src.args import parser
+from src.args import _parser
 from src import constants as const
 from src.exceptions import ValidationError
 
@@ -35,7 +35,7 @@ def test_ParsedColumns__is_valid(
     column_order, required_columns, optional_columns, expected_result
 ):
     # Given
-    parsed_columns = parser.ParsedColumns(
+    parsed_columns = _parser.ParsedColumns(
         column_order, required_columns, optional_columns
     )
 
@@ -58,7 +58,7 @@ def test_ParsedColumns__from_labelled_columns_valid():
     expected_optional_columns = ("column1",)
 
     # When
-    actual = parser.ParsedColumns.from_labelled_columns(labelled_columns)
+    actual = _parser.ParsedColumns.from_labelled_columns(labelled_columns)
 
     # Then
     assert actual.column_order == expected_column_order
@@ -77,7 +77,7 @@ def test_ParsedColumns__from_labelled_columns_invalid():
 
     # When / Then
     with pytest.raises(ValueError):
-        parser.ParsedColumns.from_labelled_columns(labelled_columns)
+        _parser.ParsedColumns.from_labelled_columns(labelled_columns)
 
 
 def test_get_argparser__sub_command__column_names():
@@ -100,7 +100,7 @@ def test_get_argparser__sub_command__column_names():
     ]
 
     # When
-    namespace = parser.get_argparser().parse_args(cmd.split())
+    namespace = _parser.get_argparser().parse_args(cmd.split())
 
     # Then
     assert namespace.subcommand == const.SUBCOMMAND__COLUMN_NAMES
@@ -134,7 +134,7 @@ def test_get_argparser__sub_command__column_indices():
     ]
 
     # When
-    namespace = parser.get_argparser().parse_args(cmd.split())
+    namespace = _parser.get_argparser().parse_args(cmd.split())
 
     # Then
     assert namespace.subcommand == const.SUBCOMMAND__COLUMN_INDICES
@@ -154,7 +154,7 @@ def test_get_argparser__sub_command__json():
     expected_input = Path("in.json")
 
     # When
-    namespace = parser.get_argparser().parse_args(cmd.split())
+    namespace = _parser.get_argparser().parse_args(cmd.split())
 
     # Then
     assert namespace.subcommand == const.SUBCOMMAND__JSON
@@ -168,7 +168,7 @@ def test__prefix_column():
     expected = f"{prefix}{column}"
 
     # When
-    actual = parser._prefix_column(column, prefix)
+    actual = _parser._prefix_column(column, prefix)
 
     # Then
     assert actual == expected
@@ -180,7 +180,7 @@ def test__label_required_column():
     expected = f"{const.ARGPREFIX__REQUIRED_COLUMN}{column}"
 
     # When
-    actual = parser._label_required_column(column)
+    actual = _parser._label_required_column(column)
 
     # Then
     assert actual == expected
@@ -192,7 +192,7 @@ def test__label_optional_column():
     expected = f"{const.ARGPREFIX__OPTIONAL_COLUMN}{column}"
 
     # When
-    actual = parser._label_optional_column(column)
+    actual = _parser._label_optional_column(column)
 
     # Then
     assert actual == expected
@@ -204,7 +204,7 @@ def test_parse_reheader_columns_valid():
     expected = {"col1": "COL1", "col2": "COL2"}
 
     # When
-    actual = parser.parse_reheader_columns(columns)
+    actual = _parser.parse_reheader_columns(columns)
 
     # Then
     assert actual == expected
@@ -216,7 +216,7 @@ def test_parse_reheader_columns_valid_multiple_equals():
     expected = {"col1": "COL1=Extra", "col2": "COL2"}
 
     # When
-    actual = parser.parse_reheader_columns(columns)
+    actual = _parser.parse_reheader_columns(columns)
 
     # Then
     assert actual == expected
@@ -229,7 +229,7 @@ def test_parse_reheader_columns_invalid_no_equals():
 
     # When
     with pytest.raises(ValidationError):
-        parser.parse_reheader_columns(columns)
+        _parser.parse_reheader_columns(columns)
 
 
 @pytest.mark.parametrize(
@@ -243,7 +243,7 @@ def test_parse_reheader_columns_invalid_no_equals():
 )
 def test_parse_integer_like_list_valid_cases(input_list, expected):
     # When
-    actual = parser.parse_integer_like_list(input_list)
+    actual = _parser.parse_integer_like_list(input_list)
 
     # Then
     assert actual == expected
@@ -256,7 +256,7 @@ def test_parse_integer_like_list_valid_cases(input_list, expected):
 def test_parse_integer_like_list_invalid_cases(input_list):
     # When
     with pytest.raises(ValidationError):
-        parser.parse_integer_like_list(input_list)
+        _parser.parse_integer_like_list(input_list)
 
 
 @pytest.mark.parametrize(
@@ -270,7 +270,7 @@ def test_parse_integer_like_list_invalid_cases(input_list):
 )
 def test_parse_integer_like_dict_valid_cases(input_dict, expected):
     # When
-    actual = parser.parse_integer_like_dict(input_dict)
+    actual = _parser.parse_integer_like_dict(input_dict)
 
     # Then
     assert actual == expected
@@ -287,4 +287,4 @@ def test_parse_integer_like_dict_valid_cases(input_dict, expected):
 def test_parse_integer_like_dict_invalid_cases(input_dict):
     # When
     with pytest.raises(ValidationError):
-        parser.parse_integer_like_dict(input_dict)
+        _parser.parse_integer_like_dict(input_dict)

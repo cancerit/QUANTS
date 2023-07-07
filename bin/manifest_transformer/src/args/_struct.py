@@ -5,8 +5,8 @@ import copy
 
 from src.enums import ColumnMode
 from src import constants as const
-from src.args import parser
-from src.args import clean
+from src.args import _parser
+from src.args import _clean
 
 if t.TYPE_CHECKING:
     from argparse import Namespace
@@ -87,9 +87,9 @@ class CleanArgs:
     def _parse_and_clean_column_tuple(
         column_tuple: t.Tuple[str, ...], is_1_indexed: bool
     ) -> t.Tuple[int, ...]:
-        parsed_columns = parser.parse_integer_like_list(list(column_tuple))
+        parsed_columns = _parser.parse_integer_like_list(list(column_tuple))
         clean_columns = [
-            clean.strict_clean_index(c, is_1_indexed) for c in parsed_columns
+            _clean.strict_clean_index(c, is_1_indexed) for c in parsed_columns
         ]
         return tuple(clean_columns)
 
@@ -97,9 +97,9 @@ class CleanArgs:
     def _parse_and_clean_column_dict(
         column_dict: t.Dict[str, str], is_1_indexed: bool
     ) -> t.Dict[int, str]:
-        parsed_columns = parser.parse_integer_like_dict(column_dict)
+        parsed_columns = _parser.parse_integer_like_dict(column_dict)
         clean_columns = {
-            clean.strict_clean_index(k, is_1_indexed): v
+            _clean.strict_clean_index(k, is_1_indexed): v
             for k, v in parsed_columns.items()
         }
         return clean_columns
@@ -113,7 +113,7 @@ class CleanArgs:
         input_file__raw = getattr(namespace, const.ARG_INPUT)
         output_file__raw = getattr(namespace, const.ARG_OUTPUT)
         summary_file__raw = getattr(namespace, const.ARG_SUMMARY)
-        parsed_columns = parser.ParsedColumns.from_labelled_columns(
+        parsed_columns = _parser.ParsedColumns.from_labelled_columns(
             getattr(namespace, const.ARG_COLUMNS)
         )
         output_file_delimiter__raw = (
@@ -131,23 +131,25 @@ class CleanArgs:
 
         # Clean raw values
         mode = ColumnMode(mode__raw)
-        input_file__clean = clean.InputFile(input_file__raw).clean
-        output_file__clean = clean.OutputFile(input_file__raw, output_file__raw).clean
-        summary_file__clean = clean.SummaryFile(
+        input_file__clean = _clean.InputFile(input_file__raw).clean
+        output_file__clean = _clean.OutputFile(input_file__raw, output_file__raw).clean
+        summary_file__clean = _clean.SummaryFile(
             input_file__raw, summary_file__raw
         ).clean
         parsed_columns.assert_valid()
         column_order__raw = parsed_columns.column_order
         required_columns__raw = parsed_columns.required_columns
         optional_columns__raw = parsed_columns.optional_columns
-        output_file_delimiter__clean = clean.clean_output_delimiter(
+        output_file_delimiter__clean = _clean.clean_output_delimiter(
             output_file_delimiter__raw
         )
-        forced_intput_file_delimiter__clean = clean.clean_input_delimiter(
+        forced_intput_file_delimiter__clean = _clean.clean_input_delimiter(
             forced_intput_file_delimiter__raw
         )
-        forced_header_row_index__clean = clean.clean_index(forced_header_row_index__raw)
-        reheader_mapping__raw = parser.parse_reheader_columns(reheader_mapping__raw)
+        forced_header_row_index__clean = _clean.clean_index(
+            forced_header_row_index__raw
+        )
+        reheader_mapping__raw = _parser.parse_reheader_columns(reheader_mapping__raw)
 
         # Normalize string columns to int columns, if necessary
         if mode == ColumnMode.COLUMN_INDICES:

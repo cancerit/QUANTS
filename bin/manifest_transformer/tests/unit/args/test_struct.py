@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from src.args import parser
-from src.args import struct
+from src.args import _parser
+from src.args import _struct
 from src.enums import ColumnMode
 
 # TESTS
@@ -18,7 +18,7 @@ def test_CleanArgs__with_column_names(make_csv_file):
         "-s summary.json "
         "-r col1=COL1 col3=COL3"
     )
-    expected = struct.CleanArgs(
+    expected = _struct.CleanArgs(
         is_1_indexed=True,
         mode=ColumnMode.COLUMN_NAMES,
         input_file=input_file,
@@ -34,8 +34,8 @@ def test_CleanArgs__with_column_names(make_csv_file):
     )
 
     # When
-    namespace = parser.get_argparser().parse_args(cmd.split())
-    actual = struct.CleanArgs.from_namespace(namespace)
+    namespace = _parser.get_argparser().parse_args(cmd.split())
+    actual = _struct.CleanArgs.from_namespace(namespace)
 
     # Then
     assert actual == expected
@@ -52,7 +52,7 @@ def test_CleanArgs__with_column_indices(make_csv_file):
         "-s summary.json "
         "-r 1=COL1 3=COL3"
     )
-    expected = struct.CleanArgs(
+    expected = _struct.CleanArgs(
         is_1_indexed=True,
         mode=ColumnMode.COLUMN_INDICES,
         input_file=input_file,
@@ -68,8 +68,8 @@ def test_CleanArgs__with_column_indices(make_csv_file):
     )
 
     # When
-    namespace = parser.get_argparser().parse_args(cmd.split())
-    actual = struct.CleanArgs.from_namespace(namespace)
+    namespace = _parser.get_argparser().parse_args(cmd.split())
+    actual = _struct.CleanArgs.from_namespace(namespace)
 
     # Then
     assert actual == expected
@@ -78,7 +78,7 @@ def test_CleanArgs__with_column_indices(make_csv_file):
 def test_CleanArgs__convert_to_0_indexed_and_back_to_1_indexed(make_csv_file):
     # Given
     input_file = make_csv_file()
-    start_clean_args = struct.CleanArgs(
+    start_clean_args = _struct.CleanArgs(
         is_1_indexed=True,
         mode=ColumnMode.COLUMN_INDICES,
         input_file=input_file,

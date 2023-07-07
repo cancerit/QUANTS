@@ -5,7 +5,7 @@ import tempfile
 from pathlib import Path
 import shutil
 
-from src.args import validate
+from src.args import _validate
 
 from src import exceptions as exc
 
@@ -105,10 +105,10 @@ def test_assert_valid_input_file(input_file_setup):
     # When
     if should_throw:
         with pytest.raises(exc.ValidationError):
-            validate.assert_valid_input_file(input_file)
+            _validate.assert_valid_input_file(input_file)
     else:
         # When and Then
-        actual = validate.assert_valid_input_file(input_file)
+        actual = _validate.assert_valid_input_file(input_file)
         assert actual == expected
 
 
@@ -121,8 +121,8 @@ def test_assert_valid_output_file(output_file_setup):
     # When
     if should_throw:
         with pytest.raises(exc.ValidationError):
-            validate.assert_valid_output_file(output_file)
+            _validate.assert_valid_output_file(output_file)
     else:
         # When and Then
-        actual = validate.assert_valid_output_file(output_file)
+        actual = _validate.assert_valid_output_file(output_file)
         assert actual == expected

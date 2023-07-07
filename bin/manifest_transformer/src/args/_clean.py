@@ -4,10 +4,10 @@ import datetime
 if t.TYPE_CHECKING:
     from pathlib import Path
 
-from src.args.io import (
+from src.args._io import (
     finalise_output_file,
 )
-from src.args import validate
+from src.args import _validate
 from src import exceptions
 from src import constants as const
 
@@ -24,7 +24,7 @@ class InputFile:
 
     @property
     def clean(self) -> "Path":
-        return validate.assert_valid_input_file(self._input_file)
+        return _validate.assert_valid_input_file(self._input_file)
 
 
 class OutputFile:
@@ -50,7 +50,7 @@ class OutputFile:
     def clean(self) -> "Path":
         clean_input_file = self._input_file.clean
         output_file = finalise_output_file(clean_input_file, self._output_file)
-        return validate.assert_valid_output_file(output_file)
+        return _validate.assert_valid_output_file(output_file)
 
 
 class SummaryFile:
@@ -93,7 +93,7 @@ class SummaryFile:
         # evaluates the output file.
         inferred_file = clean_input_file.with_name(self._summary_name(clean_input_file))
         summary_file = finalise_output_file(inferred_file, self._summary_file)
-        return validate.assert_valid_output_file(summary_file)
+        return _validate.assert_valid_output_file(summary_file)
 
 
 def strict_clean_index(index: int, is_1_indexed: bool = True) -> int:
