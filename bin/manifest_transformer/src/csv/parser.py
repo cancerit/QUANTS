@@ -36,7 +36,7 @@ class CSVParser:
         elif delimiter is not None:
             self._dialect = None
             self._delimiter = delimiter
-            self._use_dialect = True
+            self._use_dialect = False
 
     def __init__guard_kwargs(
         self, dialect: t.Optional[csv.Dialect] = None, delimiter: t.Optional[str] = None
@@ -90,8 +90,10 @@ class CSVParser:
         """
         with open(self._file_path, newline="") as csvfile:
             csvfile.seek(self._offset)
-            reader = csv.reader(csvfile, dialect=self._dialect)
-
+            if self._use_dialect:
+                reader = csv.reader(csvfile, dialect=self._dialect)
+            else:
+                reader = csv.reader(csvfile, delimiter=self._delimiter)
             try:
                 yield reader
             finally:

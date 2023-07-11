@@ -208,6 +208,34 @@ def test_CSVParser_get_csv_reader(
 
 
 @pytest.mark.parametrize(
+    "get_csv_path, expected_first_row, expected_second_row", CSV_FILE_READER_LINE_PARAMS
+)
+def test_CSVParser_get_csv_reader__with_forced_delimiter(
+    get_csv_path: t.Callable[[], Path],
+    expected_first_row: t.List[str],
+    expected_second_row: t.List[str],
+):
+    # Given
+    forced_delimenter = "\t" if get_csv_path().suffix == ".tsv" else ","
+    csv_file_path = get_csv_path()
+    csv_properties = CSVFileProperties.from_csv_file(
+        csv_file_path,
+        # We want to override the sniffed delimiter
+        forced_delimiter=forced_delimenter,
+    )
+    parser = CSVParser.from_csv_file_properties(csv_file_path, csv_properties)
+
+    # When
+    with parser.get_csv_reader() as csv_reader:
+        actual_first_row = next(csv_reader)
+        actual_second_row = next(csv_reader)
+
+    # Then
+    assert actual_first_row == expected_first_row
+    assert actual_second_row == expected_second_row
+
+
+@pytest.mark.parametrize(
     "get_csv_path, expected_column_names, should_throw", CSV_FILE_COLUMN_PARAMS
 )
 def test_CSVParser_column_header_names(
