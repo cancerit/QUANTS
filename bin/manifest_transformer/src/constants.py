@@ -29,15 +29,8 @@ HELP__OPTIONAL_COLUMNS_BY_INDEX = (
 HELP__REHEADER_BY_NAME = "Reheader columns. Provide a list of column names mappings to reheadder the output file. The format is: --reheader col1=COL1 col2=COL2 col3=COL3"
 HELP__REHEADER_BY_INDEX = "Reheader columns. Provide a list of column names indices to reheadder the output file. The format is: --reheader 1=COL1 2=COL2 3=COL3"
 
-ARG_SUBCOMMAND = "subcommand"
-ARG_INPUT = "input"
-ARG_OUTPUT = "output"
-ARG_SUMMARY = "summary"
-ARG_CAST_OUTPUT_AS_TSV = "cast_output_as_tsv"
-ARG_FORCE_DELIMITER = "force_delimiter"
-ARG_FORCE_HEADER_ROW_INDEX = "force_header_row_index"
+
 ARG_COLUMNS = "columns"
-ARG_REHEADER = "reheader"
 
 ARGPREFIX__REQUIRED_COLUMN = "REQUIRED_COLUMN:"
 ARGPREFIX__OPTIONAL_COLUMN = "OPTIONAL_COLUMN:"
@@ -58,17 +51,21 @@ NULL_VALUE__EMPTY = ""
 DELIMITER__COMMA = ","
 DELIMITER__TAB = "\t"
 
-JSON_PARAM__MODE = "mode"
-JSON_PARAM__INPUT_FILE = "input_file"
-JSON_PARAM__OUTPUT_FILE = "output_file"
-JSON_PARAM__SUMMARY_FILE = "summary_file"
+JSON_PARAM__MODE = ARG_SUBCOMMAND = "mode"
+JSON_PARAM__INPUT_FILE = ARG_INPUT = "input_file"
+JSON_PARAM__OUTPUT_FILE = ARG_OUTPUT = "output_file"
+JSON_PARAM__SUMMARY_FILE = ARG_SUMMARY = "summary_file"
 JSON_PARAM__COLUMN_ORDER = "column_order"
 JSON_PARAM__REQUIRED_COLUMNS = "required_columns"
 JSON_PARAM__OPTIONAL_COLUMNS = "optional_columns"
-JSON_PARAM__REHEADER = "reheader_mapping"
-JSON_PARAM__OUTPUT_DELIMITER = "output_file_delimiter"
-JSON_PARAM__FORCED_INPUT_DELIMITER = "forced_input_file_delimiter"
-JSON_PARAM__FORCED_HEADER_ROW_INDEX = "forced_header_row_index"
+JSON_PARAM__REHEADER = ARG_REHEADER = "reheader_mapping"
+JSON_PARAM__OUTPUT_DELIMITER = ARG_OUTPUT_DELIMITER = "output_file_delimiter"
+JSON_PARAM__FORCED_INPUT_DELIMITER = (
+    ARG_FORCE_INPUT_DELIMITER
+) = "forced_input_file_delimiter"
+JSON_PARAM__FORCED_HEADER_ROW_INDEX = (
+    ARG_FORCE_HEADER_ROW_INDEX
+) = "forced_header_row_index"
 
 
 def get_null_values() -> t.List[str]:

@@ -1,8 +1,10 @@
+import typing as t
 from pathlib import Path
 
 from src.args import _parser
 from src.args import _struct
 from src.enums import ColumnMode
+from src.args._json_helper import read_json_file
 
 from tests.test_data import files
 
@@ -77,7 +79,7 @@ def test_CleanArgs__with_column_indices(make_csv_file):
     assert actual == expected
 
 
-def test_CleanArgs__from_json_params__with_column_names():
+def test_CleanArgs__json__with_column_names():
     # Given
     json_param = files.example_json_params_1_column_names()
     expected = _struct.CleanArgs(
@@ -118,13 +120,14 @@ def test_CleanArgs__from_json_params__with_column_names():
     )
 
     # When
-    actual = _struct.CleanArgs.from_json_params(json_param)
+    as_dict = read_json_file(json_param)
+    actual = _struct.CleanArgs.from_dict(as_dict)
 
     # Then
     assert actual == expected
 
 
-def test_CleanArgs__from_json_params__with_column_indices():
+def test_CleanArgs__json__with_column_indices():
     # Given
     json_param = files.example_json_params_1_column_indices()
     expected = _struct.CleanArgs(
@@ -148,7 +151,8 @@ def test_CleanArgs__from_json_params__with_column_indices():
     )
 
     # When
-    actual = _struct.CleanArgs.from_json_params(json_param)
+    as_dict = read_json_file(json_param)
+    actual = _struct.CleanArgs.from_dict(as_dict)
 
     # Then
     assert actual == expected

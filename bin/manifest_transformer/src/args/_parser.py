@@ -14,6 +14,21 @@ class ParsedColumns:
     required_columns: t.Tuple[str, ...]
     optional_columns: t.Tuple[str, ...]
 
+    def __post_init__(self):
+        iterable = [
+            ("column_order", self.column_order),
+            ("required_columns", self.required_columns),
+            ("optional_columns", self.optional_columns),
+        ]
+        for attr, value in iterable:
+            for element in value:
+                if not isinstance(element, (str, int)):
+                    msg = f"{attr} must be a tuple of strings (or ints which are converted to str), but {element} is a {type(element)}"
+                    raise TypeError(msg)
+            # Normalise all elements to strings
+            setattr(self, attr, tuple([str(element) for element in value]))
+        return
+
     def assert_valid(self):
         """
         Assert the columns are valid.
@@ -222,9 +237,11 @@ def _add_common_arguments_to_parser(parser, use_name: bool):
     )
     parser.add_argument(
         "--output-as-tsv",
-        action="store_true",
+        action="store_const",
+        const=const.DELIMITER__TAB,
+        default=const.DELIMITER__COMMA,
         help=const.HELP__CAST_OUTPUT_AS_TSV,
-        dest=const.ARG_CAST_OUTPUT_AS_TSV,
+        dest=const.ARG_OUTPUT_DELIMITER,
     )
     parser.add_argument(
         "-s",
@@ -290,7 +307,7 @@ def _add_common_arguments_to_parser(parser, use_name: bool):
         const=const.DELIMITER__COMMA,
         default=None,
         help=const.HELP__FORCE_COMMA_DELIMITER,
-        dest=const.ARG_FORCE_DELIMITER,
+        dest=const.ARG_FORCE_INPUT_DELIMITER,
     )
     forced_delimiter_group.add_argument(
         "--force-tab",
@@ -298,7 +315,7 @@ def _add_common_arguments_to_parser(parser, use_name: bool):
         const=const.DELIMITER__TAB,
         default=None,
         help=const.HELP__FORCE_TAB_DELIMITER,
-        dest=const.ARG_FORCE_DELIMITER,
+        dest=const.ARG_FORCE_INPUT_DELIMITER,
     )
 
     # Forced column header line index
@@ -351,7 +368,7 @@ def parse_reheader_columns(columns: t.Optional[t.List[str]]) -> t.Dict[str, str]
     for column in columns:
         parts = column.split(seperator, 1)
         if len(parts) != 2:
-            msg = f"Invalid reheader column syntax: {column}"
+            msg = f"Invalid reheader column syntax: {column!r}, must be of the form 'column_name=mapped_column_name'. All reheader columns: {columns}."
             raise exceptions.ValidationError(msg)
         column_name, mapped_name = parts
         mappings[column_name] = mapped_name
