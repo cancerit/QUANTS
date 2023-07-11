@@ -7,6 +7,8 @@ from pathlib import Path
 from collections import Counter
 
 from src import constants as const
+from src.enums import ColumnMode
+from src.exceptions import ValidationError
 
 if t.TYPE_CHECKING:
     import _csv
@@ -98,6 +100,24 @@ class CSVParser:
                 yield reader
             finally:
                 pass
+
+    def translate_column_names_to_indices(
+        self, column_names: t.Iterable[str], one_index: bool = False
+    ) -> t.Tuple[int, ...]:
+        """
+        Translate column names to column indices, in the order they are provided. The indices are 0-based.
+
+        column_names: The column names to translate.
+        one_index: Whether to return 1-based indices.
+        """
+        column_names_ordered = self.column_header_names()
+        increment = 1 if one_index else 0
+        indices = []
+        for column_name in column_names:
+            index = column_names_ordered.index(column_name)
+            index += increment
+            indices.append(index)
+        return tuple(indices)
 
     def column_indices(
         self, one_index: bool = False, comprehensive: bool = False
@@ -221,3 +241,38 @@ class CSVParser:
                 if any(cell in null_values_set for cell in row):
                     null_rows.append(idx)
         return null_rows
+
+
+def get_column_order_as_indices(
+    csv_parser: "CSVParser",
+    mode: ColumnMode,
+    column_order: t.Iterable[t.Union[str, int]],
+) -> t.Tuple[int, ...]:
+    try:
+        indices = _get_column_order_as_indices(
+            csv_parser=csv_parser,
+            mode=mode,
+            column_order=column_order,
+        )
+    except RuntimeError as err:
+        msg = "It is very likely that the CSV file has no header row or you did set/force the correct header index."
+        raise ValidationError(msg) from err
+    return indices
+
+
+def _get_column_order_as_indices(
+    csv_parser: "CSVParser",
+    mode: ColumnMode,
+    column_order: t.Iterable[t.Union[str, int]],
+) -> t.Tuple[int, ...]:
+    if mode == ColumnMode.COLUMN_INDICES:
+        column_order_as_indices = [int(elem) for elem in column_order]
+    elif mode == ColumnMode.COLUMN_NAMES:
+        column_names = [str(elem) for elem in column_order]
+        column_order_as_indices = csv_parser.translate_column_names_to_indices(
+            column_names=column_names,
+            one_index=False,
+        )
+    else:
+        raise NotImplementedError(f"Invalid mode: {mode!r}")
+    return tuple(column_order_as_indices)

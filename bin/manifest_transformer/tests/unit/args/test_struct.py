@@ -32,7 +32,7 @@ def test_CleanArgs__with_column_names(make_csv_file):
         required_columns=("col1", "col2", "col3"),
         optional_columns=("opt-col4", "opt-col5"),
         output_file_delimiter="\t",
-        forced_intput_file_delimiter=",",
+        forced_input_file_delimiter=",",
         forced_header_row_index=1,
         reheader_mapping={"col1": "COL1", "col3": "COL3"},
     )
@@ -66,7 +66,7 @@ def test_CleanArgs__with_column_indices(make_csv_file):
         required_columns=(1, 2, 3),
         optional_columns=(4, 5),
         output_file_delimiter=",",
-        forced_intput_file_delimiter=None,
+        forced_input_file_delimiter=None,
         forced_header_row_index=1,
         reheader_mapping={1: "COL1", 3: "COL3"},
     )
@@ -109,7 +109,7 @@ def test_CleanArgs__json__with_column_names():
         ),
         optional_columns=("src_type", "ref_chr", "ref_strand", "ref_start", "ref_end"),
         output_file_delimiter=",",
-        forced_intput_file_delimiter=None,
+        forced_input_file_delimiter=None,
         forced_header_row_index=None,
         reheader_mapping={
             "oligo_name": "OLIGO_NAME",
@@ -140,7 +140,7 @@ def test_CleanArgs__json__with_column_indices():
         required_columns=(1, 2, 3, 4, 5),
         optional_columns=(6, 7, 8, 9, 10),
         output_file_delimiter=",",
-        forced_intput_file_delimiter=None,
+        forced_input_file_delimiter=None,
         forced_header_row_index=None,
         reheader_mapping={
             1: "OLIGO_NAME",
@@ -171,7 +171,7 @@ def test_CleanArgs__convert_to_0_indexed_and_back_to_1_indexed(make_csv_file):
         required_columns=(1, 2, 3),
         optional_columns=(4, 5),
         output_file_delimiter=",",
-        forced_intput_file_delimiter=None,
+        forced_input_file_delimiter=None,
         forced_header_row_index=1,
         reheader_mapping={1: "COL1", 3: "COL3"},
     )

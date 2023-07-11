@@ -7,6 +7,10 @@ from pathlib import Path
 
 from src.exceptions import DelimiterError, UserInterventionRequired
 from src import constants as const
+from src.enums import ColumnMode
+
+if t.TYPE_CHECKING:
+    from src.args._struct import CleanArgs
 
 _CHUNK_SIZE_1MB = 1024 * 1024
 
@@ -53,6 +57,34 @@ class CSVFileProperties:
 
     def has_column_headers(self) -> bool:
         return self.column_headers_line_index >= 0
+
+    @classmethod
+    def from_clean_args(cls, clean_args: "CleanArgs") -> "CSVFileProperties":
+        struct = (
+            clean_args.copy_as_0_indexed() if clean_args.is_1_indexed else clean_args
+        )
+        if struct.mode == ColumnMode.COLUMN_NAMES:
+            # We use the `required_columns`` as the source of column names, not the
+            # `column_order` value as it is a stronger source of columns.
+            column_names = [str(elem) for elem in struct.required_columns]
+            column_names = column_names if column_names else None
+            csv_file_properties = CSVFileProperties.from_csv_file(
+                csv_file_path=struct.input_file,
+                column_names=column_names,
+                forced_delimiter=struct.forced_input_file_delimiter,
+                forced_column_headers_line_index=struct.forced_header_row_index,
+            )
+        elif struct.mode == ColumnMode.COLUMN_INDICES:
+            column_names = None  # Column names are not available for this mode.
+            csv_file_properties = CSVFileProperties.from_csv_file(
+                csv_file_path=struct.input_file,
+                column_names=column_names,
+                forced_delimiter=struct.forced_input_file_delimiter,
+                forced_column_headers_line_index=struct.forced_header_row_index,
+            )
+        else:
+            raise NotImplementedError(f"Unknown mode: {struct.mode}")
+        return csv_file_properties
 
     @classmethod
     def from_csv_file(

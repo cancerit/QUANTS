@@ -25,7 +25,7 @@ class CleanArgs:
     required_columns: t.Tuple[t.Union[str, int], ...]
     optional_columns: t.Tuple[t.Union[str, int], ...]
     output_file_delimiter: str
-    forced_intput_file_delimiter: t.Optional[str]
+    forced_input_file_delimiter: t.Optional[str]
     forced_header_row_index: t.Optional[int]
     reheader_mapping: t.Dict[t.Union[str, int], str]
 
@@ -182,7 +182,7 @@ class CleanArgs:
         output_file__raw = valid_dict[const.ARG_OUTPUT]
         summary_file__raw = valid_dict[const.ARG_SUMMARY]
         output_file_delimiter__raw = valid_dict[const.JSON_PARAM__OUTPUT_DELIMITER]
-        forced_intput_file_delimiter__raw = valid_dict[const.ARG_FORCE_INPUT_DELIMITER]
+        forced_input_file_delimiter__raw = valid_dict[const.ARG_FORCE_INPUT_DELIMITER]
         forced_header_row_index__raw = valid_dict[const.ARG_FORCE_HEADER_ROW_INDEX]
         reheader_mapping__raw = valid_dict[const.ARG_REHEADER]
 
@@ -200,8 +200,8 @@ class CleanArgs:
         output_file_delimiter__clean = _clean.clean_output_delimiter(
             output_file_delimiter__raw
         )
-        forced_intput_file_delimiter__clean = _clean.clean_input_delimiter(
-            forced_intput_file_delimiter__raw
+        forced_input_file_delimiter__clean = _clean.clean_input_delimiter(
+            forced_input_file_delimiter__raw
         )
         forced_header_row_index__clean = _clean.clean_index(
             forced_header_row_index__raw
@@ -248,7 +248,7 @@ class CleanArgs:
             required_columns=tuple(required_columns__clean),
             optional_columns=tuple(optional_columns__clean),
             output_file_delimiter=output_file_delimiter__clean,
-            forced_intput_file_delimiter=forced_intput_file_delimiter__clean,
+            forced_input_file_delimiter=forced_input_file_delimiter__clean,
             forced_header_row_index=forced_header_row_index__clean,
             reheader_mapping=reheader_mapping__clean,
         )

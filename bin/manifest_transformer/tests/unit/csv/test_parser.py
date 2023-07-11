@@ -404,3 +404,87 @@ def test_CSVParser_find_rows_with_nulls__using_non_default_null_values(
 
     # Then
     assert len(null_rows) in expected, csv_file_path.read_text()
+
+
+@pytest.mark.parametrize(
+    "given_column_names, expected_column_indices",
+    [
+        pytest.param(
+            ["col_0", "col_1", "col_2", "col_3", "col_4"],
+            [0, 1, 2, 3, 4],
+            id="all_columns_in_order",
+        ),
+        pytest.param(
+            ["col_4", "col_2", "col_0", "col_3", "col_1"],
+            [4, 2, 0, 3, 1],
+            id="all_columns_random_order",
+        ),
+        pytest.param(
+            ["col_1", "col_2", "col_3"],
+            [1, 2, 3],
+            id="some_columns_in_order",
+        ),
+        pytest.param(
+            ["col_3", "col_1", "col_2"],
+            [3, 1, 2],
+            id="some_columns_random_order",
+        ),
+        pytest.param(
+            [],
+            [],
+            id="no_columns",
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "has_file_header",
+    [
+        pytest.param(True, id="has_file_header"),
+        pytest.param(False, id="no_file_header"),
+    ],
+)
+@pytest.mark.parametrize(
+    "has_column_header",
+    [
+        pytest.param(True, id="has_column_header"),
+        pytest.param(False, id="no_column_header"),
+    ],
+)
+def test_CSVParser_translate_column_names_to_indices(
+    make_csv_file,
+    has_file_header,
+    given_column_names,
+    expected_column_indices,
+    has_column_header,
+):
+    # Given
+    csv_file_path = make_csv_file(
+        is_erroneous=False,
+        columns=5,
+        include_file_header=has_file_header,
+        include_column_header=has_column_header,
+    )
+    csv_properties = CSVFileProperties.from_csv_file(csv_file_path)
+    expected_column_indices__0_indexed = tuple(expected_column_indices)
+    expected_column_indices__1_indexed = tuple([i + 1 for i in expected_column_indices])
+
+    # When
+    parser = CSVParser.from_csv_file_properties(csv_file_path, csv_properties)
+
+    if has_column_header:
+        actual_column_indices__0_indexed = parser.translate_column_names_to_indices(
+            given_column_names, one_index=False
+        )
+        actual_column_indices__1_indexed = parser.translate_column_names_to_indices(
+            given_column_names, one_index=True
+        )
+
+        # Then
+        assert expected_column_indices__0_indexed == actual_column_indices__0_indexed
+        assert expected_column_indices__1_indexed == actual_column_indices__1_indexed
+    elif not has_column_header:
+        # When and Then
+        with pytest.raises(RuntimeError):
+            actual_column_indices__0_indexed = parser.translate_column_names_to_indices(
+                given_column_names, one_index=False
+            )

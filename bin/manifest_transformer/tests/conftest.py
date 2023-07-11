@@ -7,7 +7,103 @@ import pytest
 import numpy as np
 import pandas as pd
 
+from tests.test_data import files
+
 # HELPERS
+
+
+# CONSTANTS
+_EXAMPLE_CSV = files.example_csv_1_with_column_headers()
+
+
+def json_params__column_names() -> t.Dict[str, t.Any]:
+    json_like_data = {
+        "mode": "column-names",
+        "input_file": str(_EXAMPLE_CSV),
+        "output_file": "example_data_1_w_column_headers.output.csv",
+        "summary_file": "example_data_1_w_column_headers.summary.json",
+        "column_order": [
+            "oligo_name",
+            "species",
+            "assembly",
+            "gene_id",
+            "transcript_id",
+            "src_type",
+            "ref_chr",
+            "ref_strand",
+            "ref_start",
+            "ref_end",
+        ],
+        "required_columns": [
+            "oligo_name",
+            "species",
+            "assembly",
+            "gene_id",
+            "transcript_id",
+        ],
+        "optional_columns": [
+            "src_type",
+            "ref_chr",
+            "ref_strand",
+            "ref_start",
+            "ref_end",
+        ],
+        "reheader_mapping": {
+            "oligo_name": "OLIGO_NAME",
+            "species": "SPECIES",
+            "assembly": "ASSEMBLY",
+            "gene_id": "GENE_ID",
+        },
+        "output_file_delimiter": ",",
+        "forced_input_file_delimiter": None,
+        "forced_header_row_index": None,
+    }
+    return json_like_data.copy()
+
+
+def json_params__column_indices() -> t.Dict[str, t.Any]:
+    json_like_data = {
+        "mode": "column-indices",
+        "input_file": str(_EXAMPLE_CSV),
+        "output_file": "example_data_1_w_column_headers.output.csv",
+        "summary_file": "example_data_1_w_column_headers.summary.json",
+        "column_order": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+        ],
+        "required_columns": [
+            1,
+            2,
+            3,
+            4,
+            5,
+        ],
+        "optional_columns": [
+            6,
+            7,
+            8,
+            9,
+            10,
+        ],
+        "reheader_mapping": {
+            "1": "OLIGO_NAME",
+            "2": "SPECIES",
+            "3": "ASSEMBLY",
+            "4": "GENE_ID",
+        },
+        "output_file_delimiter": ",",
+        "forced_input_file_delimiter": None,
+        "forced_header_row_index": None,
+    }
+    return json_like_data.copy()
 
 
 def _add_file_header(func):
@@ -39,6 +135,7 @@ def generate_csv_file(
     seed: int = 0,
     rows: int = 10,
     columns: int = 5,
+    delimiter: t.Optional[str] = None,
     include_file_header: bool = True,
     include_column_header: bool = True,
     include_null_values: bool = False,
@@ -50,6 +147,7 @@ def generate_csv_file(
         file_path (Path): Path where the CSV file will be written.
         seed: Seed for the random generator. Defaults to 0.
         rows: Number of rows in the CSV file. Defaults to 10.
+        delimiter: The delimiter to use when serializing the csv. Defaults to ",".
         columns: Number of columns in the CSV file. Defaults to 5.
         include_file_header: If True, includes a file header. Defaults to True.
         include_column_header: If True, includes a column header. Defaults to True.
@@ -58,6 +156,8 @@ def generate_csv_file(
     """
     if null_value is None:
         null_value = "NA"
+    if delimiter is None:
+        delimiter = ","
 
     column_names = [f"col_{str(i)}" for i in range(columns)]
     final_column_names = column_names if include_column_header else None
@@ -72,7 +172,13 @@ def generate_csv_file(
 
     df = pd.DataFrame(data, columns=final_column_names)
 
-    df.to_csv(file_path, index=False, na_rep=null_value)
+    df.to_csv(
+        file_path,
+        index=False,
+        na_rep=null_value,
+        sep=delimiter,
+        header=include_column_header,
+    )
     return file_path
 
 
@@ -82,6 +188,7 @@ def generate_erroneous_csv_file(
     seed: int = 0,
     rows: int = 10,
     columns: int = 5,
+    delimiter: t.Optional[str] = None,
     include_file_header: bool = True,
     include_column_header: bool = True,
     include_null_values: bool = False,
@@ -96,6 +203,7 @@ def generate_erroneous_csv_file(
         seed: Seed for the random generator. Defaults to 0.
         rows: Number of rows in the CSV file. Defaults to 10.
         columns: Number of columns in the CSV file. Defaults to 5.
+        delimiter: The delimiter to use when serializing the csv. Defaults to ",".
         include_file_header: If True, includes a file header. Defaults to True.
         include_column_header: If True, includes a column header. Defaults to True.
         include_null_values: If True, includes Null values in some float fields. Defaults to False.
@@ -106,6 +214,7 @@ def generate_erroneous_csv_file(
         seed=seed,
         rows=rows,
         columns=columns,
+        delimiter=delimiter,
         include_file_header=include_file_header,
         include_column_header=include_column_header,
         include_null_values=include_null_values,
@@ -134,15 +243,44 @@ def generate_erroneous_csv_file(
 
 
 @pytest.fixture
+def make_json_file(
+    tmp_path: Path,
+) -> t.Generator[t.Callable[[t.Dict[str, t.Any]], Path], None, None]:
+    import json
+
+    json_file = tmp_path / "json_params.json"
+
+    def _make_json_params(json_like_data: t.Dict[str, t.Any]) -> Path:
+        with open(json_file, "w") as f:
+            json.dump(json_like_data, f)
+        return json_file
+
+    yield _make_json_params
+
+
+@pytest.fixture
+def make_json_cmd(
+    make_json_file,
+) -> t.Generator[t.Callable[[t.Dict[str, t.Any]], t.List[str]], None, None]:
+    def _make_json_cmd(json_like_data: t.Dict[str, t.Any]) -> t.List[str]:
+        json_file = make_json_file(json_like_data)
+        cmd = f"json {str(json_file)}".split()
+        return cmd
+
+    yield _make_json_cmd
+
+
+@pytest.fixture
 def make_csv_file(
     tmp_path,
 ) -> t.Generator[
-    t.Callable[[bool, int, bool, bool, bool, t.Optional[str]], Path], None, None
+    t.Callable[[bool, int, str, bool, bool, bool, t.Optional[str]], Path], None, None
 ]:
     """
     Make a CSV file from a callable that takes the following keyword arguments:
         is_erroneous: If True, generates an erroneous CSV file. Defaults to False.
         columns: Number of columns in the CSV file. Defaults to 5.
+        delimiter: The delimiter to use when serializing the csv. Defaults to ",".
         include_file_header: If True, includes a file header. Defaults to True.
         include_column_header: If True, includes a column header. Defaults to True.
         include_null_values: If True, includes Null values in some float fields. Defaults to False.
@@ -157,6 +295,7 @@ def make_csv_file(
     def _make_csv_file(
         is_erroneous: bool = False,
         columns: int = 5,
+        delimiter: t.Optional[str] = None,
         include_file_header: bool = True,
         include_column_header: bool = True,
         include_null_values: bool = False,
@@ -167,6 +306,7 @@ def make_csv_file(
             csv_file_path,
             rows=rows,
             columns=columns,
+            delimiter=delimiter,
             include_file_header=include_file_header,
             include_column_header=include_column_header,
             include_null_values=include_null_values,
