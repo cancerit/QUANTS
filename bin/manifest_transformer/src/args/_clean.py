@@ -19,7 +19,11 @@ class InputFile:
     """
 
     def __init__(self, input_file: t.Union["Path", str]):
-        self._input_file: "Path" = Path(input_file)
+        try:
+            self._input_file: "Path" = Path(input_file)
+        except TypeError:
+            msg = f"Input file must be a string or Path, not {type(input_file)}"
+            raise exceptions.ValidationError(msg) from None
 
     @property
     def clean(self) -> "Path":
@@ -46,7 +50,7 @@ class OutputFile:
         input_file: t.Union["Path", str],
         output_file: t.Optional[t.Union["Path", str]],
     ):
-        self._input_file: "InputFile" = InputFile(Path(input_file))
+        self._input_file: "InputFile" = InputFile(input_file)
         self._output_file: t.Optional["Path"] = (
             Path(output_file) if output_file is not None else None
         )
@@ -81,7 +85,7 @@ class SummaryFile:
         input_file: "t.Union[str, Path]",
         summary_file: t.Optional[t.Union["Path", str]],
     ):
-        self._input_file: "InputFile" = InputFile(Path(input_file))
+        self._input_file: "InputFile" = InputFile(input_file)
         self._summary_file: t.Optional["Path"] = (
             Path(summary_file) if summary_file is not None else None
         )
