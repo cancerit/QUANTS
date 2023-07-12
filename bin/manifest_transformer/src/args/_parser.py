@@ -299,6 +299,15 @@ def _add_common_arguments_to_parser(parser, use_name: bool):
         metavar=reheader_metavar,
     )
 
+    # Reheader append or replace
+    parser.add_argument(
+        "--reheader-append",
+        action="store_true",
+        default=False,
+        help=const.HELP__REHEADER_APPEND,
+        dest=const.ARG_REHEADER_APPEND,
+    )
+
     # Forced delimiter argument mutually exclusive group (only one can be used) for comma and tab
     forced_delimiter_group = parser.add_mutually_exclusive_group(required=False)
     forced_delimiter_group.add_argument(

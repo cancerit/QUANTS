@@ -82,12 +82,13 @@ def test_ParsedColumns__from_labelled_columns_invalid():
 
 def test_get_argparser__sub_command__column_names():
     # Given
-    cmd = "column-names in.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 -o out.csv -r col1=COL1 col3=COL3"
+    cmd = "column-names in.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 -o out.csv -r col1=COL1 col3=COL3 --reheader-append"
     expected_input = Path("in.csv")
     expected_output = Path("out.csv")
     expected_output_delimiter = ","
     expected_summary = None
     expected_reheader = ["col1=COL1", "col3=COL3"]
+    expected_reheader_append = True
     expected_force_delimiter = None
     expected_force_header_row_index = None
 
@@ -109,6 +110,7 @@ def test_get_argparser__sub_command__column_names():
     assert namespace.output_file_delimiter == expected_output_delimiter
     assert namespace.summary_file == expected_summary
     assert namespace.reheader_mapping == expected_reheader
+    assert namespace.reheader_append == expected_reheader_append
     assert namespace.forced_input_file_delimiter == expected_force_delimiter
     assert namespace.forced_header_row_index == expected_force_header_row_index
     assert namespace.columns == expected_columns
@@ -122,6 +124,7 @@ def test_get_argparser__sub_command__column_indices():
     expected_output_delimiter = ","
     expected_summary = None
     expected_reheader = ["1=COL1", "3=COL3"]
+    expected_reheader_append = False
     expected_force_delimiter = None
     expected_force_header_row_index = None
 
@@ -143,6 +146,7 @@ def test_get_argparser__sub_command__column_indices():
     assert namespace.output_file_delimiter == expected_output_delimiter
     assert namespace.summary_file == expected_summary
     assert namespace.reheader_mapping == expected_reheader
+    assert namespace.reheader_append == expected_reheader_append
     assert namespace.forced_input_file_delimiter == expected_force_delimiter
     assert namespace.forced_header_row_index == expected_force_header_row_index
     assert namespace.columns == expected_columns
@@ -152,8 +156,12 @@ def test_get_argparser__sub_command__column_indices():
     "cmd",
     [
         pytest.param(
-            "column-names in.csv --force-comma --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 -o out.csv --output-as-tsv -r col1=COL1 col3=COL3 -s summary.json",
+            "column-names in.csv --force-comma --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 -o out.csv --output-as-tsv -r col1=COL1 col3=COL3 --reheader-append -s summary.json ",
             id="1",
+        ),
+        pytest.param(
+            "column-names in.csv --force-comma --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 -o out.csv --output-as-tsv -r col1=COL1 col3=COL3 -s summary.json ",
+            id="1.1",
         ),
         pytest.param(
             "column-names in.csv --force-tab --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 -o out.csv --output-as-tsv -r col1=COL1 col3=COL3 -s summary.json",
@@ -195,6 +203,7 @@ def test_get_argpaser__namespace__vars(cmd):
         const.ARG_OUTPUT_DELIMITER,
         const.ARG_SUMMARY,
         const.ARG_REHEADER,
+        const.ARG_REHEADER_APPEND,
         const.ARG_FORCE_HEADER_ROW_INDEX,
         const.ARG_FORCE_INPUT_DELIMITER,
         const.ARG_COLUMNS,
@@ -212,6 +221,7 @@ def test_get_argpaser__namespace__vars(cmd):
     assert namespace.output_file_delimiter == namespace_dict[const.ARG_OUTPUT_DELIMITER]
     assert namespace.summary_file == namespace_dict[const.ARG_SUMMARY]
     assert namespace.reheader_mapping == namespace_dict[const.ARG_REHEADER]
+    assert namespace.reheader_append == namespace_dict[const.ARG_REHEADER_APPEND]
     assert (
         namespace.forced_input_file_delimiter
         == namespace_dict[const.ARG_FORCE_INPUT_DELIMITER]

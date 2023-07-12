@@ -20,7 +20,8 @@ def test_CleanArgs__with_column_names(make_csv_file):
         "-c col1 col2 -C opt-col4 opt-col5 -c col3 "
         "-o out.tsv --output-as-tsv "
         "-s summary.json "
-        "-r col1=COL1 col3=COL3"
+        "-r col1=COL1 col3=COL3 "
+        "--reheader-append"
     )
     expected = _struct.CleanArgs(
         is_1_indexed=True,
@@ -35,6 +36,7 @@ def test_CleanArgs__with_column_names(make_csv_file):
         forced_input_file_delimiter=",",
         forced_header_row_index=1,
         reheader_mapping={"col1": "COL1", "col3": "COL3"},
+        reheader_append=True,
     )
 
     # When
@@ -69,6 +71,7 @@ def test_CleanArgs__with_column_indices(make_csv_file):
         forced_input_file_delimiter=None,
         forced_header_row_index=1,
         reheader_mapping={1: "COL1", 3: "COL3"},
+        reheader_append=False,
     )
 
     # When
@@ -117,6 +120,7 @@ def test_CleanArgs__json__with_column_names():
             "assembly": "ASSEMBLY",
             "gene_id": "GENE_ID",
         },
+        reheader_append=False,
     )
 
     # When
@@ -148,6 +152,7 @@ def test_CleanArgs__json__with_column_indices():
             3: "ASSEMBLY",
             4: "GENE_ID",
         },
+        reheader_append=True,
     )
 
     # When
@@ -174,6 +179,7 @@ def test_CleanArgs__convert_to_0_indexed_and_back_to_1_indexed(make_csv_file):
         forced_input_file_delimiter=None,
         forced_header_row_index=1,
         reheader_mapping={1: "COL1", 3: "COL3"},
+        reheader_append=True,
     )
 
     # When

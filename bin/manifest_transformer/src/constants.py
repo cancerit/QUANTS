@@ -28,6 +28,7 @@ HELP__OPTIONAL_COLUMNS_BY_INDEX = (
 )
 HELP__REHEADER_BY_NAME = "Reheader columns. Provide a list of column names mappings to reheadder the output file. The format is: --reheader col1=COL1 col2=COL2 col3=COL3"
 HELP__REHEADER_BY_INDEX = "Reheader columns. Provide a list of column names indices to reheadder the output file. The format is: --reheader 1=COL1 2=COL2 3=COL3"
+HELP__REHEADER_APPEND = "By default, the reheader mapping replaces the column header row. You can append the reheader mapping to the head of the output file instead, by setting this flag."
 
 
 ARG_COLUMNS = "columns"
@@ -59,6 +60,7 @@ JSON_PARAM__COLUMN_ORDER = "column_order"
 JSON_PARAM__REQUIRED_COLUMNS = "required_columns"
 JSON_PARAM__OPTIONAL_COLUMNS = "optional_columns"
 JSON_PARAM__REHEADER = ARG_REHEADER = "reheader_mapping"
+JSON_PARAM__REHEADER_APPEND = ARG_REHEADER_APPEND = "reheader_append"
 JSON_PARAM__OUTPUT_DELIMITER = ARG_OUTPUT_DELIMITER = "output_file_delimiter"
 JSON_PARAM__FORCED_INPUT_DELIMITER = (
     ARG_FORCE_INPUT_DELIMITER

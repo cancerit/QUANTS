@@ -28,6 +28,7 @@ class CleanArgs:
     forced_input_file_delimiter: t.Optional[str]
     forced_header_row_index: t.Optional[int]
     reheader_mapping: t.Dict[t.Union[str, int], str]
+    reheader_append: bool
 
     def copy_as_0_indexed(self) -> "CleanArgs":
         """
@@ -185,7 +186,7 @@ class CleanArgs:
         forced_input_file_delimiter__raw = valid_dict[const.ARG_FORCE_INPUT_DELIMITER]
         forced_header_row_index__raw = valid_dict[const.ARG_FORCE_HEADER_ROW_INDEX]
         reheader_mapping__raw = valid_dict[const.ARG_REHEADER]
-
+        reheader_append__raw = valid_dict[const.ARG_REHEADER_APPEND]
         column_order__raw = valid_dict[const.JSON_PARAM__COLUMN_ORDER]
         required_columns__raw = valid_dict[const.JSON_PARAM__REQUIRED_COLUMNS]
         optional_columns__raw = valid_dict[const.JSON_PARAM__OPTIONAL_COLUMNS]
@@ -209,6 +210,7 @@ class CleanArgs:
         reheader_mapping__clean = (
             reheader_mapping__raw  # There is no cleaning to do here
         )
+        reheader_append__clean = bool(reheader_append__raw)
 
         # Clean and parse columns.
         # Then normalise string columns to int columns, if necessary
@@ -251,6 +253,7 @@ class CleanArgs:
             forced_input_file_delimiter=forced_input_file_delimiter__clean,
             forced_header_row_index=forced_header_row_index__clean,
             reheader_mapping=reheader_mapping__clean,
+            reheader_append=reheader_append__clean,
         )
         return instance
 
@@ -288,6 +291,7 @@ class ArgDictValidator:
             const.JSON_PARAM__REQUIRED_COLUMNS,
             const.JSON_PARAM__OPTIONAL_COLUMNS,
             const.JSON_PARAM__REHEADER,
+            const.JSON_PARAM__REHEADER_APPEND,
             const.JSON_PARAM__OUTPUT_DELIMITER,
             const.JSON_PARAM__FORCED_INPUT_DELIMITER,
             const.JSON_PARAM__FORCED_HEADER_ROW_INDEX,
@@ -339,6 +343,12 @@ class ArgDictValidator:
             raw_dict[const.JSON_PARAM__REHEADER],
             key=const.JSON_PARAM__REHEADER,
             is_optional=True,
+        )
+
+        # reheader_append
+        self._valid_values__reheader_append(
+            raw_dict[const.JSON_PARAM__REHEADER_APPEND],
+            key=const.JSON_PARAM__REHEADER_APPEND,
         )
 
         # output_delimiter
@@ -476,4 +486,12 @@ class ArgDictValidator:
             return
         else:
             msg = f"Invalid value for {key!r}: {msg_detail}, got {forced_header_row_index!r}"
+            raise exc.ValidationError(msg)
+
+    @staticmethod
+    def _valid_values__reheader_append(reheader_append: bool, key: str) -> None:
+        if isinstance(reheader_append, bool):
+            return
+        else:
+            msg = f"Invalid value for {key!r}: expected a boolean, got {reheader_append!r}"
             raise exc.ValidationError(msg)

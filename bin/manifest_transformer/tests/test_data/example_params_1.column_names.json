@@ -35,6 +35,7 @@
         "assembly": "ASSEMBLY",
         "gene_id": "GENE_ID"
     },
+    "reheader_append": false,
     "output_file_delimiter": ",",
     "forced_input_file_delimiter": null,
     "forced_header_row_index": null
