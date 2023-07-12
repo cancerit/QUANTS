@@ -181,7 +181,8 @@ def get_argparser() -> argparse.ArgumentParser:
         title="subcommands",
         description="valid subcommands",
         dest=const.ARG_SUBCOMMAND,
-        required=False,
+        metavar="SUBCOMMAND",
+        required=True,
     )
     subparser_cli_col_names = subparsers.add_parser(
         const.SUBCOMMAND__COLUMN_NAMES,
