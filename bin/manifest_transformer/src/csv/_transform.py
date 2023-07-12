@@ -113,7 +113,8 @@ class ReheaderColumns:
         """
         column_name_remap = self._column_name_remap
         # Pad the row with placeholders, so that we can replace by index.
-        new_row = [f"placeholder-{i+1}" for i in range(len(column_name_remap))]
+        new_row_size = len(row)
+        new_row = [f"temp-col-placeholder-{i+1}" for i in range(new_row_size)]
 
         for col_index in range(len(row)):
             if col_index in column_name_remap:

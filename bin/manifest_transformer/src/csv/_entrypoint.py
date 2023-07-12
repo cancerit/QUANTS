@@ -6,7 +6,7 @@ from functools import partial
 from src.args import CleanArgs
 from src.csv.parser import CSVParser, get_column_order_as_indices
 from src.csv.properties import CSVFileProperties
-from src.csv._transform import reorder_rows
+from src.csv._transform import reorder_rows, ReheaderColumns
 
 
 def process_rows(
@@ -42,13 +42,15 @@ def manifest_transformer(clean_args: CleanArgs) -> io.StringIO:
 
     # Transform the CSV file.
     partial_reorder_rows = partial(reorder_rows, column_index_order=column_order)
-    partial_reheader_rows = lambda rows: rows  # noqa:E731 TODO implement reheader_rows
+    reheader_rows = ReheaderColumns(
+        CA.reheader_mapping, mode=CA.mode.value, append=CA.reheader_append
+    ).reheader_rows
     with csv_parser.get_csv_reader() as csv_reader:
         rows = iter(csv_reader)
         transformed_rows = process_rows(
             rows,
             reorder_func=partial_reorder_rows,
-            reheader_func=partial_reheader_rows,
+            reheader_func=reheader_rows,
         )
         transformed_rows = list(transformed_rows)
 

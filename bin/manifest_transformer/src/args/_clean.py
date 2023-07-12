@@ -164,6 +164,9 @@ def clean_reheader(
     if mode == const.SUBCOMMAND__COLUMN_NAMES and append:
         msg_not_valid = f"You cannot do reheader-append while in {const.SUBCOMMAND__COLUMN_NAMES!r} mode."
         raise exceptions.ValidationError(msg_not_valid)
+    elif mode not in {const.SUBCOMMAND__COLUMN_INDICES, const.SUBCOMMAND__COLUMN_NAMES}:
+        msg_not_valid = f"Mode must be one of {const.SUBCOMMAND__COLUMN_INDICES!r} or {const.SUBCOMMAND__COLUMN_NAMES!r}, not {mode!r}"
+        raise NotImplementedError(msg_not_valid)
     return _clean_reheader(reheader_mapping, clean_column_order, mode, append)
 
 
@@ -179,7 +182,6 @@ def _clean_reheader(
 
     # Check that the reheader mapping overlaps with the column order
     complete_overlap = reheader_start_values == clean_column_order_
-    partial_overlap = not reheader_start_values.isdisjoint(clean_column_order_)
 
     if must_be_complete and not complete_overlap:
         # A complete overlap is required if must_be_complete is True
@@ -190,15 +192,16 @@ def _clean_reheader(
         detail_missing = ", ".join(f"{str(elem)!r}" for elem in sorted(missing_keys))
         msg = f"Reheader mapping must be a subset of the column order: got {detail_got}, missing {detail_missing}."
         raise exceptions.ValidationError(msg)
-    elif not partial_overlap:
-        # A partial overlap is allowed if must_be_complete is False
+    # Catch any reheader_start_values that are not in the column order
+    elif not reheader_start_values.issubset(clean_column_order_):
         detail_got = ", ".join(
             f"{str(elem)!r}" for elem in sorted(reheader_start_values)
         )
         detail_missing = ", ".join(
-            f"{str(elem)!r}" for elem in sorted(clean_column_order_)
+            f"{str(elem)!r}"
+            for elem in sorted(reheader_start_values - clean_column_order_)
         )
-        msg = f"Reheader mapping should (at least partially) overlap with column order: got {detail_got}, expected some of {detail_missing}."
+        msg = f"Reheader mapping must be a subset of the column order: got {detail_got}, missing {detail_missing}."
         raise exceptions.ValidationError(msg)
     else:
         return reheader_mapping

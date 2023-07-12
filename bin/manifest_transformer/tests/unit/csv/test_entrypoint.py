@@ -80,6 +80,28 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             COL_ORDER_KEY: ["col_0", "col_1", "col_2", "col_3", "col_4"],
         },
         False,
+        {},
+        id="column_names+all_required+no_optional+in_order+append=False+all_reheader_cols",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_NAMES,
+        {
+            REQ_COL_KEY: ["col_0", "col_1", "col_2", "col_3", "col_4"],
+            OPT_COL_KEY: [],
+            COL_ORDER_KEY: ["col_3", "col_4", "col_0", "col_2", "col_1"],
+        },
+        False,
+        {},
+        id="column_names+all_required+no_optional+random_order+append=False+no_reheader_cols",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_NAMES,
+        {
+            REQ_COL_KEY: ["col_0", "col_1", "col_2", "col_3", "col_4"],
+            OPT_COL_KEY: [],
+            COL_ORDER_KEY: ["col_0", "col_1", "col_2", "col_3", "col_4"],
+        },
+        False,
         {"col_0": "COL_0", "col_1": "COL_1", "col_2": "COL_2"},
         id="column_names+all_required+no_optional+in_order+append=False+partial_reheader_cols",
     ),
@@ -137,6 +159,50 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
         False,
         {"col_0": "COL_0", "col_4": "COL_4"},
         id="column_names+1_required+1_optional+random_order+append=False+complete_reheader_cols",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_NAMES,
+        {
+            REQ_COL_KEY: ["col_0"],
+            OPT_COL_KEY: ["col_4"],
+            COL_ORDER_KEY: ["col_0", "col_4"],
+        },
+        False,
+        {"col_4": "COL_4"},
+        id="column_names+1_required+1_optional+in_order+append=False+partial_reheader_cols",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_NAMES,
+        {
+            REQ_COL_KEY: ["col_0"],
+            OPT_COL_KEY: ["col_4"],
+            COL_ORDER_KEY: ["col_4", "col_0"],
+        },
+        False,
+        {"col_4": "COL_4"},
+        id="column_names+1_required+1_optional+random_order+append=False+partial_reheader_cols",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_NAMES,
+        {
+            REQ_COL_KEY: ["col_0"],
+            OPT_COL_KEY: ["col_4"],
+            COL_ORDER_KEY: ["col_0", "col_4"],
+        },
+        False,
+        {},
+        id="column_names+1_required+1_optional+in_order+append=False+no_reheader_cols",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_NAMES,
+        {
+            REQ_COL_KEY: ["col_0"],
+            OPT_COL_KEY: ["col_4"],
+            COL_ORDER_KEY: ["col_4", "col_0"],
+        },
+        False,
+        {},
+        id="column_names+1_required+1_optional+random_order+append=False+no_reheader_cols",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_NAMES,
@@ -376,7 +442,7 @@ def test_manifest_transformer(
     should_throw = (
         column_mode == const.SUBCOMMAND__COLUMN_NAMES and not has_column_header
     )
-    expected_rows_count = 10 + has_column_header
+    expected_rows_count = 10 + has_column_header + should_append_reheader
 
     # Given
     cmd = make_json_cmd(json_params)
@@ -395,22 +461,38 @@ def test_manifest_transformer(
     # Then
     csvreader = csv.reader(io_object, delimiter=output_delimiter)
     rows = list(csvreader)
-    assert len(rows) == expected_rows_count, capture_bad_files(csv_file, json_params)
+    first_row = rows[0]
+    column_widths = [len(row) for row in rows]
+    max_column_width = max(column_widths)
+    min_column_width = min(column_widths)
+    assert len(rows) == expected_rows_count
+    assert max_column_width == min_column_width
+    assert max_column_width <= 5
+    assert max_column_width == len(columns[COL_ORDER_KEY])
+    assert "placeholder" not in output_delimiter.join(first_row)
 
 
-def capture_bad_files(csv_file, json_params):
+def capture_bad_files(csv_file, new_csv_lines, delimeter, json_params):
     import json
 
     parent = Path("tests/failing_data_inputs")
     parent.mkdir(exist_ok=True)
     stem = csv_file.parent.name + "." + csv_file.stem
-    new_csv_file = parent / f"{stem}.csv"
-    new_csv_file.write_text(csv_file.read_text())
+    new_input_csv_file = parent / f"{stem}.input.csv"
+    new_input_csv_file.write_text(csv_file.read_text())
+
+    new_output_csv_file = parent / f"{stem}.output.csv"
+    with new_output_csv_file.open("w") as f:
+        csvwriter = csv.writer(f, delimiter=delimeter)
+        csvwriter.writerows(new_csv_lines)
 
     new_json_file = parent / f"{stem}.json"
     new_json_file.write_text(json.dumps(json_params, indent=4))
+
     print(
-        "\n\nThe failing files have been written to the following location: \n"
-        f"- {str(new_csv_file)!r}\n- {str(new_json_file)!r}\n\n"
+        "\n\nThe failing files have been written to the following location:"
+        f"\n- {str(new_input_csv_file)!r}"
+        f"\n- {str(new_output_csv_file)!r}"
+        f"\n- {str(new_json_file)!r}\n\n"
     )
     return
