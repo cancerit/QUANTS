@@ -63,8 +63,6 @@ if __name__ == "__main__":
 
     argparser = get_argparser()
     namespace = argparser.parse_args()
-    print(namespace)
-    exit(1)
 
     safe_main(namespace)
     sys.exit(0)
