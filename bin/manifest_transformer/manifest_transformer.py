@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 This is a Python 3.8 dropin script for QUANTS that transfroms CSV/TSV manifest files.
@@ -24,11 +24,14 @@ def safe_main(namespace: "Namespace"):
         clean_args = CleanArgs.from_namespace(namespace)
         main(clean_args)
     except (exc.ValidationError, exc.UserInterventionRequired) as err:
-        cli.display_error(err, "Error: Argument validation! ")
+        cli.display_error(err, "Error: Validation! ")
         sys.exit(1)
-    except exc.UndevelopedFeatureError as err:
+    except (exc.UndevelopedFeatureError, NotImplementedError) as err:
         cli.display_error(err, "Error: Not implemented feature! ")
         sys.exit(1)
+    except Exception as err:
+        cli.display_error(err, "Error: Unhandled error (please report)! ")
+        raise
 
 
 def main(clean_args: CleanArgs):

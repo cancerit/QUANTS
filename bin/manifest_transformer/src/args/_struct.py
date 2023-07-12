@@ -160,8 +160,8 @@ class CleanArgs:
             raw_dict = cls._normalise_non_json_namespace_derived_dict(raw_dict)
         else:
             detail = ", ".join(allowed_subcommands)
-            msg = f"Unknown subcommand: {subcommand!r}, expected one of {detail}"
-            raise NotImplementedError(msg)
+            msg = f"Unknown subcommand: {subcommand!r}, expected one of {detail}. Check help for more details."
+            raise NotImplementedError(msg) from None
 
         clean_args = cls.from_dict(raw_dict)
         return clean_args
