@@ -190,18 +190,20 @@ def _clean_reheader(
         )
         missing_keys = reheader_start_values.symmetric_difference(clean_column_order_)
         detail_missing = ", ".join(f"{str(elem)!r}" for elem in sorted(missing_keys))
-        msg = f"Reheader mapping must be a subset of the column order: got {detail_got}, missing {detail_missing}."
+        msg = f"Reheader mapping must be a subset of the sum of required+optional columns: got {detail_got}, missing {detail_missing}."
         raise exceptions.ValidationError(msg)
     # Catch any reheader_start_values that are not in the column order
     elif not reheader_start_values.issubset(clean_column_order_):
         detail_got = ", ".join(
             f"{str(elem)!r}" for elem in sorted(reheader_start_values)
         )
-        detail_missing = ", ".join(
+
+        detail_undocumented = ", ".join(
             f"{str(elem)!r}"
             for elem in sorted(reheader_start_values - clean_column_order_)
         )
-        msg = f"Reheader mapping must be a subset of the column order: got {detail_got}, missing {detail_missing}."
+        detail_sum = ", ".join(f"{str(elem)!r}" for elem in sorted(clean_column_order_))
+        msg = f"Reheader mapping has unique members not found in the sum of required+optional columns: reheader keys {detail_got}; unexpected keys {detail_undocumented}; required+optional keys {detail_sum}."
         raise exceptions.ValidationError(msg)
     else:
         return reheader_mapping
