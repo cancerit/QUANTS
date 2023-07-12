@@ -9,7 +9,7 @@ HELP__JSON_INPUT_FILE = (
     "Input file path to a JSON file containing parameters for the script."
 )
 
-HELP__OUTPUT_FILE = "By default, input file is overwritten with the output. You can specify a path to write to a specific file or a directory (appends input filename)."
+HELP__OUTPUT_FILE = "Output file path for the transformed tabular manifest file (CSV/TSV). You can specify a path to write to a specific file or a directory (appends input filename)."
 HELP__SUMMARY_FILE = "By default, no runtime summary JSON file is written. You can specify a path to write to a specific file or a directory (appends script+timestamp filename)."
 HELP__CAST_OUTPUT_AS_TSV = (
     "Write output file as a TSV. By default, the output file is a CSV."

@@ -435,7 +435,7 @@ def test_manifest_transformer(
     json_params[const.JSON_PARAM__REHEADER] = reheader_mapping
     json_params[const.JSON_PARAM__INPUT_FILE] = str(csv_file)
     json_params[const.JSON_PARAM__FORCED_INPUT_DELIMITER] = input_delimiter
-    json_params[const.JSON_PARAM__OUTPUT_FILE] = None
+    json_params[const.JSON_PARAM__OUTPUT_FILE] = "output.csv"
     json_params[const.JSON_PARAM__OUTPUT_DELIMITER] = output_delimiter
 
     # Expected values

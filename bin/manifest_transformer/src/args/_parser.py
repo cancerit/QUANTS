@@ -220,20 +220,17 @@ def _add_common_arguments_to_parser(parser, use_name: bool):
         help=const.HELP__INPUT_FILE,
         metavar="INPUT",
     )
+    parser.add_argument(
+        const.ARG_OUTPUT,
+        type=Path,
+        help=const.HELP__OUTPUT_FILE,
+        metavar="OUTPUT",
+    )
     # Required columns
     required_columns_help = (
         const.HELP__REQUIRED_COLUMNS_BY_NAME
         if use_name
         else const.HELP__REQUIRED_COLUMNS_BY_INDEX
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        type=Path,
-        default=None,
-        help=const.HELP__OUTPUT_FILE,
-        dest=const.ARG_OUTPUT,
-        metavar="OUTPUT",
     )
     parser.add_argument(
         "--output-as-tsv",

@@ -38,7 +38,8 @@ class OutputFile:
     is writable.
 
     Special conditions:
-    - If the output file is None, the input file is returned as the clean output file.
+    - If the output file is None, a ValidationError is raised.
+    - If the output file is equal to the input file, a ValidationError is raised.
     - If the output file is an existing file, it is returned as the clean output file.
     - If the output file is a non-existant file, it is returned as the clean output file.
     - If the output file is an existing directory, that directory and input
@@ -48,7 +49,7 @@ class OutputFile:
     def __init__(
         self,
         input_file: t.Union["Path", str],
-        output_file: t.Optional[t.Union["Path", str]],
+        output_file: t.Union["Path", str],
     ):
         self._input_file: "InputFile" = InputFile(input_file)
         self._output_file: t.Optional["Path"] = (
@@ -57,8 +58,14 @@ class OutputFile:
 
     @property
     def clean(self) -> "Path":
+        if self._output_file is None:
+            msg = f"Output file is not optional, but was not provided: got {self._output_file!r}"
+            raise exceptions.ValidationError(msg)
         clean_input_file = self._input_file.clean
         output_file = finalise_output_file(clean_input_file, self._output_file)
+        if output_file == clean_input_file:
+            msg = f"Output file cannot be the same as the input file: got {str(output_file)!r}"
+            raise exceptions.ValidationError(msg)
         return _validate.assert_valid_output_file(output_file)
 
 

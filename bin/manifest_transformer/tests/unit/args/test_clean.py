@@ -283,13 +283,20 @@ def test_OutputFile__with_a_dir_path(input_file_setup, example_dir_setup):
 def test_OutputFile__without_a_path_specified(input_file_setup):
     # Given
     input_file = input_file_setup
-    expected = input_file
 
     # When
-    actual = _clean.OutputFile(input_file, None).clean
+    with pytest.raises(exc.ValidationError):
+        _clean.OutputFile(input_file, None).clean
 
-    # Then
-    assert actual == expected
+
+def test_OutputFile__with_a_path_specified_equal_to_input_file(input_file_setup):
+    # Given
+    input_file = input_file_setup
+    output_file = input_file
+
+    # When
+    with pytest.raises(exc.ValidationError):
+        _clean.OutputFile(input_file, output_file).clean
 
 
 def test_SummaryFile__with_a_file_path(

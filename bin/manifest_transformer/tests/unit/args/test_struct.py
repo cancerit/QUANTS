@@ -15,10 +15,10 @@ def test_CleanArgs__with_column_names(make_csv_file):
     # Given
     input_file = make_csv_file()
     cmd = (
-        f"column-names {str(input_file)} "
+        f"column-names {str(input_file)} out.tsv "
         "--force-comma --force-header-row-index 1 "
         "-c col1 col2 -C opt-col4 opt-col5 -c col3 "
-        "-o out.tsv --output-as-tsv "
+        "--output-as-tsv "
         "-s summary.json "
         "-r col1=COL1 col3=COL3 "
     )
@@ -50,10 +50,9 @@ def test_CleanArgs__with_column_indices(make_csv_file):
     # Given
     input_file = make_csv_file()
     cmd = (
-        f"column-indices {str(input_file)} "
+        f"column-indices {str(input_file)} out.csv "
         "--force-header-row-index 1 "
         "-c 1 2 -C 4 5 -c 3 "
-        "-o out.csv "
         "-s summary.json "
         "-r 1=COL1 2=COL2 3=COL3 4=COL4 5=COL5 "
         "--reheader-append"

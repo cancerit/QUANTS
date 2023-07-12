@@ -37,40 +37,19 @@ def test_CleanArgs__with_null_input__raises_error(json_param_func, make_json_cmd
 
 
 @pytest.mark.parametrize(
-    "param_func, is_json_params",
-    [
-        (json_params__column_names, True),
-        (json_params__column_indices, True),
-        (
-            lambda: (
-                f"column-names {EXAMPLE_CSV} "
-                "--force-comma --force-header-row-index 1 "
-                "-c col1 col2 -C opt-col4 opt-col5 -c col3 "
-                "--output-as-tsv "
-                "-s summary.json "
-                "-r col1=COL1 col3=COL3"
-            ),
-            False,
-        ),
-    ],
+    "json_param_func", [json_params__column_names, json_params__column_indices]
 )
-def test_CleanArgs__with_null_output(param_func, is_json_params, make_json_cmd):
+def test_CleanArgs__with_null_output(json_param_func, make_json_cmd):
     # Given
-    if is_json_params:
-        json_params = param_func()
-        json_params["output_file"] = None
-        cmd = make_json_cmd(json_params)
-    else:
-        cmd = param_func().split()
+    json_params = json_param_func()
+    json_params["output_file"] = None
+    cmd = make_json_cmd(json_params)
 
     # When
     argparser = _parser.get_argparser()
     namespace = argparser.parse_args(cmd)
-    clean_args = _struct.CleanArgs.from_namespace(namespace)
-
-    # Then
-    assert clean_args.output_file.parent == clean_args.input_file.parent
-    assert clean_args.output_file.suffix in (".tsv", ".csv")
+    with pytest.raises(ValidationError):
+        _struct.CleanArgs.from_namespace(namespace)
 
 
 @pytest.mark.parametrize(
@@ -80,10 +59,9 @@ def test_CleanArgs__with_null_output(param_func, is_json_params, make_json_cmd):
         (json_params__column_indices, True),
         (
             lambda: (
-                f"column-names {EXAMPLE_CSV} "
+                f"column-names {EXAMPLE_CSV} output.tsv "
                 "--force-comma --force-header-row-index 1 "
                 "-c col1 col2 -C opt-col4 opt-col5 -c col3 "
-                "-o output.tsv "
                 "--output-as-tsv "
                 "-r col1=COL1 col3=COL3"
             ),
