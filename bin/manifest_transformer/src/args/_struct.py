@@ -207,9 +207,6 @@ class CleanArgs:
         forced_header_row_index__clean = _clean.clean_index(
             forced_header_row_index__raw
         )
-        reheader_mapping__clean = (
-            reheader_mapping__raw  # There is no cleaning to do here
-        )
         reheader_append__clean = bool(reheader_append__raw)
 
         # Clean and parse columns.
@@ -230,14 +227,22 @@ class CleanArgs:
             optional_columns__clean = cls._parse_and_clean_column_tuple(
                 optional_columns__raw, is_1_indexed
             )
-            reheader_mapping__clean = cls._parse_and_clean_column_dict(
+            reheader_mapping__intermediate = cls._parse_and_clean_column_dict(
                 reheader_mapping__raw, is_1_indexed
             )
         else:
             column_order__clean = column_order__raw
             required_columns__clean = required_columns__raw
             optional_columns__clean = optional_columns__raw
-            reheader_mapping__clean = reheader_mapping__raw
+            reheader_mapping__intermediate = reheader_mapping__raw
+
+        # Finally clean reheader mapping
+        reheader_mapping__clean = _clean.clean_reheader(
+            reheader_mapping__intermediate,
+            column_order__clean,
+            mode=mode.value,
+            append=reheader_append__clean,
+        )
 
         # Create instance
         instance = cls(

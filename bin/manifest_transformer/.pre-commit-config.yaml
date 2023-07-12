@@ -27,7 +27,8 @@ repos:
         # E501 - line lengths are controlled by Black
         # E266 - Flake8 forbids comments with double pound-sign
         # W503 - Flake8 (knowingly) breaks with Black and Pep8
-        args: ["--ignore=E501,E266,W503", "--max-complexity=5"]
+        # E712 - Flake8 forbids comparison with boolean literals, which is silly
+        args: ["--ignore=E501,E266,W503,E712", "--max-complexity=5"]
         name: Check Python code (flake8 linting)
         exclude: |
           (?x)(

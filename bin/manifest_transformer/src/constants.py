@@ -18,16 +18,12 @@ HELP__VERSION = "Show the script's version and exit."
 HELP__FORCE_COMMA_DELIMITER = "Force input file delimiter to be a comma ','. By default, the script auto-detects the delimiter."
 HELP__FORCE_TAB_DELIMITER = "Force input file delimiter to be a tab '\\t'. By default, the script auto-detects the delimiter."
 HELP__FORCE_HEADER_ROW_INDEX = "Force the input file parser to use this index for the column header row (1-index). By default, the script auto-detects the index of column header row, if any."
-HELP__REQUIRED_COLUMNS_BY_NAME = "Required columns identified by column header name."
-HELP__REQUIRED_COLUMNS_BY_INDEX = (
-    "Required columns identified by column index (1-index)."
-)
-HELP__OPTIONAL_COLUMNS_BY_NAME = "Optional columns identified by column header name."
-HELP__OPTIONAL_COLUMNS_BY_INDEX = (
-    "Optional columns identified by column index (1-index)."
-)
-HELP__REHEADER_BY_NAME = "Reheader columns. Provide a list of column names mappings to reheadder the output file. The format is: --reheader col1=COL1 col2=COL2 col3=COL3"
-HELP__REHEADER_BY_INDEX = "Reheader columns. Provide a list of column names indices to reheadder the output file. The format is: --reheader 1=COL1 2=COL2 3=COL3"
+HELP__REQUIRED_COLUMNS_BY_NAME = "Required columns identified by column header name. Column order is inferred from this list."
+HELP__REQUIRED_COLUMNS_BY_INDEX = "Required columns identified by column index (1-index). Column order is inferred from this list."
+HELP__OPTIONAL_COLUMNS_BY_NAME = "Optional columns identified by column header name. Column order is inferred from this list."
+HELP__OPTIONAL_COLUMNS_BY_INDEX = "Optional columns identified by column index (1-index). Column order is inferred from this list."
+HELP__REHEADER_BY_NAME = "Reheader columns. Provide a list of column names mappings to reheadder the output file. Column order is NOT inferred from this list (see required & optional column args). The format is: --reheader col1=COL1 col2=COL2 col3=COL3"
+HELP__REHEADER_BY_INDEX = "Reheader columns. Provide a list of column names indices to reheadder the output file. Column order is NOT inferred from this list (see required & optional column args). The format is: --reheader 1=COL1 2=COL2 3=COL3"
 HELP__REHEADER_APPEND = "By default, the reheader mapping replaces the column header row. You can append the reheader mapping to the head of the output file instead, by setting this flag."
 
 

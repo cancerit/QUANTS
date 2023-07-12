@@ -90,7 +90,7 @@ class ParsedColumns:
         if not is_valid:
             detail = ", ".join(required & optional)
             msg = (
-                "Required columns and optional columns must be disjoint, "
+                "Required columns and optional columns must not overlap, "
                 f"but the following columns were found in both: {detail}"
             )
             raise exceptions.ValidationError(msg)

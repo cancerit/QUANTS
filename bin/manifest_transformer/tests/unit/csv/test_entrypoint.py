@@ -45,7 +45,15 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: [],
             COL_ORDER_KEY: ["col_0", "col_1", "col_2", "col_3", "col_4"],
         },
-        id="column_names+all_required+no_optional+in_order",
+        False,
+        {
+            "col_0": "COL_0",
+            "col_1": "COL_1",
+            "col_2": "COL_2",
+            "col_3": "COL_3",
+            "col_4": "COL_4",
+        },
+        id="column_names+all_required+no_optional+in_order+append=False+all_reheader_cols",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_NAMES,
@@ -54,7 +62,37 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: [],
             COL_ORDER_KEY: ["col_3", "col_4", "col_0", "col_2", "col_1"],
         },
-        id="column_names+all_required+no_optional+random_order",
+        False,
+        {
+            "col_0": "COL_0",
+            "col_1": "COL_1",
+            "col_2": "COL_2",
+            "col_3": "COL_3",
+            "col_4": "COL_4",
+        },
+        id="column_names+all_required+no_optional+random_order+append=False+all_reheader_cols",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_NAMES,
+        {
+            REQ_COL_KEY: ["col_0", "col_1", "col_2", "col_3", "col_4"],
+            OPT_COL_KEY: [],
+            COL_ORDER_KEY: ["col_0", "col_1", "col_2", "col_3", "col_4"],
+        },
+        False,
+        {"col_0": "COL_0", "col_1": "COL_1", "col_2": "COL_2"},
+        id="column_names+all_required+no_optional+in_order+append=False+partial_reheader_cols",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_NAMES,
+        {
+            REQ_COL_KEY: ["col_0", "col_1", "col_2", "col_3", "col_4"],
+            OPT_COL_KEY: [],
+            COL_ORDER_KEY: ["col_3", "col_4", "col_0", "col_2", "col_1"],
+        },
+        False,
+        {"col_0": "COL_0", "col_1": "COL_1", "col_2": "COL_2"},
+        id="column_names+all_required+no_optional+random_order+append=False+partial_reheader_cols",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_NAMES,
@@ -63,7 +101,9 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: ["col_3", "col_4"],
             COL_ORDER_KEY: ["col_0", "col_1", "col_2", "col_3", "col_4"],
         },
-        id="column_names+3_required+2_optional+in_order",
+        False,
+        {"col_0": "COL_0", "col_1": "COL_1", "col_2": "COL_2"},
+        id="column_names+3_required+2_optional+in_order+append=False+partial_reheader_cols",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_NAMES,
@@ -72,7 +112,9 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: ["col_3", "col_4"],
             COL_ORDER_KEY: ["col_3", "col_4", "col_0", "col_2", "col_1"],
         },
-        id="column_names+3_required+2_optional+random_order",
+        False,
+        {"col_0": "COL_0", "col_1": "COL_1", "col_2": "COL_2"},
+        id="column_names+3_required+2_optional+random_order+append=False+partial_reheader_cols",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_NAMES,
@@ -81,7 +123,9 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: ["col_4"],
             COL_ORDER_KEY: ["col_0", "col_4"],
         },
-        id="column_names+1_required+1_optional+in_order",
+        False,
+        {"col_0": "COL_0", "col_4": "COL_4"},
+        id="column_names+1_required+1_optional+in_order+append=False+complete_reheader_cols",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_NAMES,
@@ -90,7 +134,9 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: ["col_4"],
             COL_ORDER_KEY: ["col_4", "col_0"],
         },
-        id="column_names+1_required+1_optional+random_order",
+        False,
+        {"col_0": "COL_0", "col_4": "COL_4"},
+        id="column_names+1_required+1_optional+random_order+append=False+complete_reheader_cols",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_NAMES,
@@ -99,7 +145,9 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: [],
             COL_ORDER_KEY: ["col_0"],
         },
-        id="column_names+1_required+no_optional+in_order",
+        False,
+        {"col_0": "COL_0"},
+        id="column_names+1_required+no_optional+in_order+append=False+complete_reheader_cols",
     ),
     # COLUMN INDICES
     pytest.param(
@@ -109,7 +157,20 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: [],
             COL_ORDER_KEY: [1, 2, 3, 4, 5],
         },
-        id="column_indices+all_required+no_optional+in_order",
+        True,
+        {1: "COL_0", 2: "COL_1", 3: "COL_2", 4: "COL_3", 5: "COL_4"},
+        id="column_indices+all_required+no_optional+in_order+append=True",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_INDICES,
+        {
+            REQ_COL_KEY: [1, 2, 3, 4, 5],
+            OPT_COL_KEY: [],
+            COL_ORDER_KEY: [1, 2, 3, 4, 5],
+        },
+        False,
+        {1: "COL_0", 2: "COL_1", 3: "COL_2", 4: "COL_3", 5: "COL_4"},
+        id="column_indices+all_required+no_optional+in_order+append=False",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_INDICES,
@@ -118,7 +179,20 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: [],
             COL_ORDER_KEY: [4, 5, 1, 3, 2],
         },
-        id="column_indices+all_required+no_optional+random_order",
+        True,
+        {1: "COL_0", 2: "COL_1", 3: "COL_2", 4: "COL_3", 5: "COL_4"},
+        id="column_indices+all_required+no_optional+random_order+append=True",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_INDICES,
+        {
+            REQ_COL_KEY: [1, 2, 3, 4, 5],
+            OPT_COL_KEY: [],
+            COL_ORDER_KEY: [4, 5, 1, 3, 2],
+        },
+        False,
+        {1: "COL_0", 2: "COL_1", 3: "COL_2", 4: "COL_3", 5: "COL_4"},
+        id="column_indices+all_required+no_optional+random_order+append=False",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_INDICES,
@@ -127,7 +201,20 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: [4, 5],
             COL_ORDER_KEY: [1, 2, 3, 4, 5],
         },
-        id="column_indices+3_required+2_optional+in_order",
+        True,
+        {1: "COL_0", 2: "COL_1", 3: "COL_2", 4: "COL_3", 5: "COL_4"},
+        id="column_indices+3_required+2_optional+in_order+append=True",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_INDICES,
+        {
+            REQ_COL_KEY: [1, 2, 3],
+            OPT_COL_KEY: [4, 5],
+            COL_ORDER_KEY: [1, 2, 3, 4, 5],
+        },
+        False,
+        {1: "COL_0", 2: "COL_1", 3: "COL_2", 4: "COL_3", 5: "COL_4"},
+        id="column_indices+3_required+2_optional+in_order+append=False",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_INDICES,
@@ -136,7 +223,20 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: [4, 5],
             COL_ORDER_KEY: [4, 5, 1, 3, 2],
         },
-        id="column_indices+3_required+2_optional+random_order",
+        True,
+        {1: "COL_0", 2: "COL_1", 3: "COL_2", 4: "COL_3", 5: "COL_4"},
+        id="column_indices+3_required+2_optional+random_order+append=True",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_INDICES,
+        {
+            REQ_COL_KEY: [1, 2, 3],
+            OPT_COL_KEY: [4, 5],
+            COL_ORDER_KEY: [4, 5, 1, 3, 2],
+        },
+        False,
+        {1: "COL_0", 2: "COL_1", 3: "COL_2", 4: "COL_3", 5: "COL_4"},
+        id="column_indices+3_required+2_optional+random_order+append=False",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_INDICES,
@@ -145,7 +245,20 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: [5],
             COL_ORDER_KEY: [1, 5],
         },
-        id="column_indices+1_required+1_optional+in_order",
+        True,
+        {1: "COL_0", 5: "COL_4"},
+        id="column_indices+1_required+1_optional+in_order+append=True",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_INDICES,
+        {
+            REQ_COL_KEY: [1],
+            OPT_COL_KEY: [5],
+            COL_ORDER_KEY: [1, 5],
+        },
+        False,
+        {1: "COL_0", 5: "COL_4"},
+        id="column_indices+1_required+1_optional+in_order+append=False",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_INDICES,
@@ -154,7 +267,20 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: [5],
             COL_ORDER_KEY: [5, 1],
         },
-        id="column_indices+1_required+1_optional+random_order",
+        True,
+        {1: "COL_0", 5: "COL_4"},
+        id="column_indices+1_required+1_optional+random_order+append=True",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_INDICES,
+        {
+            REQ_COL_KEY: [1],
+            OPT_COL_KEY: [5],
+            COL_ORDER_KEY: [5, 1],
+        },
+        False,
+        {1: "COL_0", 5: "COL_4"},
+        id="column_indices+1_required+1_optional+random_order+append=False",
     ),
     pytest.param(
         const.SUBCOMMAND__COLUMN_INDICES,
@@ -163,9 +289,24 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
             OPT_COL_KEY: [],
             COL_ORDER_KEY: [1],
         },
-        id="column_indices+1_required+no_optional+in_order",
+        True,
+        {1: "COL_0"},
+        id="column_indices+1_required+no_optional+in_order+append=True",
+    ),
+    pytest.param(
+        const.SUBCOMMAND__COLUMN_INDICES,
+        {
+            REQ_COL_KEY: [1],
+            OPT_COL_KEY: [],
+            COL_ORDER_KEY: [1],
+        },
+        False,
+        {1: "COL_0"},
+        id="column_indices+1_required+no_optional+in_order+append=False",
     ),
 ]
+
+# TEST
 
 
 @pytest.mark.parametrize(
@@ -185,7 +326,7 @@ PARAMS_COLUMN_MODE_AND_COLUMNS = [
     PARAMS_OUTPUT_FILE_DELIMETER,
 )
 @pytest.mark.parametrize(
-    "column_mode, columns",
+    "column_mode, columns, should_append_reheader, reheader_mapping",
     PARAMS_COLUMN_MODE_AND_COLUMNS,
 )
 def test_manifest_transformer(
@@ -196,6 +337,8 @@ def test_manifest_transformer(
     output_delimiter: str,
     column_mode: str,
     columns: t.Dict[str, t.Any],
+    should_append_reheader: bool,
+    reheader_mapping: t.Dict[t.Union[str, int], str],
     # Fixtures
     make_csv_file: t.Callable[[bool, int, bool, bool, bool, t.Optional[str]], "Path"],
     make_json_cmd: t.Callable[[t.Dict[str, t.Any]], t.List[str]],
@@ -222,6 +365,8 @@ def test_manifest_transformer(
     json_params[COL_ORDER_KEY] = columns[COL_ORDER_KEY]
     json_params[REQ_COL_KEY] = columns[REQ_COL_KEY]
     json_params[OPT_COL_KEY] = columns[OPT_COL_KEY]
+    json_params[const.JSON_PARAM__REHEADER_APPEND] = should_append_reheader
+    json_params[const.JSON_PARAM__REHEADER] = reheader_mapping
     json_params[const.JSON_PARAM__INPUT_FILE] = str(csv_file)
     json_params[const.JSON_PARAM__FORCED_INPUT_DELIMITER] = input_delimiter
     json_params[const.JSON_PARAM__OUTPUT_FILE] = None

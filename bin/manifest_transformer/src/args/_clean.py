@@ -153,3 +153,52 @@ def clean_output_delimiter(delimiter: t.Optional[str], default=",") -> str:
         msg = f"Output file delimiter must be a tab or comma, not '{delimiter}'"
         raise exceptions.ValidationError(msg)
     return clean_delimiter
+
+
+def clean_reheader(
+    reheader_mapping: t.Dict[t.Any, str],
+    clean_column_order: t.Iterable[t.Any],
+    mode: str,
+    append: bool,
+) -> t.Dict[t.Any, str]:
+    if mode == const.SUBCOMMAND__COLUMN_NAMES and append:
+        msg_not_valid = f"You cannot do reheader-append while in {const.SUBCOMMAND__COLUMN_NAMES!r} mode."
+        raise exceptions.ValidationError(msg_not_valid)
+    return _clean_reheader(reheader_mapping, clean_column_order, mode, append)
+
+
+def _clean_reheader(
+    reheader_mapping: t.Dict[t.Any, str],
+    clean_column_order: t.Iterable[t.Any],
+    mode: str,
+    append: bool,
+) -> t.Dict[t.Any, str]:
+    must_be_complete = (mode == const.SUBCOMMAND__COLUMN_INDICES) or append == True
+    reheader_start_values = set(reheader_mapping.keys())
+    clean_column_order_ = set(clean_column_order)
+
+    # Check that the reheader mapping overlaps with the column order
+    complete_overlap = reheader_start_values == clean_column_order_
+    partial_overlap = not reheader_start_values.isdisjoint(clean_column_order_)
+
+    if must_be_complete and not complete_overlap:
+        # A complete overlap is required if must_be_complete is True
+        detail_got = ", ".join(
+            f"{str(elem)!r}" for elem in sorted(reheader_start_values)
+        )
+        missing_keys = reheader_start_values.symmetric_difference(clean_column_order_)
+        detail_missing = ", ".join(f"{str(elem)!r}" for elem in sorted(missing_keys))
+        msg = f"Reheader mapping must be a subset of the column order: got {detail_got}, missing {detail_missing}."
+        raise exceptions.ValidationError(msg)
+    elif not partial_overlap:
+        # A partial overlap is allowed if must_be_complete is False
+        detail_got = ", ".join(
+            f"{str(elem)!r}" for elem in sorted(reheader_start_values)
+        )
+        detail_missing = ", ".join(
+            f"{str(elem)!r}" for elem in sorted(clean_column_order_)
+        )
+        msg = f"Reheader mapping should (at least partially) overlap with column order: got {detail_got}, expected some of {detail_missing}."
+        raise exceptions.ValidationError(msg)
+    else:
+        return reheader_mapping

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from src.args import _clean
 from src import exceptions as exc
+from src import constants as const
 
 # CONSTANTS
 ARBITRARY_DATETIME = datetime.datetime(2022, 12, 11, 10, 9, 8)
@@ -111,6 +112,109 @@ def test_clean_cast_output_delimiter_invalid(forbidden_delimiter):
     # When
     with pytest.raises(exc.ValidationError):
         _clean.clean_output_delimiter(forbidden_delimiter)
+
+
+@pytest.mark.parametrize(
+    "reheader_mapping, clean_column_order, mode, append, expected",
+    [
+        (
+            {"a": "x", "b": "y", "c": "z"},
+            ["a", "b", "c"],
+            const.SUBCOMMAND__COLUMN_INDICES,
+            False,
+            {"a": "x", "b": "y", "c": "z"},
+        ),
+        (
+            {"a": "x", "b": "y", "c": "z"},
+            ["a", "b", "d"],
+            const.SUBCOMMAND__COLUMN_INDICES,
+            False,
+            None,
+        ),
+        (
+            {"a": "x", "b": "y", "c": "z"},
+            ["a", "b", "c"],
+            "other_mode",
+            True,
+            {"a": "x", "b": "y", "c": "z"},
+        ),
+        (
+            {"a": "x", "b": "y", "c": "z"},
+            ["a", "b", "d"],
+            "other_mode",
+            True,
+            None,
+        ),
+        # Add more test cases as needed
+    ],
+)
+def test_clean_reheader__must_be_complete(
+    reheader_mapping, clean_column_order, mode, append, expected
+):
+    # When & Then
+    if expected is None:
+        with pytest.raises(exc.ValidationError):
+            _clean.clean_reheader(
+                reheader_mapping,
+                clean_column_order,
+                mode=mode,
+                append=append,
+            )
+    else:
+        # When
+        actual = _clean.clean_reheader(
+            reheader_mapping,
+            clean_column_order,
+            mode=mode,
+            append=append,
+        )
+
+        # Then
+        assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "reheader_mapping, clean_column_order, mode, append, expected",
+    [
+        (
+            {"a": "x", "b": "y", "c": "z"},
+            ["a", "b", "c"],
+            "other_mode",
+            False,
+            {"a": "x", "b": "y", "c": "z"},
+        ),
+        (
+            {"a": "x", "b": "y", "c": "z"},
+            ["d", "e", "f"],
+            "other_mode",
+            False,
+            None,
+        ),
+    ],
+)
+def test_clean_reheader__partial_overlap(
+    reheader_mapping, clean_column_order, mode, append, expected
+):
+    # When & Then
+    if expected is None:
+        with pytest.raises(exc.ValidationError):
+            _clean.clean_reheader(
+                reheader_mapping,
+                clean_column_order,
+                mode=mode,
+                append=append,
+            )
+    else:
+        # When
+        actual = _clean.clean_reheader(
+            reheader_mapping,
+            clean_column_order,
+            mode=mode,
+            append=append,
+        )
+
+        # Then
+        assert actual == expected
 
 
 def test_InputFile_clean(input_file_setup):

@@ -21,7 +21,6 @@ def test_CleanArgs__with_column_names(make_csv_file):
         "-o out.tsv --output-as-tsv "
         "-s summary.json "
         "-r col1=COL1 col3=COL3 "
-        "--reheader-append"
     )
     expected = _struct.CleanArgs(
         is_1_indexed=True,
@@ -36,7 +35,7 @@ def test_CleanArgs__with_column_names(make_csv_file):
         forced_input_file_delimiter=",",
         forced_header_row_index=1,
         reheader_mapping={"col1": "COL1", "col3": "COL3"},
-        reheader_append=True,
+        reheader_append=False,
     )
 
     # When
@@ -56,7 +55,8 @@ def test_CleanArgs__with_column_indices(make_csv_file):
         "-c 1 2 -C 4 5 -c 3 "
         "-o out.csv "
         "-s summary.json "
-        "-r 1=COL1 3=COL3"
+        "-r 1=COL1 2=COL2 3=COL3 4=COL4 5=COL5 "
+        "--reheader-append"
     )
     expected = _struct.CleanArgs(
         is_1_indexed=True,
@@ -70,8 +70,8 @@ def test_CleanArgs__with_column_indices(make_csv_file):
         output_file_delimiter=",",
         forced_input_file_delimiter=None,
         forced_header_row_index=1,
-        reheader_mapping={1: "COL1", 3: "COL3"},
-        reheader_append=False,
+        reheader_mapping={1: "COL1", 2: "COL2", 3: "COL3", 4: "COL4", 5: "COL5"},
+        reheader_append=True,
     )
 
     # When
@@ -151,6 +151,12 @@ def test_CleanArgs__json__with_column_indices():
             2: "SPECIES",
             3: "ASSEMBLY",
             4: "GENE_ID",
+            5: "TRANSCRIPT_ID",
+            6: "SRC_TYPE",
+            7: "REF_CHR",
+            8: "REF_STRAND",
+            9: "REF_START",
+            10: "REF_END",
         },
         reheader_append=True,
     )
@@ -178,7 +184,13 @@ def test_CleanArgs__convert_to_0_indexed_and_back_to_1_indexed(make_csv_file):
         output_file_delimiter=",",
         forced_input_file_delimiter=None,
         forced_header_row_index=1,
-        reheader_mapping={1: "COL1", 3: "COL3"},
+        reheader_mapping={
+            1: "COL1",
+            2: "COL2",
+            3: "COL3",
+            4: "COL4",
+            5: "COL5",
+        },
         reheader_append=True,
     )
 
@@ -191,7 +203,13 @@ def test_CleanArgs__convert_to_0_indexed_and_back_to_1_indexed(make_csv_file):
     assert intermediate.required_columns == (0, 1, 2)
     assert intermediate.optional_columns == (3, 4)
     assert intermediate.forced_header_row_index == 0
-    assert intermediate.reheader_mapping == {0: "COL1", 2: "COL3"}
+    assert intermediate.reheader_mapping == {
+        0: "COL1",
+        1: "COL2",
+        2: "COL3",
+        3: "COL4",
+        4: "COL5",
+    }
 
     # Then
     end_clean_args = intermediate.copy_as_1_indexed()

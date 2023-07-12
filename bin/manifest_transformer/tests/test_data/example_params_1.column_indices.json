@@ -33,7 +33,13 @@
         "1": "OLIGO_NAME",
         "2": "SPECIES",
         "3": "ASSEMBLY",
-        "4": "GENE_ID"
+        "4": "GENE_ID",
+        "5": "TRANSCRIPT_ID",
+        "6": "SRC_TYPE",
+        "7": "REF_CHR",
+        "8": "REF_STRAND",
+        "9": "REF_START",
+        "10": "REF_END"
     },
     "reheader_append": true,
     "output_file_delimiter": ",",
