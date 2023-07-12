@@ -76,42 +76,51 @@ class CSVValidationReport:
             self._warnings.append(err_msg)
 
     def report(self) -> t.List[str]:
-        seperator = " " * 4
+        null = "none"
+        yes = "Yes"
+        no = "No"
+        seperator = " " * 1
+
         indexing = "1-indexed" if self.is_1_indexed else "0-indexed"
         file_delimiter = (
-            f"{self.delimiter!r}{' (forced)' if self.has_forced_delimiter else ''}"
+            f"{self.delimiter!r}{' (overridden)' if self.has_forced_delimiter else ''}"
         )
-        has_column_headers = f"{self.has_column_headers}{' (forced)' if self.has_forced_columns_headers else ''}"
-        has_file_headers = f"{self.has_file_header}"
+        has_column_headers = (
+            f"{yes}"
+            if self.has_column_headers
+            else f"{no}"
+            + f"{' (overridden)' if self.has_forced_columns_headers else ''}"
+        )
+        has_file_headers = f"{yes}" if self.has_file_header else f"{no}"
         file_header_columns = ", ".join(str(col) for col in self.file_columns)
         missing_required_cols = (
             ", ".join(str(col) for col in self.missing_required_columns)
             if self.missing_required_columns
-            else "None"
+            else null
         )
         missing_optional_cols = (
             ", ".join(str(col) for col in self.missing_optional_columns)
             if self.missing_optional_columns
-            else "None"
+            else null
         )
         column_consistency = (
-            f"{self.is_columns_consistent} ({self.number_of_columns})"
+            f"{yes} ({self.number_of_columns})"
             if self.is_columns_consistent
-            else f"{self.is_columns_consistent} (median size: {self.number_of_columns})"
+            else f"{no} (median size: {self.number_of_columns})"
         )
         rows_with_nulls = (
             ", ".join(str(row) for row in self.rows_with_nulls)
             if self.rows_with_nulls
-            else "None"
+            else null
         )
 
         lines = [
             "INPUT FILE REPORT",
             f"Indexing:{seperator}{indexing}",
-            f"Which delimiter is used:{seperator}{file_delimiter}"
+            f"Which delimiter is used:{seperator}{file_delimiter}",
             f"Are header columns detected in file:{seperator}{has_column_headers}",
             f"Are file headers detected in file:{seperator}{has_file_headers}",
-            f"File's column headers:{seperator}{file_header_columns}",
+            f"File's actual column headers:{seperator}{file_header_columns}",
             f"Missing required columns:{seperator}{missing_required_cols}",
             f"Missing optional columns:{seperator}{missing_optional_cols}",
             f"Rows have constant column count:{seperator}{column_consistency}",
@@ -224,9 +233,9 @@ def find_missing_columns(
     """
     user_columns_set = set(user_columns)
     file_columns_set = set(file_columns)
-    # The user's columns are a subset of the file's columns.
-    missing_columns = file_columns_set - user_columns_set
-    return sorted(missing_columns)
+
+    missing_columns_not_found_in_file = user_columns_set - file_columns_set
+    return sorted(missing_columns_not_found_in_file)
 
     # Find if the column dimensions are consistent across the file
 

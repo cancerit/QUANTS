@@ -15,26 +15,38 @@ from src.csv import _validate
         pytest.param(
             ["a", "b", "c"],
             ["a", "b", "c", "d"],
-            ["d"],
+            [],
             id="one_missing_column",
         ),
         pytest.param(
             ["b"],
             ["a", "b", "c", "d"],
-            ["a", "c", "d"],
+            [],
             id="three_missing_columns",
         ),
         pytest.param(
             [],
             ["a", "b", "c", "d"],
-            ["a", "b", "c", "d"],
+            [],
             id="all_missing_columns",
         ),
         pytest.param(
             ["a", "b", "c", "d"],
             ["a", "b", "c"],
-            [],
+            ["d"],
             id="one_extra_column",
+        ),
+        pytest.param(
+            ["a", "b", "c", "d", "e", "f"],
+            ["a", "b", "c"],
+            ["d", "e", "f"],
+            id="three_extra_column",
+        ),
+        pytest.param(
+            ["d", "e", "f"],
+            ["a", "b", "c"],
+            ["d", "e", "f"],
+            id="only_extra_column",
         ),
     ],
 )
