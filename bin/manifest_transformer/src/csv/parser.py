@@ -107,6 +107,8 @@ class CSVParser:
         """
         Translate column names to column indices, in the order they are provided. The indices are 0-based.
 
+        If a column name is not found, it is ignored and its index is not included in the returned tuple.
+
         column_names: The column names to translate.
         one_index: Whether to return 1-based indices.
         """
@@ -114,7 +116,10 @@ class CSVParser:
         increment = 1 if one_index else 0
         indices = []
         for column_name in column_names:
-            index = column_names_ordered.index(column_name)
+            try:
+                index = column_names_ordered.index(column_name)
+            except ValueError:
+                continue
             index += increment
             indices.append(index)
         return tuple(indices)

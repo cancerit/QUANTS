@@ -488,3 +488,66 @@ def test_CSVParser_translate_column_names_to_indices(
             actual_column_indices__0_indexed = parser.translate_column_names_to_indices(
                 given_column_names, one_index=False
             )
+
+
+@pytest.mark.parametrize(
+    "given_column_names, expected_column_indices",
+    [
+        pytest.param(
+            ["col_0", "col_1", "col_2", "col_3", "col_4", "col_5"],
+            [0, 1, 2, 3, 4],
+            id="all_columns_in_order+extra_columns",
+        ),
+        pytest.param(
+            ["col_4", "col_5", "col_2", "col_0", "col_3", "col_1"],
+            [4, 2, 0, 3, 1],
+            id="all_columns_random_order+extra_columns",
+        ),
+        pytest.param(
+            ["col_1", "col_2", "col_3", "col_5"],
+            [1, 2, 3],
+            id="some_columns_in_order+extra",
+        ),
+        pytest.param(
+            ["col_3", "col_1", "col_5", "col_2"],
+            [3, 1, 2],
+            id=f"some_columns_random_order+extra",
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "has_file_header",
+    [
+        pytest.param(True, id="has_file_header"),
+        pytest.param(False, id="no_file_header"),
+    ],
+)
+def test_CSVParser_translate_column_names_to_indices__handles_a_column_that_is_non_existant(
+    given_column_names,
+    expected_column_indices,
+    make_csv_file,
+    has_file_header,
+):
+    # Given
+    csv_file_path = make_csv_file(
+        is_erroneous=False,
+        columns=5,
+        include_file_header=has_file_header,
+        include_column_header=True,
+    )
+    csv_properties = CSVFileProperties.from_csv_file(csv_file_path)
+    expected_column_indices__0_indexed = tuple(expected_column_indices)
+    expected_column_indices__1_indexed = tuple([i + 1 for i in expected_column_indices])
+
+    # When
+    parser = CSVParser.from_csv_file_properties(csv_file_path, csv_properties)
+    actual_column_indices__0_indexed = parser.translate_column_names_to_indices(
+        given_column_names, one_index=False
+    )
+    actual_column_indices__1_indexed = parser.translate_column_names_to_indices(
+        given_column_names, one_index=True
+    )
+
+    # Then
+    assert expected_column_indices__0_indexed == actual_column_indices__0_indexed
+    assert expected_column_indices__1_indexed == actual_column_indices__1_indexed
