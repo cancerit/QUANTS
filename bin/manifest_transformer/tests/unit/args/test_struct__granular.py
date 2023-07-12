@@ -19,6 +19,17 @@ EXAMPLE_CSV = files.example_csv_1_with_column_headers()
 # TESTS
 
 
+def test_CleanArgs__with_null_json_input_file():
+    # Given
+    cmd = "json does-not-exist.json"
+
+    # When/Then
+    argparser = _parser.get_argparser()
+    namespace = argparser.parse_args(cmd.split())
+    with pytest.raises(ValidationError):
+        _struct.CleanArgs.from_namespace(namespace)
+
+
 @pytest.mark.parametrize(
     "json_param_func", [json_params__column_names, json_params__column_indices]
 )
@@ -59,7 +70,7 @@ def test_CleanArgs__with_null_output(json_param_func, make_json_cmd):
         (json_params__column_indices, True),
         (
             lambda: (
-                f"column-names {EXAMPLE_CSV} output.tsv "
+                f"column-names -i {EXAMPLE_CSV} -o output.tsv "
                 "--force-comma --force-header-row-index 1 "
                 "-c col1 col2 -C opt-col4 opt-col5 -c col3 "
                 "--output-as-tsv "

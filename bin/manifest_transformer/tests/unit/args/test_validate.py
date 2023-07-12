@@ -63,7 +63,8 @@ def input_file_setup(request):
 
     if path_type == FILE_SYMBOL:
         with open(path, "w") as f:
-            f.write("")
+            text = "example text"
+            f.write(text)
         os.chmod(path, permissions)
     elif path_type == DIR_SYMBOL:
         path.mkdir()

@@ -153,8 +153,9 @@ class CleanArgs:
         subcommand = getattr(namespace, const.ARG_SUBCOMMAND)
 
         if subcommand == const.SUBCOMMAND__JSON:
-            json_param_file = getattr(namespace, const.ARG_INPUT)
-            raw_dict = _json_helper.read_json_file(json_param_file)
+            json_param_file__raw = getattr(namespace, const.ARG_INPUT)
+            json_param_file__clean = _clean.InputFile(json_param_file__raw).clean
+            raw_dict = _json_helper.read_json_file(json_param_file__clean)
         elif subcommand in non_json_subcommands:
             raw_dict = vars(namespace)
             raw_dict = cls._normalise_non_json_namespace_derived_dict(raw_dict)

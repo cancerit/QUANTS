@@ -6,6 +6,7 @@ if t.TYPE_CHECKING:
 from src.args._io import (
     check_write_permissions,
     check_read_permissions,
+    check_file_not_empty,
 )
 from src import exceptions as exc
 
@@ -16,6 +17,7 @@ def assert_valid_input_file(input_file: "Path") -> "Path":
     if not input_file.is_file():
         raise exc.ValidationError(f"Input file {input_file!r} is not a file.")
     check_read_permissions(input_file)
+    check_file_not_empty(input_file)
     return input_file
 
 

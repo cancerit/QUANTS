@@ -28,6 +28,7 @@ def fixed_datetime(monkeypatch):
 def input_file_setup(tmp_path):
     input_file = tmp_path / "input_file.txt"
     input_file.touch()
+    input_file.write_text("a,b,c\r\n1,2,3\r\n4,5,6")
     yield input_file
 
 
@@ -227,8 +228,13 @@ def test_InputFile_clean(input_file_setup):
     # Then
     assert actual == input_file
 
-    # Finally
+    # Finally - if file does not exist, raise error
     input_file.unlink()
+    with pytest.raises(exc.ValidationError):
+        _clean.InputFile(input_file).clean
+
+    # Finally - if the file is empty, raise error
+    input_file.touch()
     with pytest.raises(exc.ValidationError):
         _clean.InputFile(input_file).clean
 

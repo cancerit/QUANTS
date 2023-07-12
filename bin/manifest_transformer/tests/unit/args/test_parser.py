@@ -82,7 +82,7 @@ def test_ParsedColumns__from_labelled_columns_invalid():
 
 def test_get_argparser__sub_command__column_names():
     # Given
-    cmd = "column-names in.csv out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 -r col1=COL1 col3=COL3 --reheader-append"
+    cmd = "column-names -i in.csv -o out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 -r col1=COL1 col3=COL3 --reheader-append"
     expected_input = Path("in.csv")
     expected_output = Path("out.csv")
     expected_output_delimiter = ","
@@ -118,7 +118,7 @@ def test_get_argparser__sub_command__column_names():
 
 def test_get_argparser__sub_command__column_indices():
     # Given
-    cmd = "column-indices in.csv out.csv -c 1 2 -C 4 5 -c 3 -r 1=COL1 3=COL3"
+    cmd = "column-indices -i in.csv -o out.csv -c 1 2 -C 4 5 -c 3 -r 1=COL1 3=COL3"
     expected_input = Path("in.csv")
     expected_output = Path("out.csv")
     expected_output_delimiter = ","
@@ -156,39 +156,39 @@ def test_get_argparser__sub_command__column_indices():
     "cmd",
     [
         pytest.param(
-            "column-names in.csv out.csv --force-comma --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1 col3=COL3 --reheader-append -s summary.json ",
+            "column-names -i in.csv -o out.csv --force-comma --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1 col3=COL3 --reheader-append -s summary.json ",
             id="1",
         ),
         pytest.param(
-            "column-names in.csv out.csv --force-comma --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1 col3=COL3 -s summary.json ",
+            "column-names -i in.csv -o out.csv --force-comma --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1 col3=COL3 -s summary.json ",
             id="1.1",
         ),
         pytest.param(
-            "column-names in.csv out.csv --force-tab --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1 col3=COL3 -s summary.json",
+            "column-names -i in.csv -o out.csv --force-tab --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1 col3=COL3 -s summary.json",
             id="2",
         ),
         pytest.param(
-            "column-names in.csv out.csv --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1 col3=COL3 -s summary.json",
+            "column-names -i in.csv -o out.csv --force-header-row-index 1 -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1 col3=COL3 -s summary.json",
             id="3",
         ),
         pytest.param(
-            "column-names in.csv out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1 col3=COL3 -s summary.json",
+            "column-names -i in.csv -o out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1 col3=COL3 -s summary.json",
             id="4",
         ),
         pytest.param(
-            "column-names in.csv out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 -r col1=COL1 col3=COL3 -s summary.json",
+            "column-names -i in.csv -o out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 -r col1=COL1 col3=COL3 -s summary.json",
             id="5",
         ),
         pytest.param(
-            "column-names in.csv out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 -s summary.json",
+            "column-names -i in.csv -o out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 -s summary.json",
             id="6",
         ),
         pytest.param(
-            "column-names in.csv out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3.csv",
+            "column-names -i in.csv -o out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3.csv",
             id="7",
         ),
         pytest.param(
-            "column-names in.csv out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3",
+            "column-names -i in.csv -o out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3",
             id="8",
         ),
     ],

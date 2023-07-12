@@ -9,6 +9,7 @@ from src import exceptions as exc
 from src.args._io import (
     check_write_permissions,
     check_read_permissions,
+    check_file_not_empty,
     finalise_output_file,
 )
 
@@ -20,6 +21,11 @@ EXISTING_FILE = "existing_file"
 EXISTING_DIR = "existing_dir"
 NON_EXISTING_BUT_PARENT_DIR = "non_existing_but_parent_dir"
 NON_EXISTING_NO_PARENT_DIR = "non_existing_no_parent_dir"
+
+ACTION__TOUCH = "touch"
+ACTION__WRITE = "write"
+ACTION__WRITE_WHITESPACE = "write_whitespace"
+ACTION__UNLINK = "unlink"
 
 
 # PARAMS
@@ -78,6 +84,54 @@ FINALISE_OUTPUT_PARAMS = [
     ),
 ]
 
+PARAMS_EMPTY_FILE = [
+    # action, content, should_throw
+    pytest.param(
+        (ACTION__TOUCH, "", True),
+        id="touch_file",
+    ),
+    pytest.param(
+        (ACTION__WRITE, "col1,col2,col3\r\na,b,c\r\n", False),
+        id="write_file",
+    ),
+    pytest.param(
+        (ACTION__WRITE_WHITESPACE, " ", True),
+        id="write_whitespace_file__one_space",
+    ),
+    pytest.param(
+        (ACTION__WRITE_WHITESPACE, " " * 100, True),
+        id="write_whitespace_file__hundred_spaces",
+    ),
+    pytest.param(
+        (ACTION__WRITE_WHITESPACE, "\t", True),
+        id="write_whitespace_file__one_tab",
+    ),
+    pytest.param(
+        (ACTION__WRITE_WHITESPACE, "\t" * 100, True),
+        id="write_whitespace_file__hundred_tabs",
+    ),
+    pytest.param(
+        (ACTION__WRITE_WHITESPACE, "\n", True),
+        id="write_whitespace_file__one_newline",
+    ),
+    pytest.param(
+        (ACTION__WRITE_WHITESPACE, "\n" * 100, True),
+        id="write_whitespace_file__hundred_newlines",
+    ),
+    pytest.param(
+        (ACTION__WRITE_WHITESPACE, "\r\n", True),
+        id="write_whitespace_file__one_crlf",
+    ),
+    pytest.param(
+        (ACTION__WRITE_WHITESPACE, "\r\n" * 100, True),
+        id="write_whitespace_file__hundred_crlfs",
+    ),
+    pytest.param(
+        (ACTION__UNLINK, "", True),
+        id="unlink_file",
+    ),
+]
+
 # FIXTURES
 
 
@@ -133,6 +187,26 @@ def path_setup(request, tmp_path) -> t.Generator[t.Tuple[Path, Path, str], None,
     yield input_path, output_path, expected
 
 
+@pytest.fixture()
+def prepare_empty_file(request, tmp_path):
+    (action, string, should_throw) = request.param
+    file = tmp_path / "temp_file.txt"
+    file.parent.mkdir(exist_ok=True)
+    if action == ACTION__TOUCH:
+        file.touch()
+    elif action == ACTION__WRITE:
+        file.write_text(string)
+    elif action == ACTION__WRITE_WHITESPACE:
+        file.write_text(string)
+    elif action == ACTION__UNLINK:
+        file.touch()
+        file.unlink()
+    else:
+        raise RuntimeError(f"Unknown action: {action}")
+
+    yield (file, should_throw)
+
+
 # TESTS
 
 
@@ -164,6 +238,27 @@ def test_check_read_permissions(path_with_permissions):
         # Given file is not readable, so an exception is expected
         with pytest.raises(exc.ValidationError):
             check_read_permissions(path_with_permissions)
+
+
+@pytest.mark.parametrize(
+    "prepare_empty_file",
+    PARAMS_EMPTY_FILE,
+    indirect=["prepare_empty_file"],
+)
+def test_check_file_not_empty(prepare_empty_file):
+    # Given
+    file, should_throw = prepare_empty_file
+
+    if should_throw:
+        # When and then
+        with pytest.raises(exc.ValidationError):
+            check_file_not_empty(file)
+    else:
+        # When
+        check_file_not_empty(file)
+
+        # Then
+        assert True
 
 
 @pytest.mark.parametrize("path_setup", FINALISE_OUTPUT_PARAMS, indirect=True)

@@ -216,16 +216,22 @@ def get_argparser() -> argparse.ArgumentParser:
 def _add_common_arguments_to_parser(parser, use_name: bool):
     iterable_metavar = "NAME" if use_name else "INDEX"
     parser.add_argument(
-        const.ARG_INPUT,
+        "-i",
+        "--input",
         type=Path,
         help=const.HELP__INPUT_FILE,
         metavar="INPUT",
+        dest=const.ARG_INPUT,
+        required=True,
     )
     parser.add_argument(
-        const.ARG_OUTPUT,
+        "-o",
+        "--output",
         type=Path,
         help=const.HELP__OUTPUT_FILE,
         metavar="OUTPUT",
+        dest=const.ARG_OUTPUT,
+        required=True,
     )
     # Required columns
     required_columns_help = (

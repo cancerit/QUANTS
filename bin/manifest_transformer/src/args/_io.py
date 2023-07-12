@@ -15,6 +15,20 @@ def check_read_permissions(path: Path) -> None:
         raise exc.ValidationError(f"{path!r} is not readable.")
 
 
+def check_file_not_empty(path: Path) -> None:
+    if not path.exists():
+        msg = f"The file '{str(path)}' does not exist."
+        raise exc.ValidationError()
+    if not path.is_file():
+        msg = f"The file '{str(path)}' is not a file."
+        raise exc.ValidationError(msg)
+    with open(path, "r") as file:
+        contents = file.read()
+        if not contents or contents.isspace():
+            msg = f"The file '{str(path)}' is empty or contains only whitespace."
+            raise exc.ValidationError(msg)
+
+
 def finalise_output_file(input_path: Path, output_path: t.Optional[Path]) -> Path:
     """
     Determine what the output file path should be given a user specified input
