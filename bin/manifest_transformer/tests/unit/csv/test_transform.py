@@ -1,7 +1,6 @@
 import pytest
-from src.csv import (
-    _transform,
-)  # Make sure to replace 'your_module' with the actual module name
+from src.csv import _transform
+from src import constants as const
 
 
 REORDER_PARAMS = [
@@ -195,3 +194,101 @@ def test_reorder_row__raises_error(row, column_index_order):
     # When & Then
     with pytest.raises(ValueError):
         _transform.reorder_row(row, column_index_order)
+
+
+@pytest.mark.parametrize(
+    "rows, column_name_remap, expected",
+    [
+        pytest.param(
+            iter([]),
+            {"a": "X", "b": "Y", "c": "Z"},
+            [],
+            id="reheader_zero_rows",
+        ),
+        pytest.param(
+            iter([["a", "b", "c"]]),
+            {"a": "X", "b": "Y", "c": "Z"},
+            [["X", "Y", "Z"]],
+            id="reheader_single_row",
+        ),
+        pytest.param(
+            iter([["a", "b", "c"], ["d", "e", "f"]]),
+            {"a": "X", "b": "Y", "c": "Z"},
+            [["X", "Y", "Z"], ["d", "e", "f"]],
+            id="reheader_multiple_rows",
+        ),
+    ],
+)
+def test_reheader_rows__column_names(rows, column_name_remap, expected):
+    # When
+    obj = _transform.ReheaderColumns(
+        column_name_remap, const.SUBCOMMAND__COLUMN_NAMES, append=False
+    )
+    # Then
+    assert list(obj.reheader_rows(rows)) == expected
+
+
+@pytest.mark.parametrize(
+    "rows, column_name_remap, expected",
+    [
+        pytest.param(
+            iter([]),
+            {0: "X", 1: "Y", 2: "Z"},
+            [],
+            id="reheader_zero_rows",
+        ),
+        pytest.param(
+            iter([["a", "b", "c"]]),
+            {0: "X", 1: "Y", 2: "Z"},
+            [["X", "Y", "Z"]],
+            id="reheader_single_row",
+        ),
+        pytest.param(
+            iter([["a", "b", "c"], ["d", "e", "f"]]),
+            {0: "X", 1: "Y", 2: "Z"},
+            [["X", "Y", "Z"], ["d", "e", "f"]],
+            id="reheader_multiple_rows",
+        ),
+    ],
+)
+def test_reheader_rows__column_indices_no_append(rows, column_name_remap, expected):
+    # When
+    obj = _transform.ReheaderColumns(
+        column_name_remap, const.SUBCOMMAND__COLUMN_INDICES, append=False
+    )
+
+    # Then
+    assert list(obj.reheader_rows(rows)) == expected
+
+
+@pytest.mark.parametrize(
+    "rows,column_name_remap,expected",
+    [
+        pytest.param(
+            iter([]),
+            {0: "X", 1: "Y", 2: "Z"},
+            [],
+            id="do_not_append_header_to_zero_rows",
+        ),
+        pytest.param(
+            iter([["a", "b", "c"]]),
+            {0: "X", 1: "Y", 2: "Z"},
+            [["X", "Y", "Z"], ["a", "b", "c"]],
+            id="append_header_to_single_row",
+        ),
+        pytest.param(
+            iter([["a", "b", "c"], ["d", "e", "f"]]),
+            {0: "X", 1: "Y", 2: "Z"},
+            [["X", "Y", "Z"], ["a", "b", "c"], ["d", "e", "f"]],
+            id="append_header_to_multiple_rows",
+        ),
+    ],
+)
+def test_reheader_rows_column__indices_append(rows, column_name_remap, expected):
+    # When
+    obj = _transform.ReheaderColumns(
+        column_name_remap, const.SUBCOMMAND__COLUMN_INDICES, append=True
+    )
+
+    # Then
+    assert list(obj.reheader_rows(rows)) == expected
