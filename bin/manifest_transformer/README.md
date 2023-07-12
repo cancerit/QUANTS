@@ -24,19 +24,19 @@ For portability this script just uses the standard library.
 manifest_transformer.py json my_params.json
 
 # Or from the CLI
-manifest_transformer.py column-names manifest.csv transformed.csv -c col_1 col_2
+manifest_transformer.py column-names -i manifest.csv -o transformed.csv -c col_1 col_2
 
 # If you need to the output file to be a TSV
-manifest_transformer.py column-names manifest.csv transformed.tsv --output-as-tsv -c col_1 col_2
+manifest_transformer.py column-names -i manifest.csv -o transformed.tsv --output-as-tsv -c col_1 col_2
 
 # If you want to reheader the output file
-manifest_transformer.py column-names manifest.csv transformed.csv -c col_1 col_2 -r col_1=COL1 col_2=COL2
+manifest_transformer.py column-names -i manifest.csv -o transformed.csv -c col_1 col_2 -r col_1=COL1 col_2=COL2
 
 # If you want to include optional columns
-manifest_transformer.py column-names manifest.csv transformed.csv -c col_1 col_2 -C col_3 col_4
+manifest_transformer.py column-names -i manifest.csv -o transformed.csv -c col_1 col_2 -C col_3 col_4
 
 # If you want to specify the order of the columns in the output file: e.g. col_2, col_1, col_3, col_5, col_4
-manifest_transformer.py column-names manifest.csv transformed.csv -c col_2 col_1 -C col_3 -c col_5 -C col_4
+manifest_transformer.py column-names -i manifest.csv -o transformed.csv -c col_2 col_1 -C col_3 -c col_5 -C col_4
 
 # More advanced usage
 manifest_transformer.py column-names --help
@@ -148,28 +148,27 @@ optional arguments:
 ## Usage - with command line parameters (using column names)
 
 ```
-manifest_transformer.py column-names [-h] [--output-as-tsv] [-s SUMMARY] -c NAME [NAME ...] [-C NAME [NAME ...]] [-r NAME=NEW_NAME [NAME=NEW_NAME ...]] [--reheader-append] [--force-comma | --force-tab]
-                                            [--force-header-row-index INDEX]
-                                            INPUT OUTPUT
+usage: manifest_transformer.py column-names [-h] -i INPUT -o OUTPUT [--output-as-tsv] [-s SUMMARY] -c NAME [NAME ...] [-C NAME [NAME ...]] [-r NAME=NEW_NAME [NAME=NEW_NAME ...]] [--reheader-append]
+                                            [--force-comma | --force-tab] [--force-header-row-index INDEX]
 
 A script to prepare, validate, trim and re-header tabular manifest files.
 
-positional arguments:
-  INPUT                 Input file path to a tabular manifest file (CSV/TSV).
-  OUTPUT                Output file path for the transformed tabular manifest file (CSV/TSV). You can specify a path to write to a specific file or a directory (appends input filename).
-
 optional arguments:
   -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        REQUIRED. Input file path to a tabular manifest file (CSV/TSV).
+  -o OUTPUT, --output OUTPUT
+                        REQUIRED. Output file path for the transformed tabular manifest file (CSV/TSV). You can specify a path to write to a specific file or a directory (appends input filename).
   --output-as-tsv       Write output file as a TSV. By default, the output file is a CSV.
   -s SUMMARY, --summary SUMMARY
                         By default, no runtime summary JSON file is written. You can specify a path to write to a specific file or a directory (appends script+timestamp filename).
   -c NAME [NAME ...], --columns NAME [NAME ...]
-                        Required columns identified by column header name. Column order is inferred from this list.
+                        REQUIRED columns identified by column header name. Column order is inferred from this list.
   -C NAME [NAME ...], --optional-columns NAME [NAME ...]
                         Optional columns identified by column header name. Column order is inferred from this list.
   -r NAME=NEW_NAME [NAME=NEW_NAME ...], --reheader NAME=NEW_NAME [NAME=NEW_NAME ...]
-                        Reheader columns. Provide a list of column names mappings to reheadder the output file. Column order is NOT inferred from this list (see required & optional column args). The format is: --reheader
-                        col1=COL1 col2=COL2 col3=COL3
+                        Reheader columns. Provide a list of column names mappings to reheadder the output file. Column order is NOT inferred from this list (see required & optional column args). The
+                        format is: --reheader col1=COL1 col2=COL2 col3=COL3
   --reheader-append     By default, the reheader mapping replaces the column header row. You can append the reheader mapping to the head of the output file instead, by setting this flag.
   --force-comma         Force input file delimiter to be a comma ','. By default, the script auto-detects the delimiter.
   --force-tab           Force input file delimiter to be a tab '\t'. By default, the script auto-detects the delimiter.
@@ -180,28 +179,27 @@ optional arguments:
 ## Usage - with command line parameters (using column indices)
 
 ```
-manifest_transformer.py column-indices [-h] [--output-as-tsv] [-s SUMMARY] -c INDEX [INDEX ...] [-C INDEX [INDEX ...]] [-r INDEX=NEW_NAME [INDEX=NEW_NAME ...]] [--reheader-append] [--force-comma | --force-tab]
-                                              [--force-header-row-index INDEX]
-                                              INPUT OUTPUT
+usage: manifest_transformer.py column-indices [-h] -i INPUT -o OUTPUT [--output-as-tsv] [-s SUMMARY] -c INDEX [INDEX ...] [-C INDEX [INDEX ...]] [-r INDEX=NEW_NAME [INDEX=NEW_NAME ...]]
+                                              [--reheader-append] [--force-comma | --force-tab] [--force-header-row-index INDEX]
 
 A script to prepare, validate, trim and re-header tabular manifest files.
 
-positional arguments:
-  INPUT                 Input file path to a tabular manifest file (CSV/TSV).
-  OUTPUT                Output file path for the transformed tabular manifest file (CSV/TSV). You can specify a path to write to a specific file or a directory (appends input filename).
-
 optional arguments:
   -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        REQUIRED. Input file path to a tabular manifest file (CSV/TSV).
+  -o OUTPUT, --output OUTPUT
+                        REQUIRED. Output file path for the transformed tabular manifest file (CSV/TSV). You can specify a path to write to a specific file or a directory (appends input filename).
   --output-as-tsv       Write output file as a TSV. By default, the output file is a CSV.
   -s SUMMARY, --summary SUMMARY
                         By default, no runtime summary JSON file is written. You can specify a path to write to a specific file or a directory (appends script+timestamp filename).
   -c INDEX [INDEX ...], --columns INDEX [INDEX ...]
-                        Required columns identified by column index (1-index). Column order is inferred from this list.
+                        REQUIRED columns identified by column index (1-index). Column order is inferred from this list.
   -C INDEX [INDEX ...], --optional-columns INDEX [INDEX ...]
                         Optional columns identified by column index (1-index). Column order is inferred from this list.
   -r INDEX=NEW_NAME [INDEX=NEW_NAME ...], --reheader INDEX=NEW_NAME [INDEX=NEW_NAME ...]
-                        Reheader columns. Provide a list of column names indices to reheadder the output file. Column order is NOT inferred from this list (see required & optional column args). The format is: --reheader 1=COL1
-                        2=COL2 3=COL3
+                        Reheader columns. Provide a list of column names indices to reheadder the output file. Column order is NOT inferred from this list (see required & optional column args). The format
+                        is: --reheader 1=COL1 2=COL2 3=COL3
   --reheader-append     By default, the reheader mapping replaces the column header row. You can append the reheader mapping to the head of the output file instead, by setting this flag.
   --force-comma         Force input file delimiter to be a comma ','. By default, the script auto-detects the delimiter.
   --force-tab           Force input file delimiter to be a tab '\t'. By default, the script auto-detects the delimiter.

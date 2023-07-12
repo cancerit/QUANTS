@@ -4,12 +4,12 @@ import typing as t
 HELP__PROG_DESCRIPTION = (
     "A script to prepare, validate, trim and re-header tabular manifest files."
 )
-HELP__INPUT_FILE = "Input file path to a tabular manifest file (CSV/TSV)."
+HELP__INPUT_FILE = "REQUIRED. Input file path to a tabular manifest file (CSV/TSV)."
 HELP__JSON_INPUT_FILE = (
     "Input file path to a JSON file containing parameters for the script."
 )
 
-HELP__OUTPUT_FILE = "Output file path for the transformed tabular manifest file (CSV/TSV). You can specify a path to write to a specific file or a directory (appends input filename)."
+HELP__OUTPUT_FILE = "REQUIRED. Output file path for the transformed tabular manifest file (CSV/TSV). You can specify a path to write to a specific file or a directory (appends input filename)."
 HELP__SUMMARY_FILE = "By default, no runtime summary JSON file is written. You can specify a path to write to a specific file or a directory (appends script+timestamp filename)."
 HELP__CAST_OUTPUT_AS_TSV = (
     "Write output file as a TSV. By default, the output file is a CSV."
@@ -18,8 +18,8 @@ HELP__VERSION = "Show the script's version and exit."
 HELP__FORCE_COMMA_DELIMITER = "Force input file delimiter to be a comma ','. By default, the script auto-detects the delimiter."
 HELP__FORCE_TAB_DELIMITER = "Force input file delimiter to be a tab '\\t'. By default, the script auto-detects the delimiter."
 HELP__FORCE_HEADER_ROW_INDEX = "Force the input file parser to use this index for the column header row (1-index). By default, the script auto-detects the index of column header row, if any."
-HELP__REQUIRED_COLUMNS_BY_NAME = "Required columns identified by column header name. Column order is inferred from this list."
-HELP__REQUIRED_COLUMNS_BY_INDEX = "Required columns identified by column index (1-index). Column order is inferred from this list."
+HELP__REQUIRED_COLUMNS_BY_NAME = "REQUIRED columns identified by column header name. Column order is inferred from this list."
+HELP__REQUIRED_COLUMNS_BY_INDEX = "REQUIRED columns identified by column index (1-index). Column order is inferred from this list."
 HELP__OPTIONAL_COLUMNS_BY_NAME = "Optional columns identified by column header name. Column order is inferred from this list."
 HELP__OPTIONAL_COLUMNS_BY_INDEX = "Optional columns identified by column index (1-index). Column order is inferred from this list."
 HELP__REHEADER_BY_NAME = "Reheader columns. Provide a list of column names mappings to reheadder the output file. Column order is NOT inferred from this list (see required & optional column args). The format is: --reheader col1=COL1 col2=COL2 col3=COL3"
