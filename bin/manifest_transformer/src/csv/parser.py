@@ -185,8 +185,9 @@ class CSVParser:
 
         This method is slower than count_columns(), but more accurate.
 
-        In an ideal case, a 2-tuple is returned with the number of columns and
-        a boolean indicating whether all rows have the same number of columns.
+        In an ideal case, a 2-tuple is returned with the number of columns and a
+        boolean indicating whether all rows have the same number of columns
+        (where True means they are all the same).
         """
         if self._columns_count_comprehensively == (0, True):
             self._columns_count_comprehensively = (
@@ -213,7 +214,9 @@ class CSVParser:
         return (column_count, same_column_count_for_all_rows)
 
     def find_rows_with_nulls(
-        self, extra_null_values: t.Optional[t.List[str]] = None
+        self,
+        extra_null_values: t.Optional[t.List[str]] = None,
+        one_index: bool = False,
     ) -> t.List[int]:
         """
         Find rows that have null values, skipping the header row if present.
@@ -224,10 +227,20 @@ class CSVParser:
 
         Args:
             extra_null_values: A list of extra null values to check for.
+            one_index: Whether to return 1-based indices. By default, 0-based indices are returned.
 
         Returns:
             A list of row indices that are completely empty.
         """
+        # Find null containing rows
+        null_rows = self._find_rows_with_nulls(extra_null_values=extra_null_values)
+        if one_index:
+            null_rows = [row + 1 for row in null_rows]
+        return null_rows
+
+    def _find_rows_with_nulls(
+        self, extra_null_values: t.Optional[t.List[str]] = None
+    ) -> t.List[int]:
         # Prepare null values
         null_values: t.List[str] = const.get_null_values()
         if extra_null_values is not None:

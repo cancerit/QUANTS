@@ -8,6 +8,7 @@ if t.TYPE_CHECKING:
 
 
 def write_output_file(output_io: "io.StringIO", output_file: "Path"):
+    output_io.seek(0)
     with tempfile.NamedTemporaryFile(delete=True) as temp_handle:
         temp_file = Path(temp_handle.name)
 

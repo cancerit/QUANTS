@@ -12,7 +12,7 @@ if t.TYPE_CHECKING:
 
 import sys
 from src.args import get_argparser, CleanArgs
-from src.csv import manifest_transformer, write_output_file
+from src.csv import manifest_transformer, manifest_validator, write_output_file
 from src import exceptions as exc
 from src import cli
 from src import summary
@@ -45,7 +45,7 @@ def main(clean_args: CleanArgs):
         maybe_json_params_file=namespace.input_file,
     )
     # Run the main function
-    # TODO manifest_validator(clean_args)  # TODO implement manifest_validator - it checks the csv file for errors
+    manifest_validator(clean_args)
     output_io = manifest_transformer(clean_args)
 
     # Write the output file

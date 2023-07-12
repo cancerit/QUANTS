@@ -7,6 +7,9 @@ from src.args import CleanArgs
 from src.csv.parser import CSVParser, get_column_order_as_indices
 from src.csv.properties import CSVFileProperties
 from src.csv._transform import reorder_rows, ReheaderColumns
+from src.csv import _validate
+from src import cli
+from src import exceptions
 
 
 def process_rows(
@@ -23,6 +26,9 @@ def process_rows(
 
 
 def manifest_transformer(clean_args: CleanArgs) -> io.StringIO:
+    """
+    Trim, reorder and reheader a manifest file.
+    """
     # Ensure clean_args are 0-indexed.
     CA = clean_args.copy_as_0_indexed()
 
@@ -60,3 +66,48 @@ def manifest_transformer(clean_args: CleanArgs) -> io.StringIO:
     csv_writer.writerows(transformed_rows)
     output_file.seek(0)
     return output_file
+
+
+def manifest_validator(clean_args: CleanArgs) -> bool:
+    """
+    Returns True if the CSV file is valid, False otherwise.
+
+    This function will log info and warnings to the console and throw an
+    exception if the CSV file is invalid.
+
+    """
+    # Ensure clean_args are 0-indexed.
+    CA_0_idx = clean_args.copy_as_0_indexed()
+
+    # Prepare the CSV parser & properties.
+    csv_file_properties = CSVFileProperties.from_clean_args(CA_0_idx)
+    csv_parser = CSVParser.from_csv_file_properties(
+        file_path=clean_args.input_file,
+        csv_file_properties=csv_file_properties,
+    )
+
+    # Possibly abort early if in column name but the parser didn't detect any headers
+    _validate.assert_column_headers_detected(
+        mode=CA_0_idx.mode,
+        has_column_headers=csv_file_properties.has_column_headers(),
+        has_user_forced_column_header_index=csv_file_properties.is_forced_column_headers_line_index(),
+    )
+
+    # Get the validation report.
+    validation_report = _validate.get_validation_report(
+        clean_args=CA_0_idx,
+        csv_parser=csv_parser,
+        csv_file_properties=csv_file_properties,
+    )
+    is_valid = validation_report.is_valid()
+
+    # Display the validation report.
+    report = validation_report.report()
+    for report_line in report:
+        cli.display_info(report_line)
+    for warning in validation_report.get_warnings():
+        cli.display_warning(warning)
+    if not is_valid:
+        error_msg = ", ".join(validation_report.get_errors())
+        raise exceptions.ValidationError(error_msg)
+    return is_valid
