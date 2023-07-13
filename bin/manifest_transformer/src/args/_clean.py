@@ -107,14 +107,19 @@ class SummaryFile:
         return new_name
 
     @property
-    def clean(self) -> "Path":
+    def clean(self) -> t.Optional["Path"]:
         clean_input_file = self._input_file.clean
         # The inferred file is the input file but with the name and suffix
         # changed. This is not going to mean the summary file will use the
         # inferred file, but it might depending on how finalise_output_file
         # evaluates the output file.
+        if self._summary_file is None:
+            return None
         inferred_file = clean_input_file.with_name(self._summary_name(clean_input_file))
         summary_file = finalise_output_file(inferred_file, self._summary_file)
+        if summary_file == clean_input_file:
+            msg = f"Summary file cannot be the same as the input file: got {str(summary_file)!r}"
+            raise exceptions.ValidationError(msg)
         return _validate.assert_valid_output_file(summary_file)
 
 

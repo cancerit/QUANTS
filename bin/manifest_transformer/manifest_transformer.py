@@ -38,12 +38,14 @@ def main(clean_args: CleanArgs):
     """Main function."""
 
     # Write the summary file
-    summary.write_summary(
-        clean_args.summary_file,
-        input_file=clean_args.input_file,
-        output_file=clean_args.output_file,
-        maybe_json_params_file=namespace.input_file,
-    )
+    if clean_args.summary_file:
+        summary.write_summary(
+            clean_args.summary_file,
+            input_file=clean_args.input_file,
+            output_file=clean_args.output_file,
+            maybe_json_params_file=namespace.input_file,
+        )
+
     # Run the main function
     manifest_validator(clean_args)
     output_io = manifest_transformer(clean_args)

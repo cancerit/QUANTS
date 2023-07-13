@@ -20,7 +20,7 @@ class CleanArgs:
     mode: ColumnMode
     input_file: Path
     output_file: Path
-    summary_file: Path
+    summary_file: t.Optional[Path]
     column_order: t.Tuple[t.Union[str, int], ...]
     required_columns: t.Tuple[t.Union[str, int], ...]
     optional_columns: t.Tuple[t.Union[str, int], ...]

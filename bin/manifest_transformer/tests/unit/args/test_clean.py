@@ -305,6 +305,18 @@ def test_OutputFile__with_a_path_specified_equal_to_input_file(input_file_setup)
         _clean.OutputFile(input_file, output_file).clean
 
 
+def test_SummaryFile__with_a_file_path__that_is_equal_input_file(
+    input_file_setup, example_dir_setup, fixed_datetime
+):
+    # Given
+    input_file = input_file_setup
+    summary_file = input_file
+
+    # When
+    with pytest.raises(exc.ValidationError):
+        _clean.SummaryFile(input_file, summary_file).clean
+
+
 def test_SummaryFile__with_a_file_path(
     input_file_setup, example_dir_setup, fixed_datetime
 ):
@@ -357,8 +369,7 @@ def test_SummaryFile__with_a_dir_path(
 def test_SummaryFile__without_a_path_specified(input_file_setup, fixed_datetime):
     # Given
     input_file = input_file_setup
-    expected_name = f"{input_file.stem}.summary.{FORMATTED_ARBITRARY_DATETIME}.json"
-    expected = input_file.parent / expected_name
+    expected = None
 
     # When
     actual = _clean.SummaryFile(input_file, None).clean

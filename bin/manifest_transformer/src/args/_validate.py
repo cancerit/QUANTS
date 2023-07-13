@@ -13,9 +13,9 @@ from src import exceptions as exc
 
 def assert_valid_input_file(input_file: "Path") -> "Path":
     if not input_file.exists():
-        raise exc.ValidationError(f"Input file {input_file!r} does not exist.")
+        raise exc.ValidationError(f"Input file {str(input_file)!r} does not exist.")
     if not input_file.is_file():
-        raise exc.ValidationError(f"Input file {input_file!r} is not a file.")
+        raise exc.ValidationError(f"Input file {str(input_file)!r} is not a file.")
     check_read_permissions(input_file)
     check_file_not_empty(input_file)
     return input_file
@@ -38,7 +38,7 @@ def assert_valid_output_file(output_file: "Path") -> "Path":
         ]
     )
     if forbidden_conditions:
-        msg = f"Output file {output_file!r} must be a file and its parent directory must exist."
+        msg = f"Output file {str(output_file)!r} must be a file and its parent directory must exist."
         raise exc.ValidationError(msg)
 
     # We know that output_file is not a directory and its parent directory

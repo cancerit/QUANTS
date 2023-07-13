@@ -88,6 +88,7 @@ def test_CleanArgs__with_null_summary(param_func, is_json_params, make_json_cmd)
         cmd = make_json_cmd(json_params)
     else:
         cmd = param_func().split()
+    expected = None
 
     # When
     argparser = _parser.get_argparser()
@@ -95,8 +96,7 @@ def test_CleanArgs__with_null_summary(param_func, is_json_params, make_json_cmd)
     clean_args = _struct.CleanArgs.from_namespace(namespace)
 
     # Then
-    assert clean_args.summary_file.parent == clean_args.input_file.parent
-    assert clean_args.summary_file.suffix in (".json")
+    assert clean_args.summary_file == expected
 
 
 @pytest.mark.parametrize(

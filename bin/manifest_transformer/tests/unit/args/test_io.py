@@ -40,15 +40,6 @@ FINALISE_OUTPUT_PARAMS = [
     pytest.param(
         (
             Path("input.txt"),
-            None,
-            None,
-            Path("input.txt"),
-        ),
-        id="output path is None",
-    ),
-    pytest.param(
-        (
-            Path("input.txt"),
             Path("output.txt"),
             EXISTING_FILE,
             Path("output.txt"),
