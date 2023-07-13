@@ -29,6 +29,11 @@ class CleanArgs:
     forced_header_row_index: t.Optional[int]
     reheader_mapping: t.Dict[t.Union[str, int], str]
     reheader_append: bool
+    _json_params_file: t.Optional[Path] = None
+
+    @property
+    def json_params_file(self) -> t.Optional[Path]:
+        return self._json_params_file
 
     def copy_as_0_indexed(self) -> "CleanArgs":
         """
@@ -155,16 +160,23 @@ class CleanArgs:
         if subcommand == const.SUBCOMMAND__JSON:
             json_param_file__raw = getattr(namespace, const.ARG_INPUT)
             json_param_file__clean = _clean.InputFile(json_param_file__raw).clean
-            raw_dict = _json_helper.read_json_file(json_param_file__clean)
         elif subcommand in non_json_subcommands:
-            raw_dict = vars(namespace)
-            raw_dict = cls._normalise_non_json_namespace_derived_dict(raw_dict)
+            json_param_file__clean = None
         else:
             detail = ", ".join(allowed_subcommands)
             msg = f"Unknown subcommand: {subcommand!r}, expected one of {detail}. Check help for more details."
             raise NotImplementedError(msg) from None
 
+        # CLI argument route (non-JSON)
+        if json_param_file__clean is None:
+            raw_dict = vars(namespace)
+            raw_dict = cls._normalise_non_json_namespace_derived_dict(raw_dict)
+        # JSON file route
+        else:
+            raw_dict = _json_helper.read_json_file(json_param_file__clean)
+
         clean_args = cls.from_dict(raw_dict)
+        clean_args._json_params_file = json_param_file__clean
         return clean_args
 
     @classmethod

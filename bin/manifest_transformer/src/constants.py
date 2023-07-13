@@ -65,6 +65,14 @@ JSON_PARAM__FORCED_HEADER_ROW_INDEX = (
     ARG_FORCE_HEADER_ROW_INDEX
 ) = "forced_header_row_index"
 
+JSON_SUMMARY__VERSION = "version"
+JSON_SUMMARY__COMMAND = "command"
+JSON_SUMMARY__INPUT_FILE = "input_file"
+JSON_SUMMARY__OUTPUT_FILE = "output_file"
+JSON_SUMMARY__TIMESTAMP = "timestamp"
+JSON_SUMMARY__JSON_PARAMS_FILE = "json_params_file"
+JSON_SUMMARY__JSON_PARAMS = "json_params"
+
 
 def get_null_values() -> t.List[str]:
     nulls = [

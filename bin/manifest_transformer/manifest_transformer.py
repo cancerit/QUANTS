@@ -21,6 +21,8 @@ from src import summary
 def safe_main(namespace: "Namespace"):
     """Main function."""
     try:
+        # Parse & clean the arguments from the namespace according to the
+        # mode/subcommand
         clean_args = CleanArgs.from_namespace(namespace)
         main(clean_args)
     except (exc.ValidationError, exc.UserInterventionRequired) as err:
@@ -43,7 +45,7 @@ def main(clean_args: CleanArgs):
             clean_args.summary_file,
             input_file=clean_args.input_file,
             output_file=clean_args.output_file,
-            maybe_json_params_file=namespace.input_file,
+            maybe_json_params_file=clean_args.json_params_file,
         )
 
     # Run the main function
