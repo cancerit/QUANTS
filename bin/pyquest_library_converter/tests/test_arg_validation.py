@@ -204,6 +204,80 @@ def test_validate_sequence_index_with_header(config):
     args_cleaner._validate_sequence_index()
 
 
+@pytest.mark.parametrize(
+    "sequence_index,name_index,should_throw",
+    [
+        (1, 1, True),
+        (1, 2, False),
+        (2, 1, False),
+        (2, 2, True),
+    ],
+)
+def test_validate_sequence_index_and_name_index_are_not_the_same(
+    config, sequence_index, name_index, should_throw
+):
+    namespace = config.valid_namespace
+    namespace.sequence_index = sequence_index
+    namespace.name_index = name_index
+    args_cleaner = ArgsCleaner(namespace)
+    if should_throw:
+        with pytest.raises(ValidationError):
+            args_cleaner.validate()
+    else:
+        args_cleaner.validate()
+
+
+@pytest.mark.parametrize(
+    "col1, col2, should_throw",
+    [
+        ("name", "sequence", False),
+        ("sequence", "name", False),
+        ("name", "name", True),
+        ("sequence", "sequence", True),
+    ],
+)
+@pytest.mark.parametrize("as_index", [True, False])
+def test_validate_sequence_header_and_name_header_are_not_the_same(
+    config, col1, col2, as_index, should_throw
+):
+    # Given
+    namespace = config.valid_namespace_with_headers
+
+    if as_index:
+        col1_value = (
+            config.oligo_seq_name_index
+            if col1 == "sequence"
+            else config.oligo_seq_index
+        )
+        col2_value = (
+            config.oligo_seq_name_index
+            if col2 == "sequence"
+            else config.oligo_seq_index
+        )
+        namespace.sequence_index = col1_value
+        namespace.name_index = col2_value
+    else:
+        col1_value = (
+            config.oligo_seq_name_header
+            if col1 == "sequence"
+            else config.oligo_seq_header
+        )
+        col2_value = (
+            config.oligo_seq_name_header
+            if col2 == "sequence"
+            else config.oligo_seq_header
+        )
+        namespace.sequence_header = col1_value
+        namespace.name_header = col2_value
+    args_cleaner = ArgsCleaner(namespace)
+    # When / Then
+    if should_throw:
+        with pytest.raises(ValidationError):
+            args_cleaner.validate()
+    else:
+        args_cleaner.validate()
+
+
 def test_get_clean_input(config):
     namespace = config.valid_namespace
     expected_input = config.csv_path

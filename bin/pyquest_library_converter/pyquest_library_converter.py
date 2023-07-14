@@ -236,7 +236,7 @@ class CSVHelper:
                     return i
                 elif i > self._start_row:
                     msg = (
-                        f"Header {header!r} not found in {self._file_path!r} after searching {i+1} rows. "
+                        f"Header {header!r} not found in {str(self._file_path)!r} after searching {i+1} rows. "
                         f"Perhaps it is not there or perhaps it was over-looked because you asked to skip {self._skip_n_rows} rows."
                     )
                     raise ValueError(msg)
@@ -598,6 +598,7 @@ class ArgsCleaner:
             self._validate_reverse_primer,
             self._validate_name_index,
             self._validate_sequence_index,
+            self._validate_name_and_sequence_together_index,
             self._validate_reverse_complement_flag,
         ]
         for validator in validators:
@@ -658,6 +659,20 @@ class ArgsCleaner:
             index_attr=_ARG_NAME_INDEX,
         )
         self._assert_valid_column_index(index)
+        return
+
+    def _validate_name_and_sequence_together_index(self):
+        name_index = self._normailse_header_or_index_to_index(
+            header_attr=_ARG_NAME_HEADER,
+            index_attr=_ARG_NAME_INDEX,
+        )
+        sequence_index = self._normailse_header_or_index_to_index(
+            header_attr=_ARG_SEQ_HEADER,
+            index_attr=_ARG_SEQ_INDEX,
+        )
+        if name_index == sequence_index:
+            msg = "Name column and sequence column must not be the same."
+            raise ValidationError(msg)
         return
 
     def _validate_forward_primer(self):
