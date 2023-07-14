@@ -615,9 +615,9 @@ class ArgsCleaner:
     def __validate_input(self):
         input_value: Path = self._get_arg(_ARG_INPUT)
         if not input_value.exists():
-            raise ValidationError(f"Input file {input_value!r} does not exist.")
+            raise ValidationError(f"Input file {str(input_value)!r} does not exist.")
         if not input_value.is_file():
-            raise ValidationError(f"Input file {input_value!r} is not a file.")
+            raise ValidationError(f"Input file {str(input_value)!r} is not a file.")
         self._check_read_permissions(input_value)
         return
 
@@ -633,7 +633,7 @@ class ArgsCleaner:
         if output_file.parent.exists():
             self._check_write_permissions(output_file.parent)
         else:
-            msg = f"Output file {output_file!r} directory does not exist."
+            msg = f"Output file {str(output_file)!r} directory does not exist."
             raise ValidationError(msg)
         input_file = self._get_arg(_ARG_INPUT)
         if input_file == output_file:
@@ -722,9 +722,7 @@ class ArgsCleaner:
         """
         self._assert_has_validated_input()
         if not self._validated_input:
-            msg = (
-                "The index cannot be validated before input file " "has been validated."
-            )
+            msg = "The index cannot be validated before input file has been validated."
             raise RuntimeError(msg)
         min_col_index = 1  # 1-indexed
         max_col_index = self._csv_helper.columns_count + 1  # 1-indexed
