@@ -173,7 +173,7 @@ class CleanArgs:
             raw_dict = cls._normalise_non_json_namespace_derived_dict(raw_dict)
         # JSON file route
         else:
-            raw_dict = _json_helper.read_json_file(json_param_file__clean)
+            raw_dict = _json_helper.load_json_file(json_param_file__clean)
 
         clean_args = cls.from_dict(raw_dict)
         clean_args._json_params_file = json_param_file__clean

@@ -4,7 +4,7 @@ from pathlib import Path
 from src.args import _parser
 from src.args import _struct
 from src.enums import ColumnMode
-from src.args._json_helper import read_json_file
+from src.args._json_helper import load_json_file
 
 from tests.test_data import files
 
@@ -123,7 +123,7 @@ def test_CleanArgs__json__with_column_names():
     )
 
     # When
-    as_dict = read_json_file(json_param)
+    as_dict = load_json_file(json_param)
     actual = _struct.CleanArgs.from_dict(as_dict)
 
     # Then
@@ -161,7 +161,7 @@ def test_CleanArgs__json__with_column_indices():
     )
 
     # When
-    as_dict = read_json_file(json_param)
+    as_dict = load_json_file(json_param)
     actual = _struct.CleanArgs.from_dict(as_dict)
 
     # Then

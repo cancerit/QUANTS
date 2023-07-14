@@ -35,7 +35,7 @@ def get_summary(
     summary[const.JSON_SUMMARY__TIMESTAMP] = _get_current_timestamp_string()
 
     if maybe_json_params_file is not None:
-        params = _json_helper.read_json_file(maybe_json_params_file)
+        params = _json_helper.load_json_file(maybe_json_params_file)
         summary[const.JSON_SUMMARY__JSON_PARAMS_FILE] = str(maybe_json_params_file)
         summary[const.JSON_SUMMARY__JSON_PARAMS] = params
     else:
