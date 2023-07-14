@@ -1,7 +1,13 @@
 import unittest
 import typing as t
+import string
+import pytest
 
-from pyquest_library_converter import reverse_complement, PrimerScanner
+from pyquest_library_converter import (
+    reverse_complement,
+    PrimerScanner,
+    find_invalid_chars_in_dna_sequence,
+)
 
 EXAMPLE_CSV_HEADER = "sequence"
 
@@ -471,3 +477,120 @@ class TestPrimerScanner(unittest.TestCase):
         # Then
         self.assertEqual(actual_forward_primer, expected_forward_primer)
         self.assertEqual(actual_reverse_primer, expected_reverse_primer)
+
+
+PRIMER_TEST_CASES = (
+    [
+        # sequence, expected, expected_allow_n, expected_allow_lower, allow_both
+        # simple positive cases
+        ("A", [], [], [], []),
+        ("C", [], [], [], []),
+        ("G", [], [], [], []),
+        ("T", [], [], [], []),
+        # simple negative cases
+        ("", [], [], [], []),
+        ("N", ["N"], [], ["N"], []),
+        ("a", ["a"], ["a"], [], []),
+        ("c", ["c"], ["c"], [], []),
+        ("g", ["g"], ["g"], [], []),
+        ("t", ["t"], ["t"], [], []),
+        ("n", ["n"], ["n"], ["n"], []),
+    ]
+    + [
+        # simple negative cases: lowers
+        (char, [char], [char], [char], [char])
+        for char in string.ascii_lowercase
+        if char not in "atcgn"
+    ]
+    + [
+        # simple negative cases: uppers
+        (char, [char], [char], [char], [char])
+        for char in string.ascii_uppercase
+        if char not in "ATCGN"
+    ]
+    + [
+        # simple negative cases: digits + symbols
+        (char, [char], [char], [char], [char])
+        for char in string.digits + string.punctuation
+    ]
+    + [
+        # complex postive cases
+        ("ATCG", [], [], [], []),
+        ("ATCGATCG", [], [], [], []),
+        ("ATCGATCGATCGATCG", [], [], [], []),
+        ("CATGAGGGAAGTCATCTGACAGAACAGCAGCACTTTGTGGTTGGTTGCTCGGAGTTTGG", [], [], [], []),
+        # complex negative cases: illegal characters
+        ("ATCGN", ["N"], [], ["N"], []),
+        ("atcg", ["a", "c", "g", "t"], ["a", "c", "g", "t"], [], []),
+        ("ATCGatcg", ["a", "c", "g", "t"], ["a", "c", "g", "t"], [], []),
+        ("ATCGATCGatcg", ["a", "c", "g", "t"], ["a", "c", "g", "t"], [], []),
+        ("AZCG", ["Z"], ["Z"], ["Z"], ["Z"]),
+        ("ATCGAACB", ["B"], ["B"], ["B"], ["B"]),
+        (
+            "CATGAGGGAAGTCANCTGACAGA3CAGCAGCACTTTZTGGTTGGTTNNNCGGAGTTTGG",
+            ["3", "N", "Z"],
+            ["3", "Z"],
+            ["3", "N", "Z"],
+            ["3", "Z"],
+        ),
+        (
+            "CATGAGGGAAGTCATCTGACAGA3CAGCAGCACTTTGTGGTTGGTTGCTCGGAGTTTGG",
+            ["3"],
+            ["3"],
+            ["3"],
+            ["3"],
+        ),
+        (
+            "CATGAGGGAAGTCATCTGACAGA?CAGCAGCACTTTGTGGTTGGTTGCTCGGAGTTTGG",
+            ["?"],
+            ["?"],
+            ["?"],
+            ["?"],
+        ),
+        (
+            "CATGAGGGAAGTCATCTGACAGAzCAGCAGCACTTTGTGGTTGGTTGCTCGGAGTTTGG",
+            ["z"],
+            ["z"],
+            ["z"],
+            ["z"],
+        ),
+    ]
+)
+
+
+@pytest.mark.parametrize(
+    "sequence, expected, expected_allow_n, expected_allow_lower, expected_allow_both",
+    PRIMER_TEST_CASES,
+)
+def test_find_invalid_chars_in_dna_sequence(
+    sequence, expected, expected_allow_n, expected_allow_lower, expected_allow_both
+):
+    # Given
+    expected_allowed = tuple(sorted("ACGT"))
+    expected_allowed_n = tuple(sorted("ACGTN"))
+    expected_allow_lower = tuple(sorted("ACGTacgt"))
+    expected_allow_both = tuple(sorted("ACGTNacgtn"))
+
+    # When
+    actual, actual_allowed = find_invalid_chars_in_dna_sequence(
+        sequence, allow_n=False, allow_lower_case=False
+    )
+    actual_allow_n, actual_allowed_n = find_invalid_chars_in_dna_sequence(
+        sequence, allow_n=True, allow_lower_case=False
+    )
+    actual_allow_lower, actual_allow_lower = find_invalid_chars_in_dna_sequence(
+        sequence, allow_n=False, allow_lower_case=True
+    )
+    actual_allow_both, actual_allow_both = find_invalid_chars_in_dna_sequence(
+        sequence, allow_n=True, allow_lower_case=True
+    )
+
+    # Then
+    assert actual_allowed == expected_allowed
+    assert actual_allowed_n == expected_allowed_n
+    assert actual_allow_lower == expected_allow_lower
+    assert actual_allow_both == expected_allow_both
+    assert actual == expected
+    assert actual_allow_n == expected_allow_n
+    assert actual_allow_lower == expected_allow_lower
+    assert actual_allow_both == expected_allow_both

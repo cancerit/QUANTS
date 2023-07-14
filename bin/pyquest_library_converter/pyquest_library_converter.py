@@ -517,8 +517,6 @@ class PrimerScanner:
 
 
 class ArgsCleaner:
-    _ALLOWED_DNA = "ACTG"
-
     def __init__(self, namespace: argparse.Namespace):
         self._namespace = namespace
         self._parsed_csv = None
@@ -677,13 +675,11 @@ class ArgsCleaner:
 
     def _validate_forward_primer(self):
         forward_primer_value: str = self._get_arg(_ARG_FORWARD_PRIMER)
-        allowed_chars = set(self._ALLOWED_DNA.upper())
-        self._assert_valid_chars(forward_primer_value, allowed_chars)
+        self._assert_valid_primer(forward_primer_value, "forward primer")
 
     def _validate_reverse_primer(self):
         reverse_primer_value: str = self._get_arg(_ARG_REVERSE_PRIMER)
-        allowed_chars = set(self._ALLOWED_DNA.upper())
-        self._assert_valid_chars(reverse_primer_value, allowed_chars)
+        self._assert_valid_primer(reverse_primer_value, "reverse primer")
 
     def _validate_reverse_complement_flag(self):
         flag = self._get_arg(_ARG_REVERSE_COMPLEMENT_FLAG)
@@ -722,14 +718,22 @@ class ArgsCleaner:
             raise ValidationError(msg)
         return
 
-    def _assert_valid_chars(self, string: str, allowed_chars: t.Set[str]):
-        for char in string:
-            if char not in allowed_chars:
-                msg = (
-                    f"Character {char!r} in {string!r} is not in the allowed "
-                    f"characters {allowed_chars!r} (case insensitive)."
-                )
-                raise ValidationError(msg)
+    def _assert_valid_primer(self, primer: str, primer_type: str):
+        if not primer:
+            # Empty primer is allowed
+            return
+        illegal_chars, allowed_chars = find_invalid_chars_in_dna_sequence(
+            primer, allow_n=False, allow_lower_case=False
+        )
+        if illegal_chars:
+            illegal_str = "".join(illegal_chars)
+            allowed_str = "".join(allowed_chars)
+            msg = (
+                f"Illegal characters {illegal_str!r} found in {primer_type}. "
+                "Only the following characters are exactly allowed: "
+                f"{allowed_str!r} (case sensitive)."
+            )
+            raise ValidationError(msg)
 
     def _assert_valid_column_index(self, index: int):
         """
@@ -819,6 +823,30 @@ class ArgsCleaner:
     def _check_read_permissions(self, path: Path) -> None:
         if not os.access(path, os.R_OK):
             raise ValidationError(f"{path!r} is not readable.")
+
+
+def find_invalid_chars_in_dna_sequence(
+    sequence: str, allow_n: bool, allow_lower_case: bool
+) -> t.Tuple[t.List[str], t.Tuple[str]]:
+    """
+    Find invalid characters in a DNA sequence, returning the invalid characters and the allowed characters.
+
+    :param sequence: The sequence to validate.
+    :param allow_n: Whether to allow the character 'N' in the sequence.
+    :param allow_lower_case: Whether to allow lower case characters in the sequence.
+
+    """
+    allowed_chars = set("ACGT")
+    if allow_n:
+        allowed_chars.add("N")
+    if allow_lower_case:
+        allowed_chars.update("acgt")
+    if allow_lower_case and allow_n:
+        allowed_chars.update("n")
+
+    sequence_set = set(sequence)
+    invalid_chars = sequence_set - allowed_chars
+    return sorted(invalid_chars), tuple(sorted(allowed_chars))
 
 
 def get_argparser() -> argparse.ArgumentParser:

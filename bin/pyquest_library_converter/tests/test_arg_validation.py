@@ -4,6 +4,7 @@ import pytest
 from pyquest_library_converter import ArgsCleaner, ValidationError
 from tests import test_data
 from pathlib import Path
+import string
 
 # FIXTURE HELPER
 
@@ -154,6 +155,69 @@ def test_validate_forward_primer(config):
     namespace = config.valid_namespace
     args_cleaner = ArgsCleaner(namespace)
     args_cleaner._validate_forward_primer()
+
+
+PRIMER_TEST_CASES = [
+    # sequence, should_throw
+    # simple positive cases
+    ("", False),
+    ("A", False),
+    ("C", False),
+    ("G", False),
+    ("T", False),
+    # simple negative cases
+    ("N", True),
+    ("a", True),
+    ("c", True),
+    ("g", True),
+    ("t", True),
+    ("n", True),
+] + [
+    # complex postive cases
+    ("ATCG", False),
+    ("ATCGATCG", False),
+    ("ATCGATCGATCGATCG", False),
+    ("CATGAGGGAAGTCATCTGACAGAACAGCAGCACTTTGTGGTTGGTTGCTCGGAGTTTGG", False),
+    # complex negative cases: illegal characters
+    ("ATCGN", True),
+    ("atcg", True),
+    ("ATCGatcg", True),
+    ("ATCGATCGatcg", True),
+    ("AZCG", True),
+    ("ATCGAACB", True),
+    ("CATGAGGGAAGTCATCTGACAGA3CAGCAGCACTTTGTGGTTGGTTGCTCGGAGTTTGG", True),
+    ("CATGAGGGAAGTCATCTGACAGA?CAGCAGCACTTTGTGGTTGGTTGCTCGGAGTTTGG", True),
+    ("CATGAGGGAAGTCATCTGACAGAzCAGCAGCACTTTGTGGTTGGTTGCTCGGAGTTTGG", True),
+]
+
+
+@pytest.mark.parametrize("sequence, should_throw", PRIMER_TEST_CASES)
+def test_validate_forward_primer__raises_if_illegal(config, sequence, should_throw):
+    namespace = config.valid_namespace
+    namespace.forward_primer = sequence
+    args_cleaner = ArgsCleaner(namespace)
+    if should_throw:
+        with pytest.raises(ValidationError):
+            args_cleaner.validate()
+    else:
+        args_cleaner.validate()
+        actual = args_cleaner.get_clean_forward_primer()
+        assert actual == sequence
+
+
+@pytest.mark.parametrize("sequence, should_throw", PRIMER_TEST_CASES)
+def test_validate_reverse_primer__raises_if_illegal(config, sequence, should_throw):
+    namespace = config.valid_namespace
+    namespace.reverse_primer = sequence
+    args_cleaner = ArgsCleaner(namespace)
+    if should_throw:
+        with pytest.raises(ValidationError):
+            args_cleaner.validate()
+    else:
+        args_cleaner.validate()
+
+        actual = args_cleaner.get_clean_reverse_primer()
+        assert actual == sequence
 
 
 def test_validate_reverse_primer(config):
