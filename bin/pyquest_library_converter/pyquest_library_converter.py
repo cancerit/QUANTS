@@ -528,6 +528,13 @@ class ArgsCleaner:
         self._header_row_discovered = False
         self._header_row_index = -1
 
+    def __repr__(self) -> str:
+        namespace_as_dict = vars(self._namespace)
+        key_value_pairs = " ".join(
+            f"{key}={value!r}" for key, value in namespace_as_dict.items()
+        )
+        return f"{self.__class__.__name__}({key_value_pairs})"
+
     def _get_arg(self, arg_name: str) -> t.Any:
         if not hasattr(self._namespace, arg_name):
             msg = (

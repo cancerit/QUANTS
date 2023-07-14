@@ -131,11 +131,11 @@ class _ArgsCleaner_Method_Tests_Mixin:
         # Then
         self.assertEqual(expected_skip_n_rows, actual_skip_n_rows)
 
-    def test_get_clean_output__with_specific_output_file_that_does_exist(self):
+    def test_get_clean_output__with_specific_output_that_does_exist(self):
         # Given
         expected_output = self.csv_path
         namespace = self.valid_namespace
-        namespace.output_file = self.csv_path
+        namespace.output = self.csv_path
         args_cleaner = ArgsCleaner(namespace)
 
         # When
@@ -145,11 +145,11 @@ class _ArgsCleaner_Method_Tests_Mixin:
         # Then
         self.assertEqual(expected_output, actual_output)
 
-    def test_get_clean_output__with_specific_output_file_that_doesnt_exist(self):
+    def test_get_clean_output__with_specific_output_that_doesnt_exist(self):
         # Given
         expected_output = self.csv_path.parent / "foo.csv"
         namespace = self.valid_namespace
-        namespace.output_file = expected_output
+        namespace.output = expected_output
         args_cleaner = ArgsCleaner(namespace)
 
         # When
@@ -163,7 +163,7 @@ class _ArgsCleaner_Method_Tests_Mixin:
         # Given
         expected_output = self.csv_path
         namespace = self.valid_namespace
-        namespace.output_file = self.csv_path.parent
+        namespace.output = self.csv_path.parent
         args_cleaner = ArgsCleaner(namespace)
 
         # When
@@ -238,7 +238,9 @@ class _ArgsCleaner_Method_Tests_Mixin:
 
         # When
         args_cleaner.validate()
-        actual_reverse_complement_flag = args_cleaner.get_clean_verbose()
+        actual_reverse_complement_flag = (
+            args_cleaner.get_clean_reverse_complement_flag()
+        )
 
         # Then
         self.assertEqual(
