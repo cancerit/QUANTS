@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 
 from src import exceptions as exc
 from src.enums import ColumnMode
+from src import constants as const
 
 if t.TYPE_CHECKING:
     from src.csv.parser import CSVParser
@@ -32,6 +33,26 @@ class CSVValidationReport:
     def get_errors(self) -> t.List[str]:
         return self._errors.copy()
 
+    def get_error_msg(self) -> str:
+        """
+        Returns a string with the error message, nicely formatting single and multiple errors.
+
+        If there are no errors, returns a string saying so: "No errors occurred."
+        """
+        lines = []
+        for line in self.get_errors():
+            line = line.capitalize()
+            line = line + "." if not line.endswith(".") else line
+            lines.append(line)
+        if len(lines) == 0:
+            msg = "No errors occurred."
+        elif len(lines) == 1:
+            msg = lines[0]
+        else:
+            detail = " ".join([f"#{i} {line}" for i, line in enumerate(lines, 1)])
+            msg = f"Multiple errors occurred. {detail}"
+        return msg
+
     def get_warnings(self) -> t.List[str]:
         return self._warnings.copy()
 
@@ -42,6 +63,7 @@ class CSVValidationReport:
         return not self._errors
 
     def _validate(self):
+        self._validate_input_delimiter()
         self._validate_required_columns()
         self._validate_optional_columns()
         self._validate_column_consistency()
@@ -94,6 +116,18 @@ class CSVValidationReport:
             )
             self._errors.append(err_msg)
 
+    def _validate_input_delimiter(self):
+        ALLOWED_DELIMITERS = set(const.allowed_delimiters())
+        if self.delimiter not in ALLOWED_DELIMITERS:
+            verb = "forced to use" if self.has_forced_delimiter else "detected"
+            allowed_delimiters_str = ", ".join(
+                [repr(d) for d in sorted(ALLOWED_DELIMITERS)]
+            )
+            advice_to_force = " The script tries to deletect delimiter but you can force the delimiter (see help)."
+            advice_str = advice_to_force if not self.has_forced_delimiter else ""
+            err_msg = f"Invalid input file delimiter: {verb} {self.delimiter!r}, allowed {allowed_delimiters_str}.{advice_str}"
+            self._errors.append(err_msg)
+
     def _validate_nulls(self):
         if self.rows_with_nulls:
             detail_rows = ", ".join(f"{str(elem)!r}" for elem in self.rows_with_nulls)
@@ -109,13 +143,12 @@ class CSVValidationReport:
         indexing = "1-indexed" if self.is_1_indexed else "0-indexed"
         mode = self.mode.value
         file_delimiter = (
-            f"{self.delimiter!r}{' (overridden)' if self.has_forced_delimiter else ''}"
+            f"{self.delimiter!r}{' (forced)' if self.has_forced_delimiter else ''}"
         )
         has_column_headers = (
             f"{yes}"
             if self.has_column_headers
-            else f"{no}"
-            + f"{' (overridden)' if self.has_forced_columns_headers else ''}"
+            else f"{no}" + f"{' (forced)' if self.has_forced_columns_headers else ''}"
         )
         has_file_headers = f"{yes}" if self.has_file_header else f"{no}"
         file_header_columns = ", ".join(str(col) for col in self.file_columns)

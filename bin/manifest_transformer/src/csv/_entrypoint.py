@@ -108,6 +108,6 @@ def manifest_validator(clean_args: CleanArgs) -> bool:
     for warning in validation_report.get_warnings():
         cli.display_warning(warning)
     if not is_valid:
-        error_msg = ", ".join(validation_report.get_errors())
+        error_msg = validation_report.get_error_msg()
         raise exceptions.ValidationError(error_msg)
     return is_valid

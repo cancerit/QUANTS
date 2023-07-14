@@ -145,7 +145,7 @@ def clean_input_delimiter(delimiter: t.Optional[str]) -> t.Optional[str]:
     """
     if delimiter is None:
         return None
-    allowed_delimiters = [const.DELIMITER__TAB, const.DELIMITER__COMMA]
+    allowed_delimiters = const.allowed_delimiters()
     if delimiter not in allowed_delimiters:
         msg = f"Output file delimiter must be a tab or comma, not '{delimiter}'"
         raise exceptions.ValidationError(msg)
@@ -156,7 +156,7 @@ def clean_output_delimiter(delimiter: t.Optional[str], default=",") -> str:
     """
     Validates & cleans the output delimiter. If the delimiter is None, the default is returned.
     """
-    allowed_delimiters = [const.DELIMITER__TAB, const.DELIMITER__COMMA]
+    allowed_delimiters = const.allowed_delimiters()
     if delimiter is None:
         clean_delimiter = default
     else:

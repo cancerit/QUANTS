@@ -48,6 +48,11 @@ NULL_VALUE__EMPTY = ""
 DELIMITER__COMMA = ","
 DELIMITER__TAB = "\t"
 
+
+def allowed_delimiters() -> t.List[str]:
+    return [DELIMITER__COMMA, DELIMITER__TAB].copy()
+
+
 JSON_PARAM__MODE = ARG_SUBCOMMAND = "mode"
 JSON_PARAM__INPUT_FILE = ARG_INPUT = "input_file"
 JSON_PARAM__OUTPUT_FILE = ARG_OUTPUT = "output_file"
