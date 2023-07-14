@@ -20,6 +20,7 @@ class CSVValidationReport:
     has_forced_delimiter: bool
     has_column_headers: bool
     has_forced_columns_headers: bool
+    file_duplicate_columns: t.List[t.Tuple[str, int]]
     file_columns: t.Tuple[t.Union[str, int], ...]
     has_file_header: bool
     missing_required_columns: t.Tuple[t.Union[str, int], ...]
@@ -67,6 +68,7 @@ class CSVValidationReport:
         self._validate_required_columns()
         self._validate_optional_columns()
         self._validate_column_consistency()
+        self._validate_duplicate_columns()
         self._validate_nulls()
 
     def _validate_required_columns(self):
@@ -128,10 +130,23 @@ class CSVValidationReport:
             err_msg = f"Invalid input file delimiter: {verb} {self.delimiter!r}, allowed {allowed_delimiters_str}.{advice_str}"
             self._errors.append(err_msg)
 
+    def _validate_duplicate_columns(self):
+        if len(self.file_duplicate_columns) > 0:
+            detail_duplicate = ", ".join(
+                f"{str(col)!r} (index {idx})"
+                for col, idx in self.file_duplicate_columns
+            )
+            err_msg = (
+                f"Some columns in the input file are duplicated: {detail_duplicate}."
+            )
+            self._errors.append(err_msg)
+
     def _validate_nulls(self):
         if self.rows_with_nulls:
             detail_rows = ", ".join(f"{str(elem)!r}" for elem in self.rows_with_nulls)
-            err_msg = f"Some rows have null values: indices {detail_rows}."
+            err_msg = (
+                f"Some rows in the input file have null values: indices {detail_rows}."
+            )
             self._warnings.append(err_msg)
 
     def report(self) -> t.List[str]:
@@ -224,6 +239,11 @@ def get_validation_report(
         file_columns=file_columns,
     )
 
+    # Find any duplicate headers in the csv
+    file_duplicate_headers = csv_parser.find_duplicate_headers(
+        one_index=CA_1_idx.is_1_indexed
+    )
+
     # Find any missing optional columns
     missing_optional_columns = find_missing_columns(
         user_columns=CA_1_idx.optional_columns,
@@ -248,6 +268,7 @@ def get_validation_report(
         has_column_headers=has_column_headers,
         has_forced_columns_headers=has_forced_columns_headers,
         file_columns=file_columns,
+        file_duplicate_columns=file_duplicate_headers,
         has_file_header=has_file_header,
         missing_required_columns=tuple(missing_required_columns),
         missing_optional_columns=tuple(missing_optional_columns),

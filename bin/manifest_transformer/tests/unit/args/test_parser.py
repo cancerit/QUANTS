@@ -303,7 +303,6 @@ def test_parse_reheader_columns_valid_multiple_equals():
     assert actual == expected
 
 
-# Test for invalid column mappings - no equal signs
 def test_parse_reheader_columns_invalid_no_equals():
     # Given
     columns = ["col1COL1", "col2=COL2"]
@@ -311,6 +310,19 @@ def test_parse_reheader_columns_invalid_no_equals():
     # When
     with pytest.raises(ValidationError):
         _parser.parse_reheader_columns(columns)
+
+
+@pytest.mark.parametrize(
+    "column_remap_list",
+    [
+        pytest.param(["col1=COL1A", "col1=COL1B"], id="duplicate-in-input-header"),
+        pytest.param(["col1a=COL1", "col1b=COL1"], id="duplicate-in-remapped-header"),
+    ],
+)
+def test_parse_reheader_columns_invalid_duplicates(column_remap_list):
+    # When & Then
+    with pytest.raises(ValidationError):
+        _parser.parse_reheader_columns(column_remap_list)
 
 
 @pytest.mark.parametrize(

@@ -127,6 +127,15 @@ def test_clean_cast_output_delimiter_invalid(forbidden_delimiter):
             {"a": "x", "b": "y", "c": "z"},
             id="replace_names",
         ),
+        # Replace cases
+        pytest.param(
+            {"a": "x", "b": "x", "c": "z"},
+            ["a", "b", "c"],
+            const.SUBCOMMAND__COLUMN_NAMES,
+            False,
+            None,
+            id="replace_names_duplicate_in_remap#error",
+        ),
         pytest.param(
             {"a": "x", "b": "y", "c": "z"},
             ["a", "b", "c", "d"],
@@ -134,6 +143,14 @@ def test_clean_cast_output_delimiter_invalid(forbidden_delimiter):
             False,
             {"a": "x", "b": "y", "c": "z"},
             id="replace_names_partial_overlap",
+        ),
+        pytest.param(
+            {"a": "x", "b": "x", "c": "z"},
+            ["a", "b", "c", "d"],
+            const.SUBCOMMAND__COLUMN_NAMES,
+            False,
+            None,
+            id="replace_names_partial_overlap_duplicate_in_remap#error",
         ),
         pytest.param(
             {"a": "x", "b": "y", "c": "z"},
@@ -152,12 +169,28 @@ def test_clean_cast_output_delimiter_invalid(forbidden_delimiter):
             id="replace_indices",
         ),
         pytest.param(
+            {1: "x", 2: "x", 3: "z"},
+            [1, 2, 3],
+            const.SUBCOMMAND__COLUMN_INDICES,
+            False,
+            None,
+            id="replace_indices_duplicate_in_remap#error",
+        ),
+        pytest.param(
             {1: "x", 2: "y"},
             [1, 2, 3],
             const.SUBCOMMAND__COLUMN_INDICES,
             False,
             {1: "x", 2: "y"},
             id="replace_indices_partial_overlap",
+        ),
+        pytest.param(
+            {1: "x", 2: "x"},
+            [1, 2, 3],
+            const.SUBCOMMAND__COLUMN_INDICES,
+            False,
+            None,
+            id="replace_indices_partial_overlap_duplicate_in_remap#error",
         ),
         pytest.param(
             {1: "x", 2: "y", 100: "z"},
@@ -191,6 +224,14 @@ def test_clean_cast_output_delimiter_invalid(forbidden_delimiter):
             True,
             {1: "x", 2: "y", 3: "z"},
             id="append_indices",
+        ),
+        pytest.param(
+            {1: "x", 2: "x", 3: "z"},
+            [1, 2, 3],
+            const.SUBCOMMAND__COLUMN_INDICES,
+            True,
+            None,
+            id="append_indices_duplicate_in_remap#error",
         ),
         pytest.param(
             {"a": "x", "b": "y", "c": "z"},

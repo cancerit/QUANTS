@@ -363,8 +363,8 @@ def _prefix_column(column: str, prefix: str) -> str:
 
 def parse_reheader_columns(columns: t.Optional[t.List[str]]) -> t.Dict[str, str]:
     """
-    Parses a list of strings of the format ["col1=COL1", "col2=COL2"]
-    into a dictionary like {"col1": "COL1", "col2": "COL2"}
+    Parses a list of strings of the format ["col1=COL1", "col2=COL2"] into a
+    dictionary like {"col1": "COL1", "col2": "COL2"}
 
     If columns is None, returns an empty dictionary.
 
@@ -373,17 +373,38 @@ def parse_reheader_columns(columns: t.Optional[t.List[str]]) -> t.Dict[str, str]
 
     Returns:
         A dictionary where key is column_name and value is mapped_column_name
+
+    Raises:
+        exceptions.ValidationError: If duplicate column names or mapped column
+        names are detected. Or if the column syntax is invalid (wrong or lack of
+        "=" separator)
     """
     if columns is None:
-        return {}
+        mappings = {}
+    else:
+        mappings = _parse_reheader_columns(columns)
+    return mappings
+
+
+def _parse_reheader_columns(columns: t.List[str]) -> t.Dict[str, str]:
     seperator = "="
     mappings = {}
+    seen_column_names = set()
+    seen_mapped_names = set()
     for column in columns:
         parts = column.split(seperator, 1)
         if len(parts) != 2:
             msg = f"Invalid reheader column syntax: {column!r}, must be of the form 'column_name=mapped_column_name'. All reheader columns: {columns}."
             raise exceptions.ValidationError(msg)
         column_name, mapped_name = parts
+        if column_name in seen_column_names:
+            msg = f"Duplicate column name detected: {column_name!r}. All reheader columns: {columns}."
+            raise exceptions.ValidationError(msg)
+        if mapped_name in seen_mapped_names:
+            msg = f"Duplicate mapped column name detected: {mapped_name!r}. All reheader columns: {columns}."
+            raise exceptions.ValidationError(msg)
+        seen_column_names.add(column_name)
+        seen_mapped_names.add(mapped_name)
         mappings[column_name] = mapped_name
     return mappings
 

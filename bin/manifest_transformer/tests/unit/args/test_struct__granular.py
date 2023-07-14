@@ -173,3 +173,41 @@ def test_CleanArgs__will_raise_if_dict_missing_key(
     # Then
     with pytest.raises(ValidationError):
         _struct.CleanArgs.from_namespace(namespace)
+
+
+@pytest.mark.parametrize(
+    "cmd, should_throw",
+    [
+        pytest.param(
+            f"column-names -i {EXAMPLE_CSV} -o out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1A col3=COL3",
+            False,
+            id="valid",
+        ),
+        pytest.param(
+            f"column-names -i {EXAMPLE_CSV} -o out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1A col1=COL1B col3=COL3",
+            True,
+            id="invalid#dupes-in-input-headers",
+        ),
+        pytest.param(
+            f"column-names -i {EXAMPLE_CSV} -o out.csv -c col1 col2 -C opt-col4 opt-col5 -c col3 --output-as-tsv -r col1=COL1 col2=COL1 col3=COL3",
+            True,
+            id="invalid#dupes-in-remapped-headers",
+        ),
+    ],
+)
+def test_CleanArgs__will_raise_if_reheader_has_dupliates(cmd, should_throw):
+    # Given
+    argparser = _parser.get_argparser()
+    namespace = argparser.parse_args(cmd.split())
+
+    # When
+    if should_throw:
+        # When & Then
+        with pytest.raises(ValidationError):
+            _struct.CleanArgs.from_namespace(namespace)
+    else:
+        # When
+        clean_args = _struct.CleanArgs.from_namespace(namespace)
+
+        # Then
+        assert clean_args.reheader_mapping == {"col1": "COL1A", "col3": "COL3"}

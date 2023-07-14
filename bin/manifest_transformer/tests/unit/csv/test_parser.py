@@ -8,7 +8,7 @@ from src.csv.properties import (
     CSVFileProperties,
     find_first_tabular_line_index_and_offset,
 )
-from src.exceptions import UserInterventionRequired
+from src.exceptions import UserInterventionRequired, ValidationError
 from tests.test_data import files, const
 
 # PARAMS
@@ -404,6 +404,88 @@ def test_CSVParser_find_rows_with_nulls__using_non_default_null_values(
 
     # Then
     assert len(null_rows) in expected, csv_file_path.read_text()
+
+
+@pytest.mark.parametrize(
+    "column_headers, expected",
+    [
+        pytest.param(
+            ["col_0", "col_1", "col_2", "col_3", "col_4"],
+            [],
+            id="no_duplicates",
+        ),
+        pytest.param(
+            ["col_0", "col_1", "col_1", "col_2", "col_3"],
+            [("col_1", 1), ("col_1", 2)],
+            id="has_2x1_duplicates",
+        ),
+        pytest.param(
+            ["col_0", "col_1", "col_1", "col_1", "col_3"],
+            [("col_1", 1), ("col_1", 2), ("col_1", 3)],
+            id="has_3x1_duplicates",
+        ),
+        pytest.param(
+            ["col_0", "col_1", "col_1", "col_2", "col_2"],
+            [("col_1", 1), ("col_1", 2), ("col_2", 3), ("col_2", 4)],
+            id="has_2x2_duplicates",
+        ),
+        pytest.param(
+            [],
+            [],
+            id="no_columns",
+        ),
+    ],
+)
+@pytest.mark.parametrize(
+    "has_file_header",
+    [
+        pytest.param(True, id="has_file_header"),
+        pytest.param(False, id="no_file_header"),
+    ],
+)
+@pytest.mark.parametrize(
+    "has_column_header",
+    [
+        pytest.param(True, id="has_column_header"),
+        pytest.param(False, id="no_column_header"),
+    ],
+)
+def test_CSVParser_find_duplicate_headers(
+    make_csv_file,
+    column_headers,
+    expected,
+    has_file_header,
+    has_column_header,
+):
+    # Given
+    csv_file_path = make_csv_file(
+        is_erroneous=False,
+        columns=column_headers,
+        include_file_header=has_file_header,
+        include_column_header=has_column_header,
+        include_null_values=False,
+    )
+    try:
+        csv_properties = CSVFileProperties.from_csv_file(csv_file_path)
+    except:
+        csv_properties = CSVFileProperties.from_csv_file(
+            csv_file_path,
+            forced_delimiter=",",
+            forced_column_headers_line_index=0,
+        )
+    should_throw = len(column_headers) == 0 or not has_column_header
+
+    # When
+    parser = CSVParser.from_csv_file_properties(csv_file_path, csv_properties)
+    if should_throw:
+        with pytest.raises((ValidationError, RuntimeError)):
+            parser.find_duplicate_headers()
+        return
+    else:
+        actual = parser.find_duplicate_headers()
+
+        # Then
+        assert actual == expected
 
 
 @pytest.mark.parametrize(

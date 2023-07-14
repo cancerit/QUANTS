@@ -1,6 +1,7 @@
 import typing as t
 import datetime
 from pathlib import Path
+import collections
 
 
 from src.args._io import (
@@ -179,18 +180,19 @@ def clean_reheader(
     elif mode not in {const.SUBCOMMAND__COLUMN_INDICES, const.SUBCOMMAND__COLUMN_NAMES}:
         msg_not_valid = f"Mode must be one of {const.SUBCOMMAND__COLUMN_INDICES!r} or {const.SUBCOMMAND__COLUMN_NAMES!r}, not {mode!r}"
         raise NotImplementedError(msg_not_valid)
-    return _clean_reheader(reheader_mapping, clean_column_order, mode, append)
+    return _clean_reheader(reheader_mapping, clean_column_order, append)
 
 
 def _clean_reheader(
     reheader_mapping: t.Dict[t.Any, str],
     clean_column_order: t.Iterable[t.Any],
-    mode: str,
     append: bool,
 ) -> t.Dict[t.Any, str]:
     must_be_complete = append == True
     reheader_start_values = set(reheader_mapping.keys())
     clean_column_order_ = set(clean_column_order)
+    # Check for duplicate values in the reheader mapping
+    _clean_reheader__remapped_column_duplicates(reheader_mapping)
 
     # Check that the reheader mapping overlaps with the column order
     complete_overlap = reheader_start_values == clean_column_order_
@@ -214,3 +216,21 @@ def _clean_reheader(
         raise exceptions.ValidationError(msg)
     else:
         return reheader_mapping
+
+
+def _clean_reheader__remapped_column_duplicates(
+    reheader_mapping: t.Dict[t.Any, str]
+) -> None:
+    """
+    Checks that the remapped columns are unique, and raises a ValidationError if not.
+    """
+    remapped_columns = list(reheader_mapping.values())
+    if len(remapped_columns) != len(set(remapped_columns)):
+        duplicates = [
+            column
+            for column, count in collections.Counter(remapped_columns).items()
+            if count > 1
+        ]
+        duplicate_str = ", ".join(f"{str(elem)!r}" for elem in sorted(duplicates))
+        msg = f"Remapped columns must be unique, but got duplicates: {duplicate_str}."
+        raise exceptions.ValidationError(msg)

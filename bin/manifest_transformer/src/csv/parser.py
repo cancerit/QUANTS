@@ -153,7 +153,9 @@ class CSVParser:
         Raises a RuntimeError if called when initialisation was CSVParser(has_header=False).
         """
         if self._has_header:
-            return self._get_column_header_names()
+            column_names = self._get_column_header_names()
+            self._assert_column_names_sanity(column_names)
+            return column_names
         else:
             msg = "CSVParser was not initialized to expect a header row. Create a new CSVParser with has_header=True."
             raise RuntimeError(msg)
@@ -162,6 +164,25 @@ class CSVParser:
         with self.get_csv_reader() as reader:
             header_row = next(reader)
             return tuple(header_row)
+
+    def _assert_column_names_sanity(
+        self, column_names: t.Tuple[str, ...]
+    ) -> None:  # noqa: C901
+        count__column_names = len(column_names)
+        count__columns, consistant = self.count_columns_comprehensively()
+        has_mismatch = count__column_names != count__columns
+        is_zero = count__column_names == 0
+
+        file_str = f"{str(self._file_path)!r}"
+        msg = ""
+        if consistant and has_mismatch:
+            msg = f"The file {file_str} has a different column count in the header row ({count__column_names}) vs the column count of all rows ({count__columns})."
+        elif consistant and is_zero:
+            msg = f"The file {file_str} has zero columns, so is empty."
+        elif not consistant:
+            msg = f"The file {file_str} the rows have differing numbers of columns, so the header row cannot be validated."
+        if msg:
+            raise ValidationError(msg)
 
     def count_columns(self) -> int:
         """
@@ -212,6 +233,34 @@ class CSVParser:
             column_count, row_freq = counter.most_common(1)[0]
             same_column_count_for_all_rows = row_freq == row_count
         return (column_count, same_column_count_for_all_rows)
+
+    def find_duplicate_headers(
+        self, one_index: bool = False
+    ) -> t.List[t.Tuple[str, int]]:
+        """
+        Find duplicate headers.
+
+        Args:
+            one_index: Whether to return 1-based indices. By default, 0-based indices are returned.
+
+        Returns:
+            A list of tuples of the form (header, index)
+        """
+        headers = self.column_header_names()
+        indices = self.column_indices(one_index=one_index)
+
+        mapping = {}
+        for header, raw_index in zip(headers, indices):
+            index = raw_index + 1 if one_index else raw_index
+            mapping.setdefault(header, []).append(index)
+        duplicates = [
+            (header, index)
+            for header, indices in mapping.items()
+            if len(indices) > 1
+            for index in indices
+        ]
+        duplicates.sort(key=lambda x: x[1])
+        return duplicates
 
     def find_rows_with_nulls(
         self,

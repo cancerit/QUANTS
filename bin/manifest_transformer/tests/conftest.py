@@ -142,7 +142,7 @@ def generate_csv_file(
     *,  # Force keyword arguments
     seed: int = 0,
     rows: int = 10,
-    columns: int = 5,
+    columns: t.Union[int, t.List[str]] = 5,
     delimiter: t.Optional[str] = None,
     include_file_header: bool = True,
     include_column_header: bool = True,
@@ -166,12 +166,18 @@ def generate_csv_file(
         null_value = "NA"
     if delimiter is None:
         delimiter = ","
-
-    column_names = [f"col_{str(i)}" for i in range(columns)]
+    if isinstance(columns, int):
+        column_names = [f"col_{str(i)}" for i in range(columns)]
+    elif isinstance(columns, (list, tuple)):
+        column_names = columns
+    else:
+        raise ValueError(
+            f"columns must be an int or a list of strings, not {type(columns)}"
+        )
     final_column_names = column_names if include_column_header else None
 
     np.random.seed(seed)  # Ensure deterministic randomness
-    data = np.random.rand(rows, columns)
+    data = np.random.rand(rows, len(column_names))
     if include_null_values:
         # Randomly replace some data entries with np.NaN: around 20% of your data to be null
         mask = np.random.choice([True, False], size=data.shape, p=[0.2, 0.8])
@@ -195,7 +201,7 @@ def generate_erroneous_csv_file(
     *,  # Force keyword arguments
     seed: int = 0,
     rows: int = 10,
-    columns: int = 5,
+    columns: t.Union[int, t.List[str]] = 5,
     delimiter: t.Optional[str] = None,
     include_file_header: bool = True,
     include_column_header: bool = True,
@@ -210,7 +216,7 @@ def generate_erroneous_csv_file(
         file_path (Path): Path where the CSV file will be written.
         seed: Seed for the random generator. Defaults to 0.
         rows: Number of rows in the CSV file. Defaults to 10.
-        columns: Number of columns in the CSV file. Defaults to 5.
+        columns: Number of columns in the CSV file or a list of column names. Defaults to 5.
         delimiter: The delimiter to use when serializing the csv. Defaults to ",".
         include_file_header: If True, includes a file header. Defaults to True.
         include_column_header: If True, includes a column header. Defaults to True.
@@ -282,12 +288,16 @@ def make_json_cmd(
 def make_csv_file(
     tmp_path,
 ) -> t.Generator[
-    t.Callable[[bool, int, str, bool, bool, bool, t.Optional[str]], Path], None, None
+    t.Callable[
+        [bool, t.Union[int, t.List[str]], str, bool, bool, bool, t.Optional[str]], Path
+    ],
+    None,
+    None,
 ]:
     """
     Make a CSV file from a callable that takes the following keyword arguments:
         is_erroneous: If True, generates an erroneous CSV file. Defaults to False.
-        columns: Number of columns in the CSV file. Defaults to 5.
+        columns: Number of columns in the CSV file or a list of column names. Defaults to 5.
         delimiter: The delimiter to use when serializing the csv. Defaults to ",".
         include_file_header: If True, includes a file header. Defaults to True.
         include_column_header: If True, includes a column header. Defaults to True.
@@ -302,7 +312,7 @@ def make_csv_file(
 
     def _make_csv_file(
         is_erroneous: bool = False,
-        columns: int = 5,
+        columns: t.Union[int, t.List[str]] = 5,
         delimiter: t.Optional[str] = None,
         include_file_header: bool = True,
         include_column_header: bool = True,
