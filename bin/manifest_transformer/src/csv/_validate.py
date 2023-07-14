@@ -14,6 +14,7 @@ if t.TYPE_CHECKING:
 @dataclass
 class CSVValidationReport:
     is_1_indexed: bool
+    mode: ColumnMode
     delimiter: str
     has_forced_delimiter: bool
     has_column_headers: bool
@@ -51,7 +52,31 @@ class CSVValidationReport:
             detail_missing = ", ".join(
                 f"{str(elem)!r}" for elem in self.missing_required_columns
             )
-            err_msg = f"Some required columns are missing: {detail_missing}."
+            max_index = (
+                self.number_of_columns
+                if self.is_1_indexed
+                else self.number_of_columns - 1
+            )
+            if self.mode == ColumnMode.COLUMN_INDICES:
+                max_user_index = max(
+                    [
+                        int(index)
+                        for index in self.missing_required_columns
+                        if index is not None
+                    ]
+                )
+                should_add_oob = max_user_index > max_index
+            else:
+                should_add_oob = False
+            out_of_bounds = (
+                f" (out of bounds, max index {max_index})"
+                if self.is_columns_consistent
+                else ""
+            )
+            opt_detail = out_of_bounds if should_add_oob else ""
+            err_msg = (
+                f"Some required columns are missing: {detail_missing}{opt_detail}."
+            )
             self._errors.append(err_msg)
 
     def _validate_optional_columns(self):
@@ -183,6 +208,7 @@ def get_validation_report(
     # Generate the validation report
     validation_report = CSVValidationReport(
         is_1_indexed=CA_1_idx.is_1_indexed,
+        mode=CA_1_idx.mode,
         delimiter=which_delimiter,
         has_forced_delimiter=has_forced_delimiter,
         has_column_headers=has_column_headers,
@@ -242,11 +268,3 @@ def find_missing_columns(
 
     missing_columns_not_found_in_file = user_columns_set - file_columns_set
     return sorted(missing_columns_not_found_in_file)
-
-    # Find if the column dimensions are consistent across the file
-
-    # Find if any rows have missing values
-
-    # Find whether the file had file-headers detected or not
-
-    # Find whether the file had column-headers detected or not

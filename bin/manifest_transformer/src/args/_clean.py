@@ -188,34 +188,29 @@ def _clean_reheader(
     mode: str,
     append: bool,
 ) -> t.Dict[t.Any, str]:
-    must_be_complete = (mode == const.SUBCOMMAND__COLUMN_INDICES) or append == True
+    must_be_complete = append == True
     reheader_start_values = set(reheader_mapping.keys())
     clean_column_order_ = set(clean_column_order)
 
     # Check that the reheader mapping overlaps with the column order
     complete_overlap = reheader_start_values == clean_column_order_
 
+    detail_got = ", ".join(f"{str(elem)!r}" for elem in sorted(reheader_start_values))
     if must_be_complete and not complete_overlap:
         # A complete overlap is required if must_be_complete is True
-        detail_got = ", ".join(
-            f"{str(elem)!r}" for elem in sorted(reheader_start_values)
-        )
         missing_keys = reheader_start_values.symmetric_difference(clean_column_order_)
-        detail_missing = ", ".join(f"{str(elem)!r}" for elem in sorted(missing_keys))
-        msg = f"Reheader mapping must be a subset of the sum of required+optional columns: got {detail_got}, missing {detail_missing}."
+        detail_unexpected = ", ".join(f"{str(elem)!r}" for elem in sorted(missing_keys))
+        detail_sum = ", ".join(f"{str(elem)!r}" for elem in sorted(clean_column_order_))
+        msg = f"When using append mode, reheader mapping must be all the required & optional columns: missing keys {detail_unexpected}; given reheader keys {detail_got}; required+optional keys {detail_sum}."
         raise exceptions.ValidationError(msg)
     # Catch any reheader_start_values that are not in the column order
     elif not reheader_start_values.issubset(clean_column_order_):
-        detail_got = ", ".join(
-            f"{str(elem)!r}" for elem in sorted(reheader_start_values)
-        )
-
-        detail_undocumented = ", ".join(
+        detail_unexpected = ", ".join(
             f"{str(elem)!r}"
             for elem in sorted(reheader_start_values - clean_column_order_)
         )
         detail_sum = ", ".join(f"{str(elem)!r}" for elem in sorted(clean_column_order_))
-        msg = f"Reheader mapping has unique members not found in the sum of required+optional columns: reheader keys {detail_got}; unexpected keys {detail_undocumented}; required+optional keys {detail_sum}."
+        msg = f"When using replace mode, reheader mapping can be only a subset of all the required & optional columns but should not include unexpected keys: unexpected keys {detail_unexpected}; given reheader keys {detail_got}; required+optional keys {detail_sum}."
         raise exceptions.ValidationError(msg)
     else:
         return reheader_mapping

@@ -118,84 +118,99 @@ def test_clean_cast_output_delimiter_invalid(forbidden_delimiter):
 @pytest.mark.parametrize(
     "reheader_mapping, clean_column_order, mode, append, expected",
     [
-        (
-            {"a": "x", "b": "y", "c": "z"},
-            ["a", "b", "c"],
-            const.SUBCOMMAND__COLUMN_INDICES,
-            False,
-            {"a": "x", "b": "y", "c": "z"},
-        ),
-        (
-            {"a": "x", "b": "y", "c": "z"},
-            ["a", "b", "d"],
-            const.SUBCOMMAND__COLUMN_INDICES,
-            False,
-            None,
-        ),
-        (
-            {"a": "x", "b": "y", "c": "z"},
-            ["a", "b", "c"],
-            const.SUBCOMMAND__COLUMN_NAMES,
-            True,
-            None,
-        ),
-        (
-            {"a": "x", "b": "y", "c": "z"},
-            ["a", "b", "d"],
-            const.SUBCOMMAND__COLUMN_NAMES,
-            True,
-            None,
-        ),
-        # Add more test cases as needed
-    ],
-)
-def test_clean_reheader__must_be_complete(
-    reheader_mapping, clean_column_order, mode, append, expected
-):
-    # When & Then
-    if expected is None:
-        with pytest.raises(exc.ValidationError):
-            _clean.clean_reheader(
-                reheader_mapping,
-                clean_column_order,
-                mode=mode,
-                append=append,
-            )
-    else:
-        # When
-        actual = _clean.clean_reheader(
-            reheader_mapping,
-            clean_column_order,
-            mode=mode,
-            append=append,
-        )
-
-        # Then
-        assert actual == expected
-
-
-@pytest.mark.parametrize(
-    "reheader_mapping, clean_column_order, mode, append, expected",
-    [
-        (
+        # Replace cases
+        pytest.param(
             {"a": "x", "b": "y", "c": "z"},
             ["a", "b", "c"],
             const.SUBCOMMAND__COLUMN_NAMES,
             False,
             {"a": "x", "b": "y", "c": "z"},
+            id="replace_names",
         ),
-        (
+        pytest.param(
+            {"a": "x", "b": "y", "c": "z"},
+            ["a", "b", "c", "d"],
+            const.SUBCOMMAND__COLUMN_NAMES,
+            False,
+            {"a": "x", "b": "y", "c": "z"},
+            id="replace_names_partial_overlap",
+        ),
+        pytest.param(
             {"a": "x", "b": "y", "c": "z"},
             ["d", "e", "f"],
             const.SUBCOMMAND__COLUMN_NAMES,
             False,
             None,
+            id="replace_names_zero_overlap#error",
+        ),
+        pytest.param(
+            {1: "x", 2: "y", 3: "z"},
+            [1, 2, 3],
+            const.SUBCOMMAND__COLUMN_INDICES,
+            False,
+            {1: "x", 2: "y", 3: "z"},
+            id="replace_indices",
+        ),
+        pytest.param(
+            {1: "x", 2: "y"},
+            [1, 2, 3],
+            const.SUBCOMMAND__COLUMN_INDICES,
+            False,
+            {1: "x", 2: "y"},
+            id="replace_indices_partial_overlap",
+        ),
+        pytest.param(
+            {1: "x", 2: "y", 100: "z"},
+            [1, 2, 3],
+            const.SUBCOMMAND__COLUMN_INDICES,
+            False,
+            None,
+            id="replace_indices_wrong_key_forbidden#error",
+        ),
+        # Append cases
+        pytest.param(
+            {1: "x", 2: "y"},
+            [1, 2, 3],
+            const.SUBCOMMAND__COLUMN_INDICES,
+            True,
+            None,
+            id="append_indices_partial_overlap#error",
+        ),
+        pytest.param(
+            {1: "x", 2: "y", 3: "z"},
+            [1, 2, 100],
+            const.SUBCOMMAND__COLUMN_INDICES,
+            True,
+            None,
+            id="append_indices_wrong_key#error",
+        ),
+        pytest.param(
+            {1: "x", 2: "y", 3: "z"},
+            [1, 2, 3],
+            const.SUBCOMMAND__COLUMN_INDICES,
+            True,
+            {1: "x", 2: "y", 3: "z"},
+            id="append_indices",
+        ),
+        pytest.param(
+            {"a": "x", "b": "y", "c": "z"},
+            ["a", "b", "c"],
+            const.SUBCOMMAND__COLUMN_NAMES,
+            True,
+            None,
+            id="append_names_append_not_supported_with_mode#error",
+        ),
+        pytest.param(
+            {"a": "x", "b": "y", "c": "z"},
+            ["a", "b", "d"],
+            const.SUBCOMMAND__COLUMN_NAMES,
+            True,
+            None,
+            id="append_names_append_not_supported_with_mode#error-2",
         ),
     ],
 )
-def test_clean_reheader__partial_overlap(
-    reheader_mapping, clean_column_order, mode, append, expected
-):
+def test_clean_reheader(reheader_mapping, clean_column_order, mode, append, expected):
     # When & Then
     if expected is None:
         with pytest.raises(exc.ValidationError):

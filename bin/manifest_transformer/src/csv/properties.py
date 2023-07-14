@@ -316,9 +316,10 @@ def find_column_headers(
     prefix = const.FILE_HEADER_LINE_PREFIX if prefix is None else prefix
     if column_names is None:
         idx = find_column_headers_by_heuristic(csv_file_path, prefix=prefix)
-        display_warning(const.WARN__NO_HEADERS_FOUND__HEURISTIC)
+        warning_msg = const.WARN__NO_HEADERS_FOUND__HEURISTIC
     else:
         idx = find_column_headers_by_name(csv_file_path, column_names)
+        warning_msg = const.WARN__NO_HEADERS_FOUND__STRING_MATCHING
         if idx == -1 and rigorous:
             # Try again with the heuristic algorithm, any errors will be
             # suppressed and idx will be -1
@@ -328,9 +329,10 @@ def find_column_headers(
                 prefix=prefix,
                 _suppress_csv_lib_errors=suppress_error,
             )
-            display_warning(const.WARN__NO_HEADERS_FOUND__BOTH_ALGORITHMS)
-        elif idx == -1:
-            display_warning(const.WARN__NO_HEADERS_FOUND__STRING_MATCHING)
+            warning_msg = const.WARN__NO_HEADERS_FOUND__BOTH_ALGORITHMS
+
+    if idx == -1:
+        display_warning(warning_msg)
     return idx
 
 
