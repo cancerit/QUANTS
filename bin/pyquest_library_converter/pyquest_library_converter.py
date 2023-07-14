@@ -18,7 +18,7 @@ if t.TYPE_CHECKING:
 _TEMPLATE_GROUP_HEADER = "The column name or header in the CSV/TSV for the {}."
 _TEMPLATE_GROUP_IDX = "1-indexed integer for the column index in a CSV/TSV for the {}."
 _HELP__INPUT_FILE = "Input file path."
-_HELP__OUTPUT_FILE = "By default, input file is overwritten with the output. You can specify a path to write to a specific file or a directory (appends input filename)."
+_HELP__OUTPUT_FILE = "Output file path. You can specify a path to write to a specific file or a directory (appends input filename)."
 _HELP__GROUP_SEQ = _TEMPLATE_GROUP_HEADER.format("oligo sequence itself")
 _HELP__GROUP_SEQ_IDX = _TEMPLATE_GROUP_IDX.format("oligo sequence itself")
 _HELP__GROUP_NAME = _TEMPLATE_GROUP_HEADER.format("oligo sequence name")
@@ -635,6 +635,13 @@ class ArgsCleaner:
         else:
             msg = f"Output file {output_file!r} directory does not exist."
             raise ValidationError(msg)
+        input_file = self._get_arg(_ARG_INPUT)
+        if input_file == output_file:
+            msg = (
+                f"Input file {str(input_file)!r} and output file {str(output_file)!r} must "
+                "not be the same."
+            )
+            raise ValidationError(msg)
         return
 
     def _validate_sequence_index(self):
@@ -778,11 +785,13 @@ class ArgsCleaner:
         input_value: Path = self._get_arg(_ARG_INPUT)
         # Default to overwriting input file when no output path is specified
         if output_value is None:
-            normal_output_value = input_value
+            raise ValidationError("Output path must be specified.")
         elif output_value.exists() and output_value.is_file():
             normal_output_value = output_value
         elif output_value.exists() and output_value.is_dir():
-            normal_output_value = output_value / input_value.name
+            normal_output_value = (
+                output_value / f"{input_value.stem}.out{input_value.suffix}"
+            )
         elif output_value.parent.exists() and not output_value.exists():
             normal_output_value = output_value
         else:
@@ -806,12 +815,10 @@ def get_argparser() -> argparse.ArgumentParser:
     # File arguments
     parser.add_argument(_ARG_INPUT, type=Path, help=_HELP__INPUT_FILE)
     parser.add_argument(
-        "-o",
-        "--output",
+        _ARG_OUTPUT,
         type=Path,
         default=None,
         help=_HELP__OUTPUT_FILE,
-        dest=_ARG_OUTPUT,
     )
 
     # Verbosity

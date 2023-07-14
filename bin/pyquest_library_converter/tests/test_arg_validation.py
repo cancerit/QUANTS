@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 import argparse
 import pytest
-from pyquest_library_converter import ArgsCleaner
+from pyquest_library_converter import ArgsCleaner, ValidationError
 from tests import test_data
 from pathlib import Path
 
@@ -23,6 +23,7 @@ class ConfigData:
 CSV_SYMBOL_1 = "example_data_1_csv"
 CSV_SYMBOL_2 = "example_data_2_tsv"
 CONFIG_PARAMS = [CSV_SYMBOL_1, CSV_SYMBOL_2]
+EXAMPLE_OUTPUT_PATH = Path("example_output_path.csv")
 
 
 @pytest.fixture(params=CONFIG_PARAMS)
@@ -36,7 +37,7 @@ def config(request):
         oligo_seq_index = 24  # 1-based indexing
         valid_namespace = argparse.Namespace(
             input=csv_path,
-            output=None,
+            output=EXAMPLE_OUTPUT_PATH,
             forward_primer="",
             reverse_primer="",
             reverse_complement_flag=False,
@@ -49,7 +50,7 @@ def config(request):
         )
         valid_namespace_with_headers = argparse.Namespace(
             input=csv_path,
-            output=None,
+            output=EXAMPLE_OUTPUT_PATH,
             forward_primer="",
             reverse_primer="",
             reverse_complement_flag=False,
@@ -78,7 +79,7 @@ def config(request):
         oligo_seq_index = 3  # 1-based indexing
         valid_namespace = argparse.Namespace(
             input=csv_path,
-            output=None,
+            output=EXAMPLE_OUTPUT_PATH,
             forward_primer="",
             reverse_primer="",
             reverse_complement_flag=False,
@@ -91,7 +92,7 @@ def config(request):
         )
         valid_namespace_with_headers = argparse.Namespace(
             input=csv_path,
-            output=None,
+            output=EXAMPLE_OUTPUT_PATH,
             forward_primer="",
             reverse_primer="",
             reverse_complement_flag=False,
@@ -138,6 +139,15 @@ def test_validate_output(config):
     namespace = config.valid_namespace
     args_cleaner = ArgsCleaner(namespace)
     args_cleaner._validate_output()
+
+
+def test_validate_output__throws_when_input_equals_output(config):
+    namespace = config.valid_namespace
+    namespace.input = config.csv_path
+    namespace.output = config.csv_path
+    args_cleaner = ArgsCleaner(namespace)
+    with pytest.raises(ValidationError):
+        args_cleaner.validate()
 
 
 def test_validate_forward_primer(config):
@@ -221,18 +231,19 @@ def test_get_clean_skip_n_rows__with_headers(config):
     assert expected_skip_n_rows == actual_skip_n_rows
 
 
-def test_get_clean_output__with_specific_output_that_does_exist(config):
-    expected_output = config.csv_path
+def test_get_clean_output__with_specific_output_that_does_exist(config, tmp_path):
+    expected_output = tmp_path / "foo.csv"
+    expected_output.touch()
     namespace = config.valid_namespace
-    namespace.output = config.csv_path
+    namespace.output = expected_output
     args_cleaner = ArgsCleaner(namespace)
     args_cleaner.validate()
     actual_output = args_cleaner.get_clean_output()
     assert expected_output == actual_output
 
 
-def test_get_clean_output__with_specific_output_that_doesnt_exist(config):
-    expected_output = config.csv_path.parent / "foo.csv"
+def test_get_clean_output__with_specific_output_that_doesnt_exist(config, tmp_path):
+    expected_output = tmp_path / "foo.csv"
     namespace = config.valid_namespace
     namespace.output = expected_output
     args_cleaner = ArgsCleaner(namespace)
@@ -242,7 +253,9 @@ def test_get_clean_output__with_specific_output_that_doesnt_exist(config):
 
 
 def test_get_clean_output__with_specific_output_dir(config):
-    expected_output = config.csv_path
+    expected_output = (
+        config.csv_path.parent / f"{config.csv_path.stem}.out{config.csv_path.suffix}"
+    )
     namespace = config.valid_namespace
     namespace.output = config.csv_path.parent
     args_cleaner = ArgsCleaner(namespace)

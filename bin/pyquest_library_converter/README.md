@@ -19,22 +19,22 @@ FORWARD="AATGATACGGCGACCACCGATCCTGCGCCTTCTCTCCTC"
 REVERSE="CATCATGGAAGATTACTTTGCGTATCGCGGCTTTAAATACCTCAGGCTTGATGGTGAGTATGAGCCAGTGAGGCGTTTCTTACAGGGTTTTGTTGTTGTGGCTCGTATGCCGTCTTCTGCTTG"
 
 # Example usage with headers
-./pyquest_library_converter.py $IN  -o $OUT -n "oligo_name" -s "mseq" --skip 0 -v
+./pyquest_library_converter.py $IN  $OUT -n "oligo_name" -s "mseq" --skip 0 -v
 
 # Example usage with column indices
-./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 -v
+./pyquest_library_converter.py $IN  $OUT -N 1 -S 24 -v
 
 # Example usage where the output csv has reverse complements for the output sequence
-./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 -v --revcomp
+./pyquest_library_converter.py $IN  $OUT -N 1 -S 24 -v --revcomp
 
 # Example usage with a reverse that needs to be removed
-./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --reverse $REVERSE -v
+./pyquest_library_converter.py $IN  $OUT -N 1 -S 24 --reverse $REVERSE -v
 
 # Example usage with a forward that needs to be removed
-./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --forward $FORWARD -v
+./pyquest_library_converter.py $IN  $OUT -N 1 -S 24 --forward $FORWARD -v
 
 # Example usage with both a forward and reverse that needs to be removed
-./pyquest_library_converter.py $IN  -o $OUT -N 1 -S 24 --forward $FORWARD --reverse $REVERSE -v
+./pyquest_library_converter.py $IN  $OUT -N 1 -S 24 --forward $FORWARD --reverse $REVERSE -v
 ```
 
 ## Usage - Auto-detect primer
@@ -44,7 +44,7 @@ OUT="example_data_2.out.csv"
 FORWARD="ATTCACGTTATGCTGTCCAATCTCT"  # Exists at the start of oligo
 REVERSE="CCCTGGGAAGGTAATTTTAGATTTC"  # Exists at the end of oligo, but as reverse compliment
 
-./pyquest_library_converter.py $IN -o $OUT -n "oligo_name" -s "mseq" --skip 0 -v --forward $FORWARD --reverse $REVERSE
+./pyquest_library_converter.py $IN -$OUT -n "oligo_name" -s "mseq" --skip 0 -v --forward $FORWARD --reverse $REVERSE
 ```
 The script will try to identify whether to treat each primer as a typical sequence of as a reverse complement sequence.
 
@@ -69,10 +69,10 @@ Forward + reverse primer trimmed in 1 out of 1 sequences
 
 # You can specify the output file as a directory (as long as it exists)
 OUT_DIR="/out"
-./pyquest_library_converter.py $IN -o $OUT -N 1 -S 24
+./pyquest_library_converter.py $IN $OUT -N 1 -S 24
 
 # The --skip option allows you to skip the first N rows
-./pyquest_library_converter.py $IN -o $OUT -N 1 -S 24 --skip 3 # Great for skipping comment and hearder rows
+./pyquest_library_converter.py $IN $OUT -N 1 -S 24 --skip 3 # Great for skipping comment and hearder rows
 ```
 
 ## Usage - Help
