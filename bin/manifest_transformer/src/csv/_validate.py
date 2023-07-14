@@ -208,18 +208,24 @@ def assert_column_headers_detected(
     if should_throw:
         mode_str = mode.value
         index_mode_str = ColumnMode.COLUMN_INDICES.value
+        opt_detail = (
+            f" (which is required while in {mode_str!r} mode)"
+            if mode == ColumnMode.COLUMN_NAMES
+            else ""
+        )
         if needs_user_intervention:
             msg = (
-                f"No column headers detected while in {mode_str!r} mode. "
-                "Please check the file, then force the column header index & force input delimiter (see help) and try again. "
+                f"No column headers detected in file{opt_detail}. "
+                "Please check the file has column headers, "
+                "then force the column header index (see help) and try again. "
                 f"If the file has no column headers, use {index_mode_str!r} mode instead."
             )
             raise exc.UserInterventionRequired(msg)
         else:
             msg = (
-                f"No column headers fouce via forced column header index while in {mode_str!r} mode. "
-                "Please check the file. "
-                f"If the file has no column headers, use {index_mode_str!r} mode instead."
+                f"No column headers detected in file{opt_detail} even with a forced column header index. "
+                "Please check the file has column headers "
+                f"or use {index_mode_str!r} mode instead."
             )
             raise exc.ValidationError(msg)
     return

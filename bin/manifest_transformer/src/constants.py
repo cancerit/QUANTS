@@ -73,6 +73,16 @@ JSON_SUMMARY__TIMESTAMP = "timestamp"
 JSON_SUMMARY__JSON_PARAMS_FILE = "json_params_file"
 JSON_SUMMARY__JSON_PARAMS = "json_params"
 
+WARN__NO_HEADERS_FOUND__STRING_MATCHING = (
+    "No headers detected in file by string matching algorithm."
+)
+WARN__NO_HEADERS_FOUND__HEURISTIC = (
+    "No headers detected in file by heuristic algorithm."
+)
+WARN__NO_HEADERS_FOUND__BOTH_ALGORITHMS = (
+    "No headers detected in file by both string matching and heuristic algorithms."
+)
+
 
 def get_null_values() -> t.List[str]:
     nulls = [

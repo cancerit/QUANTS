@@ -8,6 +8,7 @@ from pathlib import Path
 from src.exceptions import DelimiterError, UserInterventionRequired
 from src import constants as const
 from src.enums import ColumnMode
+from src.cli import display_warning
 
 if t.TYPE_CHECKING:
     from src.args._struct import CleanArgs
@@ -192,7 +193,10 @@ class CSVFileProperties:
 
         try:
             column_headers_line_index = find_column_headers(
-                csv_file_path, prefix=prefix, column_names=column_names
+                csv_file_path,
+                prefix=prefix,
+                column_names=column_names,
+                rigorous=True,
             )
         except csv.Error:
             msg = (
@@ -289,27 +293,44 @@ def find_column_headers(
     csv_file_path: t.Union[str, Path],
     column_names: t.Optional[t.Sequence[str]] = None,
     prefix: t.Optional[str] = None,
+    rigorous: bool = False,
 ) -> int:
     """
-    Find the line index of column headers in a CSV file, by either using a heuristic
-    or by searching for the index with a list of column names.
+    Find the line index of column headers in a CSV file, by either using a heuristic algorith,
+    or a sting matching algorithm.
 
     Returns -1 if no column header line is found.
 
-    If column_names is None, will use a heuristic to find the column headers.
-    If column_names is not None, will search for the line index with the column.
+    Algorithm selection:
+    - If column_names is None, will use a heuristic algortithm.
+    - If column_names is not None, will use a sting matching algorithm.
+    - If column_names is not None and rigorous is True, will use a string
+      matching algorithm and failing that, a heuristic algorithm.
 
     prefix: The prefix of the file header line, typically '##'.
     column_names: A list of column names to search for, or None.
-
+    rigorous: If True, multiple algorithms will be used to find the column headers.
 
     For more information, see: find_column_headers_by_heuristic and find_column_headers_by_name
     """
     prefix = const.FILE_HEADER_LINE_PREFIX if prefix is None else prefix
     if column_names is None:
         idx = find_column_headers_by_heuristic(csv_file_path, prefix=prefix)
+        display_warning(const.WARN__NO_HEADERS_FOUND__HEURISTIC)
     else:
         idx = find_column_headers_by_name(csv_file_path, column_names)
+        if idx == -1 and rigorous:
+            # Try again with the heuristic algorithm, any errors will be
+            # suppressed and idx will be -1
+            suppress_error = True
+            idx = find_column_headers_by_heuristic(
+                csv_file_path,
+                prefix=prefix,
+                _suppress_csv_lib_errors=suppress_error,
+            )
+            display_warning(const.WARN__NO_HEADERS_FOUND__BOTH_ALGORITHMS)
+        elif idx == -1:
+            display_warning(const.WARN__NO_HEADERS_FOUND__STRING_MATCHING)
     return idx
 
 
@@ -374,7 +395,9 @@ def _find_column_headers_by_name(
 
 
 def find_column_headers_by_heuristic(
-    csv_file_path: t.Union[str, Path], prefix: t.Optional[str] = None
+    csv_file_path: t.Union[str, Path],
+    prefix: t.Optional[str] = None,
+    _suppress_csv_lib_errors: bool = False,
 ) -> int:
     """
     Find the line index of column headers in a CSV file, using a heuristic to
@@ -382,10 +405,13 @@ def find_column_headers_by_heuristic(
 
     Relies on CSV Sniffer to determine if the first line of the file is a
     header, and one of two key criteria will be considered to estimate if the
-    sample contains a header:
-    - the second through n-th rows contain numeric values
-    - the second through n-th rows contain strings where at least one value's length
+    sample contains a header: - the second through n-th rows contain numeric
+    values - the second through n-th rows contain strings where at least one
+    value's length
         differs from that of the putative header of that column.
+
+    In most cases you do no want to suppress errors but if you do the return
+    value will be -1.
     """
     prefix = const.FILE_HEADER_LINE_PREFIX if prefix is None else prefix
     first_line, offset = find_first_tabular_line_index_and_offset(
@@ -396,7 +422,13 @@ def find_column_headers_by_heuristic(
         # Read the first 1MB of the file
         chunk = csv_file.read(_CHUNK_SIZE_1MB)
         # Count the number of lines in the chunk
-        has_header = csv.Sniffer().has_header(chunk)
+        try:
+            has_header = csv.Sniffer().has_header(chunk)
+        except csv.Error as e:
+            if not _suppress_csv_lib_errors:
+                raise e
+            else:
+                has_header = False
     return first_line if has_header else -1
 
 
