@@ -107,6 +107,7 @@ class CSVValidationReport:
         seperator = " " * 1
 
         indexing = "1-indexed" if self.is_1_indexed else "0-indexed"
+        mode = self.mode.value
         file_delimiter = (
             f"{self.delimiter!r}{' (overridden)' if self.has_forced_delimiter else ''}"
         )
@@ -140,16 +141,16 @@ class CSVValidationReport:
         )
 
         lines = [
-            "INPUT FILE REPORT",
-            f"Indexing:{seperator}{indexing}",
-            f"Which delimiter is used:{seperator}{file_delimiter}",
-            f"Are header columns detected in file:{seperator}{has_column_headers}",
-            f"Are file headers detected in file:{seperator}{has_file_headers}",
-            f"File's actual column headers:{seperator}{file_header_columns}",
-            f"Missing required columns:{seperator}{missing_required_cols}",
-            f"Missing optional columns:{seperator}{missing_optional_cols}",
-            f"Rows have constant column count:{seperator}{column_consistency}",
-            f"Rows have null values:{seperator}{rows_with_nulls}",
+            f"Indexing convention:{seperator}{indexing}",
+            f"Mode:{seperator}{mode}",
+            f"Input file delimiter used:{seperator}{file_delimiter}",
+            f"Input file has detected header columns:{seperator}{has_column_headers}",
+            f"Input file has detected file columns:{seperator}{has_file_headers}",
+            f"Input file's actual column headers:{seperator}{file_header_columns}",
+            f"Input file missing any required columns:{seperator}{missing_required_cols}",
+            f"Input file missing any optional columns:{seperator}{missing_optional_cols}",
+            f"Input file has consistant column count accross all rows:{seperator}{column_consistency}",
+            f"Input file has null values:{seperator}{rows_with_nulls}",
         ]
         return lines
 
