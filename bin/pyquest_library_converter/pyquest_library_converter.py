@@ -4,6 +4,7 @@ import typing as t
 import sys
 import os
 import argparse
+import enum
 import csv
 from contextlib import contextmanager
 from functools import partial
@@ -60,6 +61,12 @@ class ValidationError(Exception):
 
 class UndevelopedFeatureError(Exception):
     pass
+
+
+class OligoCasing(enum.Enum):
+    UPPER = "upper"
+    LOWER = "lower"
+    NONE = "unknown"
 
 
 @dataclass
@@ -285,11 +292,15 @@ class PrimerScanner:
         self._given_reverse_primer_revcomp = reverse_complement(reverse_primer)
         self.__init_counters()
         self._has_scanned = False
+        _, allowed_chars = find_invalid_chars_in_dna_sequence(
+            "", allow_n=True, allow_lower_case=True
+        )
+        self._allowed_chars = allowed_chars
 
     def __init_counter_dict(self, original: str, revcomp: str) -> t.Dict[str, int]:
         return {original: 0, revcomp: 0}
 
-    def __init_counters(self) -> t.Tuple[t.Dict[str, int], t.Dict[str, int]]:
+    def __init_counters(self):
         self._forward_primer_counter: t.Dict[str, int] = self.__init_counter_dict(
             self._given_forward_primer, self._given_forward_primer_revcomp
         )
@@ -297,6 +308,8 @@ class PrimerScanner:
             self._given_reverse_primer, self._given_reverse_primer_revcomp
         )
         self._total_oligos_scanned = 0
+        self._oligo_casing_set: t.Set[OligoCasing] = set()
+        self._invalid_chars_set: t.Set[str] = set()
 
     def summary(self) -> t.List[str]:
         """
@@ -342,6 +355,26 @@ class PrimerScanner:
             else search_rev_lines
         )
 
+        oligo_cases = ", ".join(case.value for case in self._oligo_casing_set)
+        has_error_case = OligoCasing.NONE in self._oligo_casing_set
+        single_case_error = " (error)" if has_error_case else ""
+        oligo_caseing_lines = (
+            [f"Oligo sequences casing is not uniform: {oligo_cases} (error)"]
+            if len(self._oligo_casing_set) > 1
+            else [
+                f"Oligo sequences has a single case: {oligo_cases}{single_case_error}"
+            ]
+        )
+
+        oligo_invalid_chars = ", ".join(self._invalid_chars_set)
+        oligo_invalid_char_lines = (
+            [
+                f"Oligo sequences contains invalid characters: {oligo_invalid_chars} (error)"
+            ]
+            if len(self._invalid_chars_set) > 0
+            else ["Oligo sequences contain no invalid characters."]
+        )
+
         chosen_fwd_line = self._summary_chosen_primer(
             predicted_primer=predicted_fwd_primer,
             primer_name="forward",
@@ -361,6 +394,8 @@ class PrimerScanner:
         )
         lines = (
             [f"Total seqeunces processed: {total}"]
+            + oligo_caseing_lines
+            + oligo_invalid_char_lines
             + search_fwd_lines
             + search_rev_lines
             + [chosen_fwd_line, chosen_rev_line]
@@ -413,6 +448,48 @@ class PrimerScanner:
         numerator = self._reverse_primer_counter[self._given_reverse_primer]
         return numerator / total
 
+    def raise_errors(self) -> None:
+        """
+        Raise an error if there are any errors in the oligos.
+        """
+        self._assert_has_scanned()
+        errors = []
+        if len(self._oligo_casing_set) > 1:
+            oligo_cases = ", ".join(case.value for case in self._oligo_casing_set)
+            msg = f"Oligo casing is not uniform: {oligo_cases}."
+            errors.append(msg)
+        if OligoCasing.NONE in self._oligo_casing_set:
+            msg = "Some oligos have an unknown case - either an oligo is an empty string or it is a mix of upper and lower case characters."
+            errors.append(msg)
+        if len(self._invalid_chars_set) > 0:
+            invalid_chars = ", ".join(self._invalid_chars_set)
+            msg = f"Oligo sequences contains invalid characters: {invalid_chars}."
+            errors.append(msg)
+        if len(errors) > 0:
+            error_prefix = (
+                "Multiple errors were found"
+                if len(errors) > 1
+                else "An error was found"
+            )
+            errors_formatted = " ".join(
+                [f"#{i} {error}" for i, error in enumerate(errors, 1)]
+            )
+            msg = f"{error_prefix} while scanning the input file: {errors_formatted}"
+            raise ValidationError(msg)
+        return
+
+    def get_oligos_case(self) -> OligoCasing:
+        """
+        Returns the case of the oligos.
+        """
+        self._assert_has_scanned()
+        if len(self._oligo_casing_set) != 1:
+            msg = "Oligo casing is not uniform - this error will only be raised if raise_errors() is not called."
+            raise RuntimeError(msg)
+        # Do not use pop() on the set because it will exhaust the set
+        case = list(self._oligo_casing_set).pop()
+        return case
+
     def predict_forward_primer(self) -> str:
         """
         Predict the forward primer based on the ratio of the number of times the
@@ -459,19 +536,42 @@ class PrimerScanner:
         return primer
 
     def _scan(self, oligo: str) -> None:
+        self._count_oligo_casing(oligo)
+        self._count_invalid_chars(oligo)
+
+        forward_primer_tup = (
+            self._given_forward_primer,
+            self._given_forward_primer_revcomp,
+            self._forward_primer_counter,
+        )
+        reverse_primer_tup = (
+            self._given_reverse_primer,
+            self._given_reverse_primer_revcomp,
+            self._reverse_primer_counter,
+        )
         for original, revcomp, counter in [
-            (
-                self._given_forward_primer,
-                self._given_forward_primer_revcomp,
-                self._forward_primer_counter,
-            ),
-            (
-                self._given_reverse_primer,
-                self._given_reverse_primer_revcomp,
-                self._reverse_primer_counter,
-            ),
+            forward_primer_tup,
+            reverse_primer_tup,
         ]:
             self._count_primers(oligo, original, revcomp, counter)
+        return
+
+    def _count_oligo_casing(self, oligo: str) -> None:
+        is_upper_case = oligo.isupper()
+        is_lower_case = oligo.islower()
+
+        if is_upper_case:
+            self._oligo_casing_set.add(OligoCasing.UPPER)
+        elif is_lower_case:
+            self._oligo_casing_set.add(OligoCasing.LOWER)
+        else:
+            self._oligo_casing_set.add(OligoCasing.NONE)
+        return
+
+    def _count_invalid_chars(self, oligo: str) -> None:
+        invalid_chars = find_invalid_chars_in_string(oligo, self._allowed_chars)
+        self._invalid_chars_set.update(invalid_chars)
+        return
 
     def _count_primers(
         self, oligo: str, original: str, revcomp: str, counter: t.Dict[str, int]
@@ -849,6 +949,21 @@ def find_invalid_chars_in_dna_sequence(
     return sorted(invalid_chars), tuple(sorted(allowed_chars))
 
 
+def find_invalid_chars_in_string(
+    string: str, allowed_chars: t.Tuple[str]
+) -> t.List[str]:
+    """
+    Find invalid characters in a string, returning the invalid characters.
+
+    :param string: The string to validate.
+    :param allowed_chars: The allowed characters.
+
+    """
+    string_set = set(string)
+    invalid_chars = string_set - set(allowed_chars)
+    return sorted(invalid_chars)
+
+
 def get_argparser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Transforms oligo sequences to a format that can be used in PyQuest"
@@ -981,6 +1096,8 @@ def main(
         detected_forward_primer = primer_scanner.predict_forward_primer()
         detected_reverse_primer = primer_scanner.predict_reverse_primer()
         report.add_scanning_summary(primer_scanner.summary())
+        primer_scanner.raise_errors()
+        oligo_case = primer_scanner.get_oligos_case()
 
     # Prepare closured functions for writing the output file
     _reverse_complement_sequences_closure = partial(
@@ -999,6 +1116,22 @@ def main(
         if reverse_complement_flag
         else noop_sequences
     )
+    _closure_upper_case_sequences = partial(
+        upper_case_sequences, sequence_header=_OUTPUT_HEADER__SEQUENCE
+    )
+    conditionally_upper_case_sequences = (
+        _closure_upper_case_sequences
+        if oligo_case == OligoCasing.LOWER
+        else noop_sequences
+    )
+    _closure_lower_case_sequences = partial(
+        lower_case_sequences, sequence_header=_OUTPUT_HEADER__SEQUENCE
+    )
+    conditionally_lower_case_sequences = (
+        _closure_lower_case_sequences
+        if oligo_case == OligoCasing.LOWER
+        else noop_sequences
+    )
 
     # Prepare a temporary file to write to
     with tempfile.NamedTemporaryFile(delete=True) as temp_handle:
@@ -1010,8 +1143,10 @@ def main(
             dict_rows = filter_rows(
                 csv_reader, name_index=name_index, sequence_index=sequence_index
             )
+            dict_rows = conditionally_upper_case_sequences(dict_rows)
             dict_rows = trim_sequences_closure(dict_rows, report=report)
             dict_rows = conditionally_reverse_complement_sequences(dict_rows)
+            dict_rows = conditionally_lower_case_sequences(dict_rows)
             write_rows(dict_rows, output_file=temp_file, headers=output_headers)
 
         # Copy the temporary file to the output file
@@ -1047,6 +1182,40 @@ def filter_rows(
             _OUTPUT_HEADER__NAME: name,
             _OUTPUT_HEADER__SEQUENCE: sequence,
         }
+        yield dict_row
+
+
+def upper_case_sequences(
+    dict_rows: t.Iterator[t.Dict[str, str]], sequence_header: str
+) -> t.Iterable[t.Dict[str, str]]:
+    """
+    Upper case the sequences.
+
+    Yield dictionaries of index, name, sequence values from each row, where keys are the new headers.
+
+    Header corresponds to the CSV header for the sequence column.
+    """
+    for dict_row in dict_rows:
+        # Upper case the sequence and update the dictionary
+        sequence = dict_row[sequence_header]
+        dict_row[sequence_header] = sequence.upper()
+        yield dict_row
+
+
+def lower_case_sequences(
+    dict_rows: t.Iterator[t.Dict[str, str]], sequence_header: str
+) -> t.Iterable[t.Dict[str, str]]:
+    """
+    Lower case the sequences.
+
+    Yield dictionaries of index, name, sequence values from each row, where keys are the new headers.
+
+    Header corresponds to the CSV header for the sequence column.
+    """
+    for dict_row in dict_rows:
+        # Lower case the sequence and update the dictionary
+        sequence = dict_row[sequence_header]
+        dict_row[sequence_header] = sequence.lower()
         yield dict_row
 
 
@@ -1186,7 +1355,7 @@ def display_error(prefix: str, error: Exception) -> None:
     """
     Display the error message.
     """
-    error_msg = f"{prefix}\n{error}"
+    error_msg = f"{prefix} {error}"
     print(error_msg, file=sys.stderr)
 
 
@@ -1199,21 +1368,20 @@ if __name__ == "__main__":  # noqa: C901
     cleaner = ArgsCleaner(namespace)
     try:
         cleaner.validate()
+        main(
+            input_file=cleaner.get_clean_input(),
+            skip_n_rows=cleaner.get_clean_skip_n_rows(),
+            output_file=cleaner.get_clean_output(),
+            verbose=cleaner.get_clean_verbose(),
+            forward_primer=cleaner.get_clean_forward_primer(),
+            reverse_primer=cleaner.get_clean_reverse_primer(),
+            name_index=cleaner.get_clean_name_index(),
+            sequence_index=cleaner.get_clean_sequence_index(),
+            reverse_complement_flag=cleaner.get_clean_reverse_complement_flag(),
+        )
     except ValidationError as err:
         display_error("Error: Argument validation!", err)
         sys.exit(1)
     except (UndevelopedFeatureError, NotImplementedError) as err:
         display_error("Error: Not implemented feature!", err)
         sys.exit(1)
-
-    main(
-        input_file=cleaner.get_clean_input(),
-        skip_n_rows=cleaner.get_clean_skip_n_rows(),
-        output_file=cleaner.get_clean_output(),
-        verbose=cleaner.get_clean_verbose(),
-        forward_primer=cleaner.get_clean_forward_primer(),
-        reverse_primer=cleaner.get_clean_reverse_primer(),
-        name_index=cleaner.get_clean_name_index(),
-        sequence_index=cleaner.get_clean_sequence_index(),
-        reverse_complement_flag=cleaner.get_clean_reverse_complement_flag(),
-    )
