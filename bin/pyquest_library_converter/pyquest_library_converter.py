@@ -31,8 +31,8 @@ if sys.version_info < (3, 8):
 
 def main(
     input_file: t.Union[str, Path],
-    skip_n_rows: int,
     output_file: t.Union[str, Path],
+    skip_n_rows: int,
     verbose: bool,
     forward_primer: str,
     reverse_primer: str,
@@ -121,6 +121,7 @@ def main(
 
     # At this point, the temporary file has been deleted
     if verbose:
+        print("PROCESSING REPORT")
         print(report.summary())
     return
 
@@ -131,20 +132,15 @@ if __name__ == "__main__":  # noqa: C901
         sys.exit(1)
     parser = get_argparser()
     namespace = parser.parse_args()
-    cleaner = ArgsCleaner(namespace)
+    args_cleaner = ArgsCleaner(namespace)
     try:
-        cleaner.validate()
-        main(
-            input_file=cleaner.get_clean_input(),
-            skip_n_rows=cleaner.get_clean_skip_n_rows(),
-            output_file=cleaner.get_clean_output(),
-            verbose=cleaner.get_clean_verbose(),
-            forward_primer=cleaner.get_clean_forward_primer(),
-            reverse_primer=cleaner.get_clean_reverse_primer(),
-            name_index=cleaner.get_clean_name_index(),
-            sequence_index=cleaner.get_clean_sequence_index(),
-            reverse_complement_flag=cleaner.get_clean_reverse_complement_flag(),
-        )
+        # Validate the arguments
+        args_cleaner.validate()
+        if args_cleaner.get_clean_verbose():
+            print("ARGUMENT REPORT")
+            print(args_cleaner.summary() + "\n")
+        # Run the main function
+        main(**args_cleaner.to_clean_dict())
     except ValidationError as err:
         display_error("Error: Argument validation!", err)
         sys.exit(1)

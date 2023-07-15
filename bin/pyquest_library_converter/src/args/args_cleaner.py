@@ -1,6 +1,7 @@
 import typing as t
 import os
 from pathlib import Path
+from textwrap import dedent
 
 from src.exceptions import ValidationError
 from src import constants as const
@@ -21,12 +22,59 @@ class ArgsCleaner:
         self._header_row_discovered = False
         self._header_row_index = -1
 
-    def __repr__(self) -> str:
-        namespace_as_dict = vars(self._namespace)
-        key_value_pairs = " ".join(
-            f"{key}={value!r}" for key, value in namespace_as_dict.items()
-        )
-        return f"{self.__class__.__name__}({key_value_pairs})"
+    def summary(self) -> str:
+        """
+        Return a summary of namespace arguments and clean arguments.
+        """
+        raw_input = self._get_arg(const._ARG_INPUT)
+        raw_output = self._get_arg(const._ARG_OUTPUT)
+        raw_verbose = self._get_arg(const._ARG_VERBOSE)
+        raw_skip_n_rows = self._get_arg(const._ARG_SKIP_N_ROWS)
+        raw_forward_primer = self._get_arg(const._ARG_FORWARD_PRIMER)
+        raw_reverse_primer = self._get_arg(const._ARG_REVERSE_PRIMER)
+        raw_name_header = self._get_arg(const._ARG_NAME_HEADER)
+        raw_name_index = self._get_arg(const._ARG_NAME_INDEX)
+        raw_sequence_header = self._get_arg(const._ARG_SEQ_HEADER)
+        raw_sequence_index = self._get_arg(const._ARG_SEQ_INDEX)
+        raw_reverse_complement_flag = self._get_arg(const._ARG_REVERSE_COMPLEMENT_FLAG)
+        is_validated = self._validated
+        if is_validated:
+            clean_input = self.get_clean_input()
+            clean_output = self.get_clean_output()
+            clean_verbose = self.get_clean_verbose()
+            clean_skip_n_rows = self.get_clean_skip_n_rows()
+            clean_forward_primer = self.get_clean_forward_primer()
+            clean_reverse_primer = self.get_clean_reverse_primer()
+            clean_name_index = self.get_clean_name_index()
+            clean_sequence_index = self.get_clean_sequence_index()
+            clean_reverse_complement_flag = self.get_clean_reverse_complement_flag()
+        else:
+            special_value = "N/A"
+            clean_input = special_value
+            clean_output = special_value
+            clean_verbose = special_value
+            clean_skip_n_rows = special_value
+            clean_forward_primer = special_value
+            clean_reverse_primer = special_value
+            clean_name_index = special_value
+            clean_sequence_index = special_value
+            clean_reverse_complement_flag = special_value
+        summary = f"""\
+        Is Validated: {is_validated}
+        Input: {str(raw_input)!r} -> {str(clean_input)!r}
+        Output: {str(raw_output)!r} -> {str(clean_output)!r}
+        Verbose: {raw_verbose!r} -> {clean_verbose!r}
+        Skip N Rows: {raw_skip_n_rows!r} -> {clean_skip_n_rows!r}
+        Forward Primer: {raw_forward_primer!r} -> {clean_forward_primer!r}
+        Reverse Primer: {raw_reverse_primer!r} -> {clean_reverse_primer!r}
+        Name Header: {raw_name_header!r} -> {clean_name_index!r}
+        Name Index: {raw_name_index!r} -> {clean_name_index!r}
+        Sequence Header: {raw_sequence_header!r} -> {clean_sequence_index!r}
+        Sequence Index: {raw_sequence_index!r} -> {raw_sequence_index!r}
+        Reverse Complement Flag: {raw_reverse_complement_flag!r} -> {clean_reverse_complement_flag!r}
+        """
+        summary = dedent(summary).rstrip()
+        return summary
 
     def _get_arg(self, arg_name: str) -> t.Any:
         if not hasattr(self._namespace, arg_name):
@@ -37,6 +85,29 @@ class ArgsCleaner:
             )
             raise AttributeError(msg)
         return getattr(self._namespace, arg_name)
+
+    def to_clean_dict(self) -> t.Dict[str, t.Any]:
+        KEY_INPUT = const._ARG_INPUT
+        KEY_OUTPUT = const._ARG_OUTPUT
+        KEY_VERBOSE = const._ARG_VERBOSE
+        KEY_SKIP_N_ROWS = const._ARG_SKIP_N_ROWS
+        KEY_FORWARD_PRIMER = const._ARG_FORWARD_PRIMER
+        KEY_REVERSE_PRIMER = const._ARG_REVERSE_PRIMER
+        KEY_NAME_INDEX = const._ARG_NAME_INDEX
+        KEY_SEQUENCE_INDEX = const._ARG_SEQ_INDEX
+        KEY_REVERSE_COMPLEMENT_FLAG = const._ARG_REVERSE_COMPLEMENT_FLAG
+        clean_dict = {
+            KEY_INPUT: self.get_clean_input(),
+            KEY_SKIP_N_ROWS: self.get_clean_skip_n_rows(),
+            KEY_OUTPUT: self.get_clean_output(),
+            KEY_VERBOSE: self.get_clean_verbose(),
+            KEY_FORWARD_PRIMER: self.get_clean_forward_primer(),
+            KEY_REVERSE_PRIMER: self.get_clean_reverse_primer(),
+            KEY_NAME_INDEX: self.get_clean_name_index(),
+            KEY_SEQUENCE_INDEX: self.get_clean_sequence_index(),
+            KEY_REVERSE_COMPLEMENT_FLAG: self.get_clean_reverse_complement_flag(),
+        }
+        return clean_dict
 
     def get_clean_input(self) -> Path:
         self._assert_has_validated_all()

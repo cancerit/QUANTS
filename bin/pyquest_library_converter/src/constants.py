@@ -1,5 +1,6 @@
-_ARG_INPUT = "input"
-_ARG_OUTPUT = "output"
+_ARG_INPUT = "input_file"
+_ARG_OUTPUT = "output_file"
+_ARG_SKIP_N_ROWS = "skip_n_rows"
 _ARG_VERBOSE = "verbose"
 _ARG_FORWARD_PRIMER = "forward_primer"
 _ARG_REVERSE_PRIMER = "reverse_primer"
@@ -8,7 +9,6 @@ _ARG_NAME_HEADER = "name_header"
 _ARG_NAME_INDEX = "name_index"
 _ARG_SEQ_HEADER = "sequence_header"
 _ARG_SEQ_INDEX = "sequence_index"
-_ARG_SKIP_N_ROWS = "skip_n_rows"
 
 
 _OUTPUT_HEADER__ID = "#id"

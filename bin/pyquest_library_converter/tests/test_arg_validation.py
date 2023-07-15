@@ -5,6 +5,7 @@ from pathlib import Path
 
 from src.args.args_cleaner import ArgsCleaner
 from src.exceptions import ValidationError
+from src import constants as const
 
 from tests import test_data
 
@@ -14,6 +15,7 @@ from tests import test_data
 @dataclass
 class ConfigData:
     csv_path: Path
+    csv_delimiter: str
     oligo_seq_name_header: str
     oligo_seq_name_index: int
     oligo_seq_header: str
@@ -34,13 +36,14 @@ def config(request):
     if request.param == CSV_SYMBOL_1:
         # Setup from _ExampleData1_Mixin
         csv_path = test_data.get.example_data_1_csv()  # replace with actual path
+        csv_delimiter = ","
         oligo_seq_name_header = "oligo_name"
         oligo_seq_name_index = 1  # 1-based indexing
         oligo_seq_header = "mseq"
         oligo_seq_index = 24  # 1-based indexing
         valid_namespace = argparse.Namespace(
-            input=csv_path,
-            output=EXAMPLE_OUTPUT_PATH,
+            input_file=csv_path,
+            output_file=EXAMPLE_OUTPUT_PATH,
             forward_primer="",
             reverse_primer="",
             reverse_complement_flag=False,
@@ -52,8 +55,8 @@ def config(request):
             verbose=False,
         )
         valid_namespace_with_headers = argparse.Namespace(
-            input=csv_path,
-            output=EXAMPLE_OUTPUT_PATH,
+            input_file=csv_path,
+            output_file=EXAMPLE_OUTPUT_PATH,
             forward_primer="",
             reverse_primer="",
             reverse_complement_flag=False,
@@ -64,25 +67,17 @@ def config(request):
             sequence_index=None,
             verbose=False,
         )
-        return ConfigData(
-            csv_path=csv_path,
-            oligo_seq_name_header=oligo_seq_name_header,
-            oligo_seq_name_index=oligo_seq_name_index,
-            oligo_seq_header=oligo_seq_header,
-            oligo_seq_index=oligo_seq_index,
-            valid_namespace=valid_namespace,
-            valid_namespace_with_headers=valid_namespace_with_headers,
-        )
     elif request.param == CSV_SYMBOL_2:
         # Setup from _ExampleData2_Mixin
         csv_path = test_data.get.example_data_2_tsv()
+        csv_delimiter = "\t"
         oligo_seq_name_header = "#id"
         oligo_seq_name_index = 1  # 1-based indexing
         oligo_seq_header = "sgrna_seqs"
         oligo_seq_index = 3  # 1-based indexing
         valid_namespace = argparse.Namespace(
-            input=csv_path,
-            output=EXAMPLE_OUTPUT_PATH,
+            input_file=csv_path,
+            output_file=EXAMPLE_OUTPUT_PATH,
             forward_primer="",
             reverse_primer="",
             reverse_complement_flag=False,
@@ -94,8 +89,8 @@ def config(request):
             verbose=False,
         )
         valid_namespace_with_headers = argparse.Namespace(
-            input=csv_path,
-            output=EXAMPLE_OUTPUT_PATH,
+            input_file=csv_path,
+            output_file=EXAMPLE_OUTPUT_PATH,
             forward_primer="",
             reverse_primer="",
             reverse_complement_flag=False,
@@ -106,15 +101,20 @@ def config(request):
             sequence_index=None,
             verbose=False,
         )
-        return ConfigData(
-            csv_path=csv_path,
-            oligo_seq_name_header=oligo_seq_name_header,
-            oligo_seq_name_index=oligo_seq_name_index,
-            oligo_seq_header=oligo_seq_header,
-            oligo_seq_index=oligo_seq_index,
-            valid_namespace=valid_namespace,
-            valid_namespace_with_headers=valid_namespace_with_headers,
-        )
+    else:
+        raise ValueError(f"Invalid request.param: {request.param}")
+
+    config = ConfigData(
+        csv_path=csv_path,
+        csv_delimiter=csv_delimiter,
+        oligo_seq_name_header=oligo_seq_name_header,
+        oligo_seq_name_index=oligo_seq_name_index,
+        oligo_seq_header=oligo_seq_header,
+        oligo_seq_index=oligo_seq_index,
+        valid_namespace=valid_namespace,
+        valid_namespace_with_headers=valid_namespace_with_headers,
+    )
+    return config
 
 
 # TESTS
@@ -146,8 +146,8 @@ def test_validate_output(config):
 
 def test_validate_output__throws_when_input_equals_output(config):
     namespace = config.valid_namespace
-    namespace.input = config.csv_path
-    namespace.output = config.csv_path
+    namespace.input_file = config.csv_path
+    namespace.output_file = config.csv_path
     args_cleaner = ArgsCleaner(namespace)
     with pytest.raises(ValidationError):
         args_cleaner.validate()
@@ -375,7 +375,7 @@ def test_get_clean_output__with_specific_output_that_does_exist(config, tmp_path
     expected_output = tmp_path / "foo.csv"
     expected_output.touch()
     namespace = config.valid_namespace
-    namespace.output = expected_output
+    namespace.output_file = expected_output
     args_cleaner = ArgsCleaner(namespace)
     args_cleaner.validate()
     actual_output = args_cleaner.get_clean_output()
@@ -385,7 +385,7 @@ def test_get_clean_output__with_specific_output_that_does_exist(config, tmp_path
 def test_get_clean_output__with_specific_output_that_doesnt_exist(config, tmp_path):
     expected_output = tmp_path / "foo.csv"
     namespace = config.valid_namespace
-    namespace.output = expected_output
+    namespace.output_file = expected_output
     args_cleaner = ArgsCleaner(namespace)
     args_cleaner.validate()
     actual_output = args_cleaner.get_clean_output()
@@ -397,7 +397,7 @@ def test_get_clean_output__with_specific_output_dir(config):
         config.csv_path.parent / f"{config.csv_path.stem}.out{config.csv_path.suffix}"
     )
     namespace = config.valid_namespace
-    namespace.output = config.csv_path.parent
+    namespace.output_file = config.csv_path.parent
     args_cleaner = ArgsCleaner(namespace)
     args_cleaner.validate()
     actual_output = args_cleaner.get_clean_output()
@@ -498,3 +498,52 @@ def test_get_clean_sequence_index_with_header(config):
     args_cleaner.validate()
     actual_sequence_index = args_cleaner.get_clean_sequence_index()
     assert expected_sequence_index == actual_sequence_index
+
+
+def test_to_clean_dict(config):
+    # Given
+    namespace = config.valid_namespace
+    expected_dict = vars(namespace)
+    args_cleaner = ArgsCleaner(namespace)
+    ## ! Remove header key-values, as they will never be in clean dict
+    expected_dict.pop(const._ARG_NAME_HEADER)
+    expected_dict.pop(const._ARG_SEQ_HEADER)
+
+    # When
+    args_cleaner.validate()
+    actual_dict = args_cleaner.to_clean_dict()
+
+    # Then
+    assert expected_dict == actual_dict
+
+
+def test_to_clean_dict__with_header(config):
+    import pandas as pd
+
+    # Setup
+    namespace = config.valid_namespace_with_headers
+    df = pd.read_csv(
+        namespace.input_file,
+        sep=config.csv_delimiter,
+        # We pandas to skip file header/file comments
+        skiprows=namespace.skip_n_rows,
+    )
+    name_index_1 = df.columns.get_loc(namespace.name_header) + 1
+    sequence_index_1 = df.columns.get_loc(namespace.sequence_header) + 1
+
+    # Given
+    args_cleaner = ArgsCleaner(namespace)
+    ## ! Remove header key-values, as they will never be in clean dict
+    ## ! Replace header key-values with index key-values, as they would be in clean dict
+    expected_dict = vars(namespace)
+    expected_dict.pop(const._ARG_NAME_HEADER)
+    expected_dict.pop(const._ARG_SEQ_HEADER)
+    expected_dict[const._ARG_NAME_INDEX] = name_index_1
+    expected_dict[const._ARG_SEQ_INDEX] = sequence_index_1
+
+    # When
+    args_cleaner.validate()
+    actual_dict = args_cleaner.to_clean_dict()
+
+    # Then
+    assert expected_dict == actual_dict

@@ -9,12 +9,18 @@ def get_argparser() -> argparse.ArgumentParser:
         description="Transforms oligo sequences to a format that can be used in PyQuest"
     )
     # File arguments
-    parser.add_argument(const._ARG_INPUT, type=Path, help=const._HELP__INPUT_FILE)
+    parser.add_argument(
+        const._ARG_INPUT,
+        type=Path,
+        help=const._HELP__INPUT_FILE,
+        metavar="INPUT",
+    )
     parser.add_argument(
         const._ARG_OUTPUT,
         type=Path,
         default=None,
         help=const._HELP__OUTPUT_FILE,
+        metavar="OUTPUT",
     )
 
     # Verbosity
