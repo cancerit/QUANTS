@@ -50,7 +50,9 @@ The script will try to identify whether to treat each primer as a typical sequen
 
 In this case the script will print a message similar to:
 ```
-Total seqeunces processed: 1
+Total sequences processed: 1
+Oligo sequences has a single case: upper
+Oligo sequences contain no invalid characters.
 Forward primer found 1 times in 1 sequences scanned.
 Forward primer reverse complement found 0 times in 1 sequences scanned.
 Reverse primer found 0 times in 1 sequences scanned
@@ -93,6 +95,7 @@ optional arguments:
   --reverse REVERSE     DNA primer to be removed from the end of the oligo sequence if provided.
   --skip SKIP_N_ROWS    Number of rows to skip in the CSV/TSV file before reading the data. By default, 1 row is skipped which assumes
                         a header row. If you use the --name-header or --sequence-header options, you can set this to 0.
+  --revcomp             Reverse complement the oligo sequence.
   -n NAME_HEADER, --name-header NAME_HEADER
                         The column name or header in the CSV/TSV for the oligo sequence name.
   -N NAME_INDEX, --name-index NAME_INDEX

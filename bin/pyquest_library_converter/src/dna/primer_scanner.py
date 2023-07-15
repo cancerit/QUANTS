@@ -17,8 +17,8 @@ class PrimerScanner:
     """
 
     def __init__(self, forward_primer: str, reverse_primer: str) -> None:
-        self._given_forward_primer = forward_primer
-        self._given_reverse_primer = reverse_primer
+        self._given_forward_primer = forward_primer.upper()
+        self._given_reverse_primer = reverse_primer.upper()
         self._given_forward_primer_revcomp = reverse_complement(forward_primer)
         self._given_reverse_primer_revcomp = reverse_complement(reverse_primer)
         self.__init_counters()
@@ -124,7 +124,7 @@ class PrimerScanner:
             revcomp_count=reverse_revcomp_cnt,
         )
         lines = (
-            [f"Total seqeunces processed: {total}"]
+            [f"Total sequences processed: {total}"]
             + oligo_caseing_lines
             + oligo_invalid_char_lines
             + search_fwd_lines
@@ -318,12 +318,20 @@ class PrimerScanner:
     def _find_primers(
         self, oligo: str, original: str, revcomp: str
     ) -> t.Tuple[bool, bool]:
-        has_original_at_either_end = oligo.startswith(original) or oligo.endswith(
+        # Matching is only possible if the primers and the oligo are all upper cased. The primers are upper cased at object creation.
+        # But the oligo is upper cased at the time of scanning.
+        clean_oligo = oligo.upper()
+
+        # Calculate the conditions
+        has_original_at_either_end = clean_oligo.startswith(
             original
-        )
-        has_revcomp_at_either_end = oligo.startswith(revcomp) or oligo.endswith(revcomp)
-        contains_original = original in oligo
-        contains_revcomp = revcomp in oligo
+        ) or clean_oligo.endswith(original)
+        has_revcomp_at_either_end = clean_oligo.startswith(
+            revcomp
+        ) or clean_oligo.endswith(revcomp)
+        contains_original = original in clean_oligo
+        contains_revcomp = revcomp in clean_oligo
+
         # Catch dangerous scenarios
         # Edge case 1: a primer is found but not at either end of the oligo
         has_original_not_at_ends = contains_original and not has_original_at_either_end

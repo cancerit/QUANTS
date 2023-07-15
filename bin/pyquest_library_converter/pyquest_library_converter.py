@@ -66,10 +66,16 @@ def main(
         primer_scanner.raise_errors()
         oligo_case = primer_scanner.get_oligos_case()
 
-    # Prepare closured functions for writing the output file
+    # Prepare closured functions for processing sequences
     _reverse_complement_sequences_closure = partial(
         dna_helpers.reverse_complement_sequences,
         header=const._OUTPUT_HEADER__SEQUENCE,
+    )
+    _closure_upper_case_sequences = partial(
+        dna_helpers.upper_case_sequences, sequence_header=const._OUTPUT_HEADER__SEQUENCE
+    )
+    _closure_lower_case_sequences = partial(
+        dna_helpers.lower_case_sequences, sequence_header=const._OUTPUT_HEADER__SEQUENCE
     )
     trim_sequences_closure = partial(
         dna_helpers.trim_sequences,
@@ -78,21 +84,17 @@ def main(
         forward_primer=detected_forward_primer,
         reverse_primer=detected_reverse_primer,
     )
+
+    # Define conditional functions for processing sequences
     conditionally_reverse_complement_sequences = (
         _reverse_complement_sequences_closure
         if reverse_complement_flag
         else dna_helpers.noop_sequences
     )
-    _closure_upper_case_sequences = partial(
-        dna_helpers.upper_case_sequences, sequence_header=const._OUTPUT_HEADER__SEQUENCE
-    )
     conditionally_upper_case_sequences = (
         _closure_upper_case_sequences
         if oligo_case == OligoCasing.LOWER
         else dna_helpers.noop_sequences
-    )
-    _closure_lower_case_sequences = partial(
-        dna_helpers.lower_case_sequences, sequence_header=const._OUTPUT_HEADER__SEQUENCE
     )
     conditionally_lower_case_sequences = (
         _closure_lower_case_sequences
