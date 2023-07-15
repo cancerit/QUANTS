@@ -3,11 +3,8 @@ import typing as t
 import string
 import pytest
 
-from pyquest_library_converter import (
-    reverse_complement,
-    PrimerScanner,
-    find_invalid_chars_in_dna_sequence,
-)
+from src.dna.primer_scanner import PrimerScanner
+from src.dna.helpers import find_invalid_chars_in_dna_sequence, reverse_complement
 
 EXAMPLE_CSV_HEADER = "sequence"
 

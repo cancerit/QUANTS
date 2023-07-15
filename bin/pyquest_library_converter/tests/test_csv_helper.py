@@ -3,7 +3,7 @@ from dataclasses import dataclass, field
 import typing as t
 
 from tests import test_data
-from pyquest_library_converter import CSVHelper
+from src.csv.csv_helper import CSVHelper
 
 
 @dataclass
@@ -13,7 +13,7 @@ class IterableTestCase:
     example_header: str
     expected_header_row: int
     expected_header_index: int
-    expected_delimeter: str
+    expected_delimiter: str
     expected_start_row: int
     expected_column_count: int
     expected_concatenated_output_rows: t.List[str] = field(default_factory=list)
@@ -29,7 +29,7 @@ class TestCSVHelper(unittest.TestCase):
                 example_header="oligo_name",
                 expected_header_row=0,
                 expected_header_index=1,
-                expected_delimeter=",",
+                expected_delimiter=",",
                 expected_start_row=0,
                 expected_column_count=24,
                 expected_concatenated_output_rows=[
@@ -61,7 +61,7 @@ class TestCSVHelper(unittest.TestCase):
 
         # Then
         self.assertIsInstance(csv_helper, CSVHelper)
-        self.assertEqual(csv_helper._delimeter, test_case.expected_delimeter)
+        self.assertEqual(csv_helper._delimiter, test_case.expected_delimiter)
         self.assertEqual(csv_helper._start_row, expected_start_row)
         self.assertEqual(csv_helper.columns_count, test_case.expected_column_count)
 
@@ -78,7 +78,7 @@ class TestCSVHelper(unittest.TestCase):
         csv_helper = CSVHelper(test_case.csv_path, skip_n_rows)
         expected_first_row = test_case.expected_concatenated_output_rows[skip_n_rows]
 
-        delimiter = test_case.expected_delimeter
+        delimiter = test_case.expected_delimiter
 
         # When
         with csv_helper.get_csv_reader() as reader:
@@ -114,7 +114,7 @@ class TestCSVHelper(unittest.TestCase):
         expected_concat_rows = "\n".join(
             test_case.expected_concatenated_output_rows[start:stop]
         )
-        delimiter = test_case.expected_delimeter
+        delimiter = test_case.expected_delimiter
 
         # When
         actual_rows = []

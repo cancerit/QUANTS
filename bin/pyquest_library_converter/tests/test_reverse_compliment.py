@@ -1,5 +1,6 @@
 import pytest
-from pyquest_library_converter import reverse_complement, reverse_complement_sequences
+from src.dna.helpers import reverse_complement, reverse_complement_sequences
+
 
 EXAMPLE_CSV_HEADER = "sequence"
 

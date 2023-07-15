@@ -1,7 +1,8 @@
 import unittest
 import typing as t
 
-from pyquest_library_converter import trim_sequence, UndevelopedFeatureError
+from src.dna.helpers import trim_sequence
+from src.exceptions import UndevelopedFeatureError
 
 
 class TestTrimSequence(unittest.TestCase):
