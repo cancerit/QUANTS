@@ -53,7 +53,7 @@ def get_argparser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--skip",
         type=int,
-        default=1,
+        default=0,
         help=const._HELP__SKIP_N_ROWS,
         dest=const._ARG_SKIP_N_ROWS,
     )

@@ -8,6 +8,10 @@ import pytest
 import pandas as pd
 
 from src.dna.helpers import reverse_complement, trim_sequence
+from src.csv.csv_helper import (
+    find_first_tabular_line_index_and_offset,
+    find_column_headers,
+)
 from pyquest_library_converter import main
 from src.args.args_parsing import get_argparser
 from src.args.args_cleaner import ArgsCleaner
@@ -87,6 +91,14 @@ class UseIndices(enum.Enum):
     NO = False
 
 
+def adjust_skip_n_rows(file: t.Union[str, Path], skip_n_rows: int) -> int:
+    first_line_0_idx, _ = find_first_tabular_line_index_and_offset(file)
+    header_0_idx = find_column_headers(file)
+    has_header_row = first_line_0_idx == header_0_idx
+    adjusted = first_line_0_idx + int(has_header_row) + skip_n_rows
+    return adjusted
+
+
 # FIXTURES
 
 
@@ -98,7 +110,7 @@ def get_main_kwargs():
         update_kwargs: t.Optional[t.Dict[str, t.Any]] = None,
     ) -> t.Dict[str, t.Any]:
         default_kwargs = {
-            const._ARG_SKIP_N_ROWS: 1,  # skip header row
+            const.KEY_ADJUSTED_SKIP_N_ROWS: 0,
             const._ARG_VERBOSE: False,
             const._ARG_FORWARD_PRIMER: "",
             const._ARG_REVERSE_PRIMER: "",
@@ -512,7 +524,6 @@ def test_main(
     output_file = tmp_path / "test.out.csv"
     forward_primer = EXAMPLE_FORWARD_PRIMER if primer_flag == UsePrimers.YES else ""
     reverse_primer = EXAMPLE_REVERSE_PRIMER if primer_flag == UsePrimers.YES else ""
-    skip_n_rows = 1 if use_column_indices_flag == UseIndices.YES else 0
 
     main_kwargs = get_main_kwargs(input_file, output_file)
     main_kwargs[const._ARG_REVERSE_COMPLEMENT_FLAG] = revcomp_flag.value
@@ -522,17 +533,20 @@ def test_main(
 
     # When: differing execution strategies
     if use_arg_cleaner == UseArgCleanerFlag.YES:
-        main_kwargs[const._ARG_SKIP_N_ROWS] = skip_n_rows
         # Mimics command line execution
         arg_cleaner: ArgsCleaner = get_arg_cleaner(
             main_kwargs, use_column_indices_flag == UseIndices.YES
         )
         arg_cleaner.validate()
+        print(f"{arg_cleaner.get_clean_adjusted_skip_n_rows()=}")
         main(**arg_cleaner.to_clean_dict())
     else:
-        main_kwargs[
-            const._ARG_SKIP_N_ROWS
-        ] = 1  # Main is only column indices so must skip header
+        # Arg cleaner updates and normalises the skip n rows value by including
+        # the file comment rows and columns header row. So when calling main
+        # directly, we need to accomodated the skip n rows value accordingly.
+        unadjusted_skip_n_rows = main_kwargs[const.KEY_ADJUSTED_SKIP_N_ROWS]
+        adjusted_skip_n_rows = adjust_skip_n_rows(input_file, unadjusted_skip_n_rows)
+        main_kwargs[const.KEY_ADJUSTED_SKIP_N_ROWS] = adjusted_skip_n_rows
         # Directly call main
         main(**main_kwargs)
 
@@ -557,21 +571,14 @@ def test_arg_cleaner_args_vs_main_kwargs(
     # Setup main_kwargs
     input_file = make_csv_file(input_data)
     output_file = tmp_path / "test.out.csv"
-    main_kwargs = get_main_kwargs(input_file, output_file)
+    main_kwargs = get_main_kwargs(input_file, output_file).copy()
+    unadjusted_skip_n_rows = main_kwargs[const.KEY_ADJUSTED_SKIP_N_ROWS]
+    adjusted_skip_n_rows = adjust_skip_n_rows(input_file, unadjusted_skip_n_rows)
+    main_kwargs[const.KEY_ADJUSTED_SKIP_N_ROWS] = adjusted_skip_n_rows
 
     # Setup arg_cleaner args
     arg_cleaner: ArgsCleaner = get_arg_cleaner(main_kwargs, use_indices=True)
     arg_cleaner.validate()
-    arg_cleaner_args = {
-        "input_file": arg_cleaner.get_clean_input(),
-        "skip_n_rows": arg_cleaner.get_clean_skip_n_rows(),
-        "output_file": arg_cleaner.get_clean_output(),
-        "verbose": arg_cleaner.get_clean_verbose(),
-        "forward_primer": arg_cleaner.get_clean_forward_primer(),
-        "reverse_primer": arg_cleaner.get_clean_reverse_primer(),
-        "name_index": arg_cleaner.get_clean_name_index(),
-        "sequence_index": arg_cleaner.get_clean_sequence_index(),
-        "reverse_complement_flag": arg_cleaner.get_clean_reverse_complement_flag(),
-    }
+    arg_cleaner_args = arg_cleaner.to_clean_dict()
 
     assert main_kwargs == arg_cleaner_args

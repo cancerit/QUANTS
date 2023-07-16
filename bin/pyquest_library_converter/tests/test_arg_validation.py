@@ -1,11 +1,26 @@
+import typing as t
 from dataclasses import dataclass
 import argparse
-import pytest
 from pathlib import Path
 
+import pytest
+
 from src.args.args_cleaner import ArgsCleaner
+from src.args.args_parsing import get_argparser
 from src.exceptions import ValidationError
 from src import constants as const
+from enum import IntEnum
+
+
+class NameArg(IntEnum):
+    HEADER = 1
+    INDEX = 2
+
+
+class SeqArg(IntEnum):
+    HEADER = 1
+    INDEX = 2
+
 
 from tests import test_data
 
@@ -16,6 +31,8 @@ from tests import test_data
 class ConfigData:
     csv_path: Path
     csv_delimiter: str
+    file_header_rows: t.List[int]
+    has_column_header_row: bool
     oligo_seq_name_header: str
     oligo_seq_name_index: int
     oligo_seq_header: str
@@ -37,6 +54,8 @@ def config(request):
         # Setup from _ExampleData1_Mixin
         csv_path = test_data.get.example_data_1_csv()  # replace with actual path
         csv_delimiter = ","
+        file_header_rows = []
+        has_column_header_row = True
         oligo_seq_name_header = "oligo_name"
         oligo_seq_name_index = 1  # 1-based indexing
         oligo_seq_header = "mseq"
@@ -71,6 +90,8 @@ def config(request):
         # Setup from _ExampleData2_Mixin
         csv_path = test_data.get.example_data_2_tsv()
         csv_delimiter = "\t"
+        file_header_rows = [0, 1]
+        has_column_header_row = True
         oligo_seq_name_header = "#id"
         oligo_seq_name_index = 1  # 1-based indexing
         oligo_seq_header = "sgrna_seqs"
@@ -81,7 +102,7 @@ def config(request):
             forward_primer="",
             reverse_primer="",
             reverse_complement_flag=False,
-            skip_n_rows=3,
+            skip_n_rows=0,
             name_header=None,
             name_index=oligo_seq_name_index,
             sequence_index=oligo_seq_index,
@@ -94,7 +115,7 @@ def config(request):
             forward_primer="",
             reverse_primer="",
             reverse_complement_flag=False,
-            skip_n_rows=2,
+            skip_n_rows=0,
             name_header=oligo_seq_name_header,
             name_index=None,
             sequence_header=oligo_seq_header,
@@ -107,6 +128,8 @@ def config(request):
     config = ConfigData(
         csv_path=csv_path,
         csv_delimiter=csv_delimiter,
+        file_header_rows=file_header_rows,
+        has_column_header_row=has_column_header_row,
         oligo_seq_name_header=oligo_seq_name_header,
         oligo_seq_name_index=oligo_seq_name_index,
         oligo_seq_header=oligo_seq_header,
@@ -130,6 +153,50 @@ def test_validate__with_valid_namespace_with_headers(config):
     namespace = config.valid_namespace_with_headers
     args_cleaner = ArgsCleaner(namespace)
     args_cleaner.validate()
+
+
+@pytest.mark.parametrize(
+    "cmd_fragment_template, name_type, seq_type, should_throw",
+    [
+        pytest.param("-N {} -S {}", NameArg.INDEX, SeqArg.INDEX, False, id="N+S"),
+        pytest.param("-n {} -s {}", NameArg.HEADER, SeqArg.HEADER, False, id="n+s"),
+        pytest.param("-N {} -s {}", NameArg.INDEX, SeqArg.HEADER, True, id="N+s"),
+        pytest.param("-n {} -S {}", NameArg.INDEX, SeqArg.INDEX, True, id="n+S"),
+    ],
+)
+def test_validate__throws_when_headers_and_names_are_mixed(
+    config,
+    cmd_fragment_template,
+    name_type: NameArg,
+    seq_type: SeqArg,
+    should_throw: bool,
+):
+    # Given
+    name_value = (
+        config.oligo_seq_name_index
+        if name_type == NameArg.INDEX
+        else config.oligo_seq_name_header
+    )
+    seq_value = (
+        config.oligo_seq_index if seq_type == SeqArg.INDEX else config.oligo_seq_header
+    )
+    cmd_fragment = cmd_fragment_template.format(name_value, seq_value)
+    cmd = f"{str(config.valid_namespace.input_file)} {str(config.valid_namespace.output_file)} {cmd_fragment}"
+
+    argparser = get_argparser()
+    namespace = argparser.parse_args(cmd.split())
+    # When
+    args_cleaner = ArgsCleaner(namespace)
+    if should_throw:
+        # Then
+        with pytest.raises(ValidationError):
+            args_cleaner.validate()
+        return
+    else:
+        # Then
+        args_cleaner.validate()
+        assert args_cleaner.get_clean_name_index() == config.oligo_seq_name_index
+        assert args_cleaner.get_clean_sequence_index() == config.oligo_seq_index
 
 
 def test_validate_codependent_input_args(config):
@@ -308,34 +375,33 @@ def test_validate_sequence_header_and_name_header_are_not_the_same(
 ):
     # Given
     namespace = config.valid_namespace_with_headers
+    pick_index = (
+        lambda x: config.oligo_seq_name_index
+        if x == "sequence"
+        else config.oligo_seq_index
+    )
+    pick_header = (
+        lambda x: config.oligo_seq_name_header
+        if x == "sequence"
+        else config.oligo_seq_header
+    )
 
     if as_index:
-        col1_value = (
-            config.oligo_seq_name_index
-            if col1 == "sequence"
-            else config.oligo_seq_index
-        )
-        col2_value = (
-            config.oligo_seq_name_index
-            if col2 == "sequence"
-            else config.oligo_seq_index
-        )
+        col1_value = pick_index(col1)
+        col2_value = pick_index(col2)
         namespace.sequence_index = col1_value
+        namespace.sequence_header = None
         namespace.name_index = col2_value
+        namespace.name_header = None
     else:
-        col1_value = (
-            config.oligo_seq_name_header
-            if col1 == "sequence"
-            else config.oligo_seq_header
-        )
-        col2_value = (
-            config.oligo_seq_name_header
-            if col2 == "sequence"
-            else config.oligo_seq_header
-        )
+        col1_value = pick_header(col1)
+        col2_value = pick_header(col2)
+        namespace.sequence_index = None
         namespace.sequence_header = col1_value
+        namespace.name_index = None
         namespace.name_header = col2_value
     args_cleaner = ArgsCleaner(namespace)
+
     # When / Then
     if should_throw:
         with pytest.raises(ValidationError):
@@ -353,21 +419,29 @@ def test_get_clean_input(config):
     assert expected_input == actual_input
 
 
-def test_get_clean_skip_n_rows(config):
-    expected_skip_n_rows = config.valid_namespace.skip_n_rows
+def test_get_clean_adjusted_skip_n_rows(config):
+    expected_skip_n_rows = (
+        config.valid_namespace.skip_n_rows
+        + config.has_column_header_row
+        + len(config.file_header_rows)
+    )
     namespace = config.valid_namespace
     args_cleaner = ArgsCleaner(namespace)
     args_cleaner.validate()
-    actual_skip_n_rows = args_cleaner.get_clean_skip_n_rows()
+    actual_skip_n_rows = args_cleaner.get_clean_adjusted_skip_n_rows()
     assert expected_skip_n_rows == actual_skip_n_rows
 
 
-def test_get_clean_skip_n_rows__with_headers(config):
-    expected_skip_n_rows = config.valid_namespace_with_headers.skip_n_rows + 1
+def test_get_clean_adjusted_skip_n_rows__with_headers(config):
+    expected_skip_n_rows = (
+        config.valid_namespace.skip_n_rows
+        + config.has_column_header_row
+        + len(config.file_header_rows)
+    )
     namespace = config.valid_namespace_with_headers
     args_cleaner = ArgsCleaner(namespace)
     args_cleaner.validate()
-    actual_skip_n_rows = args_cleaner.get_clean_skip_n_rows()
+    actual_skip_n_rows = args_cleaner.get_clean_adjusted_skip_n_rows()
     assert expected_skip_n_rows == actual_skip_n_rows
 
 
@@ -503,11 +577,19 @@ def test_get_clean_sequence_index_with_header(config):
 def test_to_clean_dict(config):
     # Given
     namespace = config.valid_namespace
-    expected_dict = vars(namespace)
+    expected_dict = vars(namespace).copy()
     args_cleaner = ArgsCleaner(namespace)
+    adjusted_skip_rows = (
+        getattr(namespace, const._ARG_SKIP_N_ROWS)
+        + config.has_column_header_row
+        + len(config.file_header_rows)
+    )
     ## ! Remove header key-values, as they will never be in clean dict
+    ## Also relabel skip rows to adjusted skip rows
     expected_dict.pop(const._ARG_NAME_HEADER)
     expected_dict.pop(const._ARG_SEQ_HEADER)
+    expected_dict.pop(const._ARG_SKIP_N_ROWS)
+    expected_dict[const.KEY_ADJUSTED_SKIP_N_ROWS] = adjusted_skip_rows
 
     # When
     args_cleaner.validate()
@@ -526,20 +608,28 @@ def test_to_clean_dict__with_header(config):
         namespace.input_file,
         sep=config.csv_delimiter,
         # We pandas to skip file header/file comments
-        skiprows=namespace.skip_n_rows,
+        skiprows=len(config.file_header_rows),
     )
     name_index_1 = df.columns.get_loc(namespace.name_header) + 1
     sequence_index_1 = df.columns.get_loc(namespace.sequence_header) + 1
+    adjusted_skip_rows = (
+        getattr(namespace, const._ARG_SKIP_N_ROWS)
+        + config.has_column_header_row
+        + len(config.file_header_rows)
+    )
 
     # Given
     args_cleaner = ArgsCleaner(namespace)
     ## ! Remove header key-values, as they will never be in clean dict
     ## ! Replace header key-values with index key-values, as they would be in clean dict
-    expected_dict = vars(namespace)
+    ## Also relabel skip rows to adjusted skip rows
+    expected_dict = vars(namespace).copy()
     expected_dict.pop(const._ARG_NAME_HEADER)
     expected_dict.pop(const._ARG_SEQ_HEADER)
     expected_dict[const._ARG_NAME_INDEX] = name_index_1
     expected_dict[const._ARG_SEQ_INDEX] = sequence_index_1
+    expected_dict.pop(const._ARG_SKIP_N_ROWS)
+    expected_dict[const.KEY_ADJUSTED_SKIP_N_ROWS] = adjusted_skip_rows
 
     # When
     args_cleaner.validate()

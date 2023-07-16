@@ -34,5 +34,15 @@ def example_data_2_tsv() -> Path:
 
 
 @_file_exists
-def example_data_3_csv() -> Path:
-    return Path(resource_filename(__name__, "example_data_3.csv"))
+def example_data_3_csv_w_file_and_column_headers() -> Path:
+    return Path(resource_filename(__name__, "example_data_3_w_file+column_headers.csv"))
+
+
+@_file_exists
+def example_data_3_csv_w_column_headers() -> Path:
+    return Path(resource_filename(__name__, "example_data_3_w_column_headers.csv"))
+
+
+@_file_exists
+def example_data_3_csv_wo_headers() -> Path:
+    return Path(resource_filename(__name__, "example_data_3_wo_headers.csv"))

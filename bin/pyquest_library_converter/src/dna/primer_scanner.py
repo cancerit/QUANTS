@@ -41,6 +41,7 @@ class PrimerScanner:
         self._total_oligos_scanned = 0
         self._oligo_casing_set: t.Set[OligoCasing] = set()
         self._invalid_chars_set: t.Set[str] = set()
+        self._invalid_chars_found_in_initial_rows = False
 
     def summary(self) -> t.List[str]:
         """
@@ -159,8 +160,8 @@ class PrimerScanner:
         Scan all oligos and count the number of times the given forward and reverse primers or their respective reverse complements are found.
         """
         self.__init_counters()
-        for oligo in oligos:
-            self._scan(oligo)
+        for idx_0, oligo in enumerate(oligos):
+            self._scan(oligo, idx_0)
             self._total_oligos_scanned += 1
         if self._total_oligos_scanned == 0:
             raise ValueError("No oligos given to scan")
@@ -194,7 +195,12 @@ class PrimerScanner:
             errors.append(msg)
         if len(self._invalid_chars_set) > 0:
             invalid_chars = ", ".join(self._invalid_chars_set)
-            msg = f"Oligo sequences contains invalid characters: {invalid_chars}."
+            unusual_invalid_chars = bool(self._invalid_chars_found_in_initial_rows)
+            unusual_s = " (characters were found in the first 5 rows may suggest the header row was not found or skipped) "
+            detail = unusual_s if unusual_invalid_chars else ""
+            msg = (
+                f"Oligo sequences contains invalid characters:{detail}{invalid_chars}."
+            )
             errors.append(msg)
         if len(errors) > 0:
             error_prefix = (
@@ -202,8 +208,10 @@ class PrimerScanner:
                 if len(errors) > 1
                 else "An error was found"
             )
-            errors_formatted = " ".join(
-                [f"#{i} {error}" for i, error in enumerate(errors, 1)]
+            errors_formatted = (
+                " ".join([f"#{i} {error}" for i, error in enumerate(errors, 1)])
+                if len(errors) > 1
+                else errors[0]
             )
             msg = f"{error_prefix} while scanning the input file: {errors_formatted}"
             raise ValidationError(msg)
@@ -266,9 +274,9 @@ class PrimerScanner:
             primer = original if ratio > 0.5 else revcomp
         return primer
 
-    def _scan(self, oligo: str) -> None:
+    def _scan(self, oligo: str, index: int) -> None:
         self._count_oligo_casing(oligo)
-        self._count_invalid_chars(oligo)
+        self._count_invalid_chars(oligo, index)
 
         forward_primer_tup = (
             self._given_forward_primer,
@@ -299,8 +307,10 @@ class PrimerScanner:
             self._oligo_casing_set.add(OligoCasing.NONE)
         return
 
-    def _count_invalid_chars(self, oligo: str) -> None:
+    def _count_invalid_chars(self, oligo: str, index: int) -> None:
         invalid_chars = find_invalid_chars_in_string(oligo, self._allowed_chars)
+        if invalid_chars and index < 5:
+            self._invalid_chars_found_in_initial_rows = True
         self._invalid_chars_set.update(invalid_chars)
         return
 

@@ -32,5 +32,20 @@ _HELP__FORWARD_PRIMER = (
 _HELP__REVERSE_PRIMER = (
     "DNA primer to be removed from the end of the oligo sequence if provided."
 )
-_HELP__SKIP_N_ROWS = "Number of rows to skip in the CSV/TSV file before reading the data. By default, 1 row is skipped which assumes a header row. If you use the --name-header or --sequence-header options, you can set this to 0."
+_HELP__SKIP_N_ROWS = "Choose how many data rows to skip before processing. Any headers or comments are always automatically skipped. If unset defaults to 0. E.g 0 (no data rows skipped), 1 (skip first row) and N (skip N data rows)."
 _HELP__REVERSE_COMPLEMENT_FLAG = "Reverse complement the oligo sequence."
+
+FILE_HEADER_LINE_PREFIX = "##"
+
+WARN__NO_HEADERS_FOUND__STRING_MATCHING = (
+    "No headers detected in file by string matching algorithm."
+)
+WARN__NO_HEADERS_FOUND__HEURISTIC = (
+    "No headers detected in file by heuristic algorithm."
+)
+WARN__NO_HEADERS_FOUND__BOTH_ALGORITHMS = (
+    "No headers detected in file by both string matching and heuristic algorithms."
+)
+
+
+KEY_ADJUSTED_SKIP_N_ROWS = "adjusted_skip_n_rows"

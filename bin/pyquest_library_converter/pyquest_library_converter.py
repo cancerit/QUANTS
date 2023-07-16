@@ -8,7 +8,7 @@ from pathlib import Path
 import tempfile
 import shutil
 
-from src.csv.csv_helper import CSVHelper
+from src.csv.csv_reader import CSVReaderFactory
 from src.csv.filter import filter_rows
 from src.csv.write import write_rows
 from src.report import Report
@@ -32,7 +32,7 @@ if sys.version_info < (3, 8):
 def main(
     input_file: t.Union[str, Path],
     output_file: t.Union[str, Path],
-    skip_n_rows: int,
+    adjusted_skip_n_rows: int,
     verbose: bool,
     forward_primer: str,
     reverse_primer: str,
@@ -50,8 +50,8 @@ def main(
     ]
 
     # Scan the file once to auto-detect the best primers
-    csv_helper = CSVHelper(input_file, skip_n_rows=skip_n_rows)
-    with csv_helper.get_csv_reader() as csv_reader:
+    csv_reader_factory = CSVReaderFactory(input_file, skip_n_rows=adjusted_skip_n_rows)
+    with csv_reader_factory.get_csv_reader() as csv_reader:
         primer_scanner = PrimerScanner(
             forward_primer=forward_primer, reverse_primer=reverse_primer
         )
@@ -107,8 +107,10 @@ def main(
         temp_file = Path(temp_handle.name)
 
         # Read the input file and write to a temporary file
-        csv_helper = CSVHelper(input_file, skip_n_rows=skip_n_rows)
-        with csv_helper.get_csv_reader() as csv_reader:
+        csv_reader_factory = CSVReaderFactory(
+            input_file, skip_n_rows=adjusted_skip_n_rows
+        )
+        with csv_reader_factory.get_csv_reader() as csv_reader:
             dict_rows = filter_rows(
                 csv_reader, name_index=name_index, sequence_index=sequence_index
             )
@@ -144,8 +146,8 @@ if __name__ == "__main__":  # noqa: C901
         # Run the main function
         main(**args_cleaner.to_clean_dict())
     except ValidationError as err:
-        display_error("Error: Argument validation!", err)
+        display_error(err, "Error: Argument validation!")
         sys.exit(1)
     except (UndevelopedFeatureError, NotImplementedError) as err:
-        display_error("Error: Not implemented feature!", err)
+        display_error(err, "Error: Not implemented feature!")
         sys.exit(1)

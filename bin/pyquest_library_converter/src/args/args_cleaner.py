@@ -2,11 +2,14 @@ import typing as t
 import os
 from pathlib import Path
 from textwrap import dedent
+from pprint import pformat
+from types import MappingProxyType
 
 from src.exceptions import ValidationError
 from src import constants as const
 from src.dna.helpers import find_invalid_chars_in_dna_sequence
 from src.csv.csv_helper import CSVHelper
+from src.enums import NameAndSequenceArgs
 
 if t.TYPE_CHECKING:
     import argparse
@@ -14,13 +17,15 @@ if t.TYPE_CHECKING:
 
 class ArgsCleaner:
     def __init__(self, namespace: "argparse.Namespace"):
-        self._namespace = namespace
+        # Read-only to prevent accidental modification
+        self._namespace_dict = MappingProxyType(vars(namespace).copy())
         self._parsed_csv = None
         self._validated = False
         self._validated_input = False
+        self._scanned_for_headers = False
         self._csv_helper: "t.Optional[CSVHelper]" = None
         self._header_row_discovered = False
-        self._header_row_index = -1
+        self._header_row_index_0_idx = -1
 
     def summary(self) -> str:
         """
@@ -42,7 +47,7 @@ class ArgsCleaner:
             clean_input = self.get_clean_input()
             clean_output = self.get_clean_output()
             clean_verbose = self.get_clean_verbose()
-            clean_skip_n_rows = self.get_clean_skip_n_rows()
+            clean_skip_n_rows = self.get_clean_adjusted_skip_n_rows()
             clean_forward_primer = self.get_clean_forward_primer()
             clean_reverse_primer = self.get_clean_reverse_primer()
             clean_name_index = self.get_clean_name_index()
@@ -77,20 +82,21 @@ class ArgsCleaner:
         return summary
 
     def _get_arg(self, arg_name: str) -> t.Any:
-        if not hasattr(self._namespace, arg_name):
+        if arg_name not in self._namespace_dict:
+            namespace = pformat(self._namespace_dict)
             msg = (
                 f"Argument {arg_name!r} no longer has an attribute on the "
-                f"{self._namespace!r} object, which suggests "
-                "the arg parser has changed."
+                "namespace object, which suggests "
+                f"the arg parser has changed:\n{namespace}"
             )
             raise AttributeError(msg)
-        return getattr(self._namespace, arg_name)
+        return self._namespace_dict[arg_name]
 
     def to_clean_dict(self) -> t.Dict[str, t.Any]:
         KEY_INPUT = const._ARG_INPUT
         KEY_OUTPUT = const._ARG_OUTPUT
         KEY_VERBOSE = const._ARG_VERBOSE
-        KEY_SKIP_N_ROWS = const._ARG_SKIP_N_ROWS
+        KEY_ADJUSTED_SKIP_N_ROWS = const.KEY_ADJUSTED_SKIP_N_ROWS
         KEY_FORWARD_PRIMER = const._ARG_FORWARD_PRIMER
         KEY_REVERSE_PRIMER = const._ARG_REVERSE_PRIMER
         KEY_NAME_INDEX = const._ARG_NAME_INDEX
@@ -98,7 +104,7 @@ class ArgsCleaner:
         KEY_REVERSE_COMPLEMENT_FLAG = const._ARG_REVERSE_COMPLEMENT_FLAG
         clean_dict = {
             KEY_INPUT: self.get_clean_input(),
-            KEY_SKIP_N_ROWS: self.get_clean_skip_n_rows(),
+            KEY_ADJUSTED_SKIP_N_ROWS: self.get_clean_adjusted_skip_n_rows(),
             KEY_OUTPUT: self.get_clean_output(),
             KEY_VERBOSE: self.get_clean_verbose(),
             KEY_FORWARD_PRIMER: self.get_clean_forward_primer(),
@@ -113,7 +119,7 @@ class ArgsCleaner:
         self._assert_has_validated_all()
         return self._get_arg(const._ARG_INPUT)
 
-    def get_clean_skip_n_rows(self) -> int:
+    def get_clean_adjusted_skip_n_rows(self) -> int:
         self._assert_has_validated_all()
         return self._normailse_skip_n_rows()
 
@@ -136,7 +142,7 @@ class ArgsCleaner:
 
     def get_clean_name_index(self) -> int:
         self._assert_has_validated_all()
-        index = self._normailse_header_or_index_to_index(
+        index = self._normalise_header_or_index_to_index(
             header_attr=const._ARG_NAME_HEADER,
             index_attr=const._ARG_NAME_INDEX,
         )
@@ -144,7 +150,7 @@ class ArgsCleaner:
 
     def get_clean_sequence_index(self) -> int:
         self._assert_has_validated_all()
-        index = self._normailse_header_or_index_to_index(
+        index = self._normalise_header_or_index_to_index(
             header_attr=const._ARG_SEQ_HEADER,
             index_attr=const._ARG_SEQ_INDEX,
         )
@@ -160,9 +166,6 @@ class ArgsCleaner:
             self._validate_output,
             self._validate_forward_primer,
             self._validate_reverse_primer,
-            self._validate_name_index,
-            self._validate_sequence_index,
-            self._validate_name_and_sequence_together_index,
             self._validate_reverse_complement_flag,
         ]
         for validator in validators:
@@ -172,9 +175,13 @@ class ArgsCleaner:
 
     def _validate_codependent_input_args(self):
         self.__validate_input()
-        self.__validate_skip_n_rows()
         self._assert_or_set_csv_helper()
-        self._validated_input = True
+        self.__validate_skip_n_rows()
+        self._validate_name_arg_and_sequence_arg_types_together()
+        self._validate_name_index_and_sequence_index_values_together()
+        self._validate_name_index()
+        self._validate_sequence_index()
+        self._scan_for_header_row()
         return
 
     def __validate_input(self):
@@ -184,6 +191,7 @@ class ArgsCleaner:
         if not input_value.is_file():
             raise ValidationError(f"Input file {str(input_value)!r} is not a file.")
         self._check_read_permissions(input_value)
+        self._validated_input = True
         return
 
     def __validate_skip_n_rows(self):
@@ -210,7 +218,7 @@ class ArgsCleaner:
         return
 
     def _validate_sequence_index(self):
-        index = self._normailse_header_or_index_to_index(
+        index = self._normalise_header_or_index_to_index(
             header_attr=const._ARG_SEQ_HEADER,
             index_attr=const._ARG_SEQ_INDEX,
         )
@@ -218,24 +226,44 @@ class ArgsCleaner:
         return
 
     def _validate_name_index(self):
-        index = self._normailse_header_or_index_to_index(
+        index = self._normalise_header_or_index_to_index(
             header_attr=const._ARG_NAME_HEADER,
             index_attr=const._ARG_NAME_INDEX,
         )
         self._assert_valid_column_index(index)
         return
 
-    def _validate_name_and_sequence_together_index(self):
-        name_index = self._normailse_header_or_index_to_index(
+    def _validate_name_index_and_sequence_index_values_together(self):
+        name_index = self._normalise_header_or_index_to_index(
             header_attr=const._ARG_NAME_HEADER,
             index_attr=const._ARG_NAME_INDEX,
         )
-        sequence_index = self._normailse_header_or_index_to_index(
+        sequence_index = self._normalise_header_or_index_to_index(
             header_attr=const._ARG_SEQ_HEADER,
             index_attr=const._ARG_SEQ_INDEX,
         )
         if name_index == sequence_index:
             msg = "Name column and sequence column must not be the same."
+            raise ValidationError(msg)
+        return
+
+    def _validate_name_arg_and_sequence_arg_types_together(self):
+        arg_type = self._get_argument_type_used_by_name_and_sequence()
+
+        if arg_type == NameAndSequenceArgs.MIXED:
+            name_index = self._get_arg(const._ARG_NAME_INDEX)
+            sequence_index = self._get_arg(const._ARG_SEQ_INDEX)
+            name_header = self._get_arg(const._ARG_NAME_HEADER)
+            sequence_header = self._get_arg(const._ARG_SEQ_HEADER)
+            name_i = str(name_index) if name_index is not None else ""
+            seq_i = str(sequence_index) if sequence_index is not None else ""
+            name_h = str(name_header) if name_header is not None else ""
+            seq_i = str(sequence_header) if sequence_header is not None else ""
+            detail = f"Index: {name_i!r} & {seq_i!r}. Header: {name_h!r} & {seq_i!r}"
+            msg = f"Cannot use a mix of indices and headers for name and sequence columns. {detail}"
+            raise ValidationError(msg)
+        elif arg_type == NameAndSequenceArgs.NONE:
+            msg = "Must specify both name and sequence columns."
             raise ValidationError(msg)
         return
 
@@ -264,16 +292,19 @@ class ArgsCleaner:
 
     def _assert_has_validated_input(self):
         if not self._validated_input:
-            msg = (
-                "The index cannot be validated before input file " "has been validated."
-            )
+            msg = "The index cannot be validated before input file has been validated."
             raise RuntimeError(msg)
+
+    def _assert_has_scanned_for_headers(self):
+        if not self._scanned_for_headers:
+            msg = "The index cannot be validated before input file has been scanned for headers."
+            raise RuntimeError(msg)
+        return
 
     def _assert_or_set_csv_helper(self):
         file_path: Path = self._get_arg(const._ARG_INPUT)
-        skip_n_rows: int = self._get_arg(const._ARG_SKIP_N_ROWS)
         try:
-            self._csv_helper = CSVHelper(file_path, skip_n_rows)
+            self._csv_helper = CSVHelper(file_path)
         except ValueError as e:
             raise ValidationError(str(e))
         if self._csv_helper.columns_count < 2:
@@ -317,7 +348,7 @@ class ArgsCleaner:
             msg = f"Sequence index {index!r} must be greater than or equal to 1."
             raise ValidationError(msg)
 
-    def _normailse_header_or_index_to_index(
+    def _normalise_header_or_index_to_index(
         self, header_attr: str, index_attr: str
     ) -> int:
         maybe_index: t.Optional[int] = self._get_arg(index_attr)
@@ -337,27 +368,44 @@ class ArgsCleaner:
         self._assert_has_validated_input()
         if maybe_header is None:
             raise ValidationError("A valid header or index must be provided.")
-        try:
-            header_row = self._csv_helper.find_header_row(maybe_header)
-            normal_index = self._csv_helper.find_header_index(maybe_header)
-        except ValueError as e:
-            raise ValidationError(str(e))
-        self._header_row_discovered = True
-        self._header_row_index = header_row
-        return normal_index
+        column_index_1_idx = self._csv_helper.find_column_index_by_header(
+            maybe_header,
+            one_index=True,
+        )
+        if column_index_1_idx == -1:
+            msg = f"Header {maybe_header!r} not found in input file ."
+            raise ValidationError(msg)
+
+        return column_index_1_idx
 
     def _normailse_skip_n_rows(self) -> int:
-        skip_n_rows: int = self._get_arg(const._ARG_SKIP_N_ROWS)
-        if self._header_row_discovered:
-            # If the header has been discovered, then the first row after the
-            # header is a data row, so we need to skip one extra row.
-            #
-            # I.e.:
-            # - if the header is on row 0, then the first data row is on row 1, we skip 1 row
-            # - if the header is on row 2, then the first data row is on row 3, we skip 3 rows
+        self._assert_has_scanned_for_headers()
+        # The user states they want to skip N rows
+        # We must first calutate the implicit offset ie. the number of rows to automatically skip before the user specified N rows are skipped:
+        # - we do this to consider the case where the file may have file headers (aka file comments)
+        # - we do this to consider the case where the file may have a header row
+        # We must then calculate the explicit offset ie. the number of rows to skip after the implicit offset
 
-            skip_n_rows = self._header_row_index + 1
-        return skip_n_rows
+        # Find the implicit offset
+        has_header_row = self._header_row_index_0_idx != -1
+        if has_header_row:
+            # We add 1 to the header row index to account for the header row itself
+            # as the user is uninterested in the header row
+            implicit_offset = self._header_row_index_0_idx + 1
+        else:
+            (
+                first_tabular_row_0_idx,
+                _,
+            ) = self._csv_helper._find_first_tabular_row_idx_and_offset(one_index=False)
+            implicit_offset = first_tabular_row_0_idx
+
+        # Find the explicit offset
+        skip_n_rows: int = self._get_arg(const._ARG_SKIP_N_ROWS)
+        explicit_offset = skip_n_rows
+
+        # Compute the accuracte "skip_n_rows" value
+        result = implicit_offset + explicit_offset
+        return result
 
     def _normalise_output_to_file(self) -> Path:  # noqa: C901
         """
@@ -389,3 +437,45 @@ class ArgsCleaner:
     def _check_read_permissions(self, path: Path) -> None:
         if not os.access(path, os.R_OK):
             raise ValidationError(f"{path!r} is not readable.")
+
+    def _get_argument_type_used_by_name_and_sequence(self) -> NameAndSequenceArgs:
+        name_index = self._get_arg(const._ARG_NAME_INDEX)
+        sequence_index = self._get_arg(const._ARG_SEQ_INDEX)
+        name_header = self._get_arg(const._ARG_NAME_HEADER)
+        sequence_header = self._get_arg(const._ARG_SEQ_HEADER)
+        # Users can either specify a pair of indexes or a pair of headers. A mix
+        # of the two is not allowed.
+        uses_headers = name_header is not None or sequence_header is not None
+        uses_indexes = name_index is not None or sequence_index is not None
+        if uses_headers and uses_indexes:
+            result = NameAndSequenceArgs.MIXED
+        elif uses_headers:
+            result = NameAndSequenceArgs.HEADER
+        elif uses_indexes:
+            result = NameAndSequenceArgs.INDEX
+        else:
+            result = NameAndSequenceArgs.NONE
+        return result
+
+    def _scan_for_header_row(self):
+        self._assert_has_validated_input()
+        arg_type = self._get_argument_type_used_by_name_and_sequence()
+        if arg_type == NameAndSequenceArgs.INDEX:
+            header_index = self._csv_helper.find_header_row_index(
+                one_index=False,
+            )
+        elif arg_type == NameAndSequenceArgs.HEADER:
+            name_header = self._get_arg(const._ARG_NAME_HEADER)
+            sequence_header = self._get_arg(const._ARG_SEQ_HEADER)
+            header_index = self._csv_helper.find_header_row_index_by_header(
+                name_header,
+                sequence_header,
+                one_index=False,
+            )
+        else:
+            raise RuntimeError(
+                "Cannot scan for headers, but this error is unreachable if validate was called first."
+            )
+        self._scanned_for_headers = True
+        self._header_row_index_0_idx = header_index
+        return
