@@ -72,6 +72,7 @@ def config(request):
             sequence_index=oligo_seq_index,
             sequence_header=None,
             verbose=False,
+            force_header_index=None,
         )
         valid_namespace_with_headers = argparse.Namespace(
             input_file=csv_path,
@@ -85,6 +86,7 @@ def config(request):
             sequence_header=oligo_seq_header,
             sequence_index=None,
             verbose=False,
+            force_header_index=None,
         )
     elif request.param == CSV_SYMBOL_2:
         # Setup from _ExampleData2_Mixin
@@ -108,6 +110,7 @@ def config(request):
             sequence_index=oligo_seq_index,
             sequence_header=None,
             verbose=False,
+            force_header_index=None,
         )
         valid_namespace_with_headers = argparse.Namespace(
             input_file=csv_path,
@@ -121,6 +124,7 @@ def config(request):
             sequence_header=oligo_seq_header,
             sequence_index=None,
             verbose=False,
+            force_header_index=None,
         )
     else:
         raise ValueError(f"Invalid request.param: {request.param}")

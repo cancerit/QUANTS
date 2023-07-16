@@ -57,6 +57,13 @@ def get_argparser() -> argparse.ArgumentParser:
         help=const._HELP__SKIP_N_ROWS,
         dest=const._ARG_SKIP_N_ROWS,
     )
+    parser.add_argument(
+        "--force-header-index",
+        type=int,
+        default=None,
+        dest=const._ARG_FORCE_HEADER_INDEX,
+        help=const._HELP__FORCE_HEADER_INDEX,
+    )
 
     # Include a way to toggle the output sequences to be in reverse complement, default is false
     parser.add_argument(

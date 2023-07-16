@@ -39,6 +39,7 @@ def main(
     name_index: int,
     sequence_index: int,
     reverse_complement_flag: bool,
+    **options,
 ):
     report = Report()
     input_file = Path(input_file)

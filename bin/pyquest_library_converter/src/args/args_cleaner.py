@@ -10,6 +10,7 @@ from src import constants as const
 from src.dna.helpers import find_invalid_chars_in_dna_sequence
 from src.csv.csv_helper import CSVHelper
 from src.enums import NameAndSequenceArgs
+from src.cli import display_warning
 
 if t.TYPE_CHECKING:
     import argparse
@@ -25,6 +26,7 @@ class ArgsCleaner:
         self._scanned_for_headers = False
         self._csv_helper: "t.Optional[CSVHelper]" = None
         self._header_row_discovered = False
+        self._use_forced_header_index = False
         self._header_row_index_0_idx = -1
 
     def summary(self) -> str:
@@ -42,12 +44,15 @@ class ArgsCleaner:
         raw_sequence_header = self._get_arg(const._ARG_SEQ_HEADER)
         raw_sequence_index = self._get_arg(const._ARG_SEQ_INDEX)
         raw_reverse_complement_flag = self._get_arg(const._ARG_REVERSE_COMPLEMENT_FLAG)
+        raw_force_header_index = self._get_arg(const._ARG_FORCE_HEADER_INDEX)
         is_validated = self._validated
         if is_validated:
             clean_input = self.get_clean_input()
             clean_output = self.get_clean_output()
             clean_verbose = self.get_clean_verbose()
+            clean_forced_header_index = self.get_clean_forced_header_index()
             clean_skip_n_rows = self.get_clean_adjusted_skip_n_rows()
+            is_forced = " (forced)" if clean_forced_header_index is not None else ""
             clean_forward_primer = self.get_clean_forward_primer()
             clean_reverse_primer = self.get_clean_reverse_primer()
             clean_name_index = self.get_clean_name_index()
@@ -59,6 +64,8 @@ class ArgsCleaner:
             clean_output = special_value
             clean_verbose = special_value
             clean_skip_n_rows = special_value
+            clean_forced_header_index = special_value
+            is_forced = ""
             clean_forward_primer = special_value
             clean_reverse_primer = special_value
             clean_name_index = special_value
@@ -69,7 +76,7 @@ class ArgsCleaner:
         Input: {str(raw_input)!r} -> {str(clean_input)!r}
         Output: {str(raw_output)!r} -> {str(clean_output)!r}
         Verbose: {raw_verbose!r} -> {clean_verbose!r}
-        Skip N Rows: {raw_skip_n_rows!r} -> {clean_skip_n_rows!r}
+        Skip N Rows: {raw_skip_n_rows!r} -> {clean_skip_n_rows!r}{is_forced}
         Forward Primer: {raw_forward_primer!r} -> {clean_forward_primer!r}
         Reverse Primer: {raw_reverse_primer!r} -> {clean_reverse_primer!r}
         Name Header: {raw_name_header!r} -> {clean_name_index!r}
@@ -77,6 +84,7 @@ class ArgsCleaner:
         Sequence Header: {raw_sequence_header!r} -> {clean_sequence_index!r}
         Sequence Index: {raw_sequence_index!r} -> {raw_sequence_index!r}
         Reverse Complement Flag: {raw_reverse_complement_flag!r} -> {clean_reverse_complement_flag!r}
+        Force Header Index: {raw_force_header_index!r} -> {clean_forced_header_index!r}
         """
         summary = dedent(summary).rstrip()
         return summary
@@ -102,6 +110,7 @@ class ArgsCleaner:
         KEY_NAME_INDEX = const._ARG_NAME_INDEX
         KEY_SEQUENCE_INDEX = const._ARG_SEQ_INDEX
         KEY_REVERSE_COMPLEMENT_FLAG = const._ARG_REVERSE_COMPLEMENT_FLAG
+        KEY_FORCE_HEADER_INDEX = const._ARG_FORCE_HEADER_INDEX
         clean_dict = {
             KEY_INPUT: self.get_clean_input(),
             KEY_ADJUSTED_SKIP_N_ROWS: self.get_clean_adjusted_skip_n_rows(),
@@ -112,6 +121,7 @@ class ArgsCleaner:
             KEY_NAME_INDEX: self.get_clean_name_index(),
             KEY_SEQUENCE_INDEX: self.get_clean_sequence_index(),
             KEY_REVERSE_COMPLEMENT_FLAG: self.get_clean_reverse_complement_flag(),
+            KEY_FORCE_HEADER_INDEX: self.get_clean_forced_header_index(),
         }
         return clean_dict
 
@@ -122,6 +132,10 @@ class ArgsCleaner:
     def get_clean_adjusted_skip_n_rows(self) -> int:
         self._assert_has_validated_all()
         return self._normailse_skip_n_rows()
+
+    def get_clean_forced_header_index(self) -> t.Optional[int]:
+        self._assert_has_validated_all()
+        return self._get_arg(const._ARG_FORCE_HEADER_INDEX)
 
     def get_clean_output(self) -> Path:
         self._assert_has_validated_all()
@@ -176,6 +190,7 @@ class ArgsCleaner:
     def _validate_codependent_input_args(self):
         self.__validate_input()
         self._assert_or_set_csv_helper()
+        self._validate_force_header_index()
         self.__validate_skip_n_rows()
         self._validate_name_arg_and_sequence_arg_types_together()
         self._validate_name_index_and_sequence_index_values_together()
@@ -295,6 +310,11 @@ class ArgsCleaner:
             msg = "The index cannot be validated before input file has been validated."
             raise RuntimeError(msg)
 
+    def _assert_has_validated_force_header_index(self):
+        if not self._use_forced_header_index:
+            msg = "The skip_n_row cannot be validated before forced header index has been validated."
+            raise RuntimeError(msg)
+
     def _assert_has_scanned_for_headers(self):
         if not self._scanned_for_headers:
             msg = "The index cannot be validated before input file has been scanned for headers."
@@ -380,19 +400,37 @@ class ArgsCleaner:
 
     def _normailse_skip_n_rows(self) -> int:
         self._assert_has_scanned_for_headers()
+        self._assert_has_validated_force_header_index()
         # The user states they want to skip N rows
         # We must first calutate the implicit offset ie. the number of rows to automatically skip before the user specified N rows are skipped:
         # - we do this to consider the case where the file may have file headers (aka file comments)
         # - we do this to consider the case where the file may have a header row
         # We must then calculate the explicit offset ie. the number of rows to skip after the implicit offset
 
+        # Prepare implicit offset variables
+        has_detected_header_row = self._header_row_index_0_idx != -1
+        force_header_index_1_idx = self._get_arg(const._ARG_FORCE_HEADER_INDEX)
+        force_header_index_0_idx = (
+            force_header_index_1_idx - 1
+            if force_header_index_1_idx is not None
+            else None
+        )
+        has_forced_header_index = self._use_forced_header_index
+
         # Find the implicit offset
-        has_header_row = self._header_row_index_0_idx != -1
-        if has_header_row:
+        if has_forced_header_index and force_header_index_0_idx is not None:
+            # The forced header index takes precedence over other methods
+            #
+            # We add 1 to the header row index to account for the header row itself
+            # as the user is uninterested in the header row
+            implicit_offset = force_header_index_0_idx + 1
+        elif has_detected_header_row:
             # We add 1 to the header row index to account for the header row itself
             # as the user is uninterested in the header row
             implicit_offset = self._header_row_index_0_idx + 1
         else:
+            # Otherwise, we assume the file has no header row and so the
+            # implicit offset is 0 + any file headers/file comments detected
             (
                 first_tabular_row_0_idx,
                 _,
@@ -406,6 +444,25 @@ class ArgsCleaner:
         # Compute the accuracte "skip_n_rows" value
         result = implicit_offset + explicit_offset
         return result
+
+    def _validate_force_header_index(self) -> t.Optional[int]:
+        index: t.Optional[int] = self._get_arg(const._ARG_FORCE_HEADER_INDEX)
+        if index is None:
+            self._use_forced_header_index = True
+            return None
+        else:
+            line_count = self._csv_helper.line_count
+            if index < 1:
+                msg = f"Header index {index!r} must be greater than or equal to 1."
+                raise ValidationError(msg)
+            elif index > line_count:
+                msg = (
+                    f"Header index {index!r} must be less than or equal to the number of lines in the file: "
+                    f"{line_count}."
+                )
+                raise ValidationError(msg)
+            self._use_forced_header_index = True
+            return index
 
     def _normalise_output_to_file(self) -> Path:  # noqa: C901
         """
@@ -460,7 +517,12 @@ class ArgsCleaner:
     def _scan_for_header_row(self):
         self._assert_has_validated_input()
         arg_type = self._get_argument_type_used_by_name_and_sequence()
-        if arg_type == NameAndSequenceArgs.INDEX:
+        line_count = self._csv_helper.line_count
+        is_unreliable_heuristic = line_count < 5
+        if is_unreliable_heuristic and arg_type == NameAndSequenceArgs.INDEX:
+            header_index = -1
+            display_warning(const.WARN_HEADER_SCAN_ABORTED)
+        elif arg_type == NameAndSequenceArgs.INDEX:
             header_index = self._csv_helper.find_header_row_index(
                 one_index=False,
             )

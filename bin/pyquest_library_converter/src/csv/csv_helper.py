@@ -133,7 +133,7 @@ class CSVHelper:
         Index is 0-indexed by default, but can be 1-indexed by setting one_index=True.
         """
         header_row_index = find_column_headers(
-            self._file_path, rigorous=True, column_names=None
+            self._file_path, rigorous=False, column_names=None
         )
         if one_index and header_row_index != -1:
             header_row_index += 1
@@ -223,34 +223,13 @@ class CSVHelper:
         Get the number of lines in the CSV file.
         """
         if self._line_count == 0:
-            self._line_count = self._get_file_structure()
+            self._line_count = self._get_line_count()
         return self._line_count
 
-    # def get_file_structure(self) -> t.Tuple[int, int, int]:
-    #     """
-    #     Get the number of file header rows, column header rows, and data rows in the CSV file.
-    #     """
-    #     if self._file_structure == (0, 0, 0):
-    #         self._file_structure = self._get_file_structure()
-    #     return self._file_structure
-
-    # def _get_file_structure(self) -> t.Tuple[int, int, int]:
-    #     line_count = 0
-    #     file_header_rows = 0
-    #     first_tabular_row_idx = None
-    #     with open(self._file_path) as file:
-    #         for line in file.read():
-    #             line_count += 1
-
-    #             # Find any file header rows
-    #             if line.startswith(FILE_HEADER_PREFIX):
-    #                 file_header_rows += 1
-    #                 continue
-
-    #             # Find the first tabular row
-    #             if first_tabular_row_idx is None and line.strip():
-    #                 first_tabular_row_idx = line_count
-    #                 continue
+    def _get_line_count(self) -> int:
+        with open(self._file_path, "r") as csvfile:
+            line_count = sum(1 for line in csvfile)
+        return line_count
 
 
 def find_file_headers(

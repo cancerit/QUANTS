@@ -1,6 +1,7 @@
 _ARG_INPUT = "input_file"
 _ARG_OUTPUT = "output_file"
 _ARG_SKIP_N_ROWS = "skip_n_rows"
+_ARG_FORCE_HEADER_INDEX = "force_header_index"
 _ARG_VERBOSE = "verbose"
 _ARG_FORWARD_PRIMER = "forward_primer"
 _ARG_REVERSE_PRIMER = "reverse_primer"
@@ -33,6 +34,7 @@ _HELP__REVERSE_PRIMER = (
     "DNA primer to be removed from the end of the oligo sequence if provided."
 )
 _HELP__SKIP_N_ROWS = "Choose how many data rows to skip before processing. Any headers or comments are always automatically skipped. If unset defaults to 0. E.g 0 (no data rows skipped), 1 (skip first row) and N (skip N data rows)."
+_HELP__FORCE_HEADER_INDEX = "Force the input file parser to use this index for the column header row (1-index). By default, the script auto-detects the index of column header row, if any. If also using '--skip', the script will automatically skip all rows up to and including index before then skipping the speficied N data rows."
 _HELP__REVERSE_COMPLEMENT_FLAG = "Reverse complement the oligo sequence."
 
 FILE_HEADER_LINE_PREFIX = "##"
@@ -46,6 +48,6 @@ WARN__NO_HEADERS_FOUND__HEURISTIC = (
 WARN__NO_HEADERS_FOUND__BOTH_ALGORITHMS = (
     "No headers detected in file by both string matching and heuristic algorithms."
 )
-
+WARN_HEADER_SCAN_ABORTED = "Insufficient lines (<10) for header detection. Assumption: no header. If inaccurate, specify header with '--force-header-index' or use column names. File comments/headers will be detect as normal."
 
 KEY_ADJUSTED_SKIP_N_ROWS = "adjusted_skip_n_rows"
