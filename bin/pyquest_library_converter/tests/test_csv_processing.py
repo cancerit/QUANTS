@@ -82,6 +82,11 @@ class ShouldRaiseFlag(enum.Enum):
     DONT_RAISE = False
 
 
+class UseIndices(enum.Enum):
+    YES = True
+    NO = False
+
+
 # FIXTURES
 
 
@@ -93,7 +98,7 @@ def get_main_kwargs():
         update_kwargs: t.Optional[t.Dict[str, t.Any]] = None,
     ) -> t.Dict[str, t.Any]:
         default_kwargs = {
-            const._ARG_SKIP_N_ROWS: 0,
+            const._ARG_SKIP_N_ROWS: 1,  # skip header row
             const._ARG_VERBOSE: False,
             const._ARG_FORWARD_PRIMER: "",
             const._ARG_REVERSE_PRIMER: "",
@@ -115,25 +120,30 @@ def get_main_kwargs():
 def get_cmd():
     """Return a string of the command to run."""
 
-    def _get_cmd(main_kwargs: t.Dict[str, t.Any]) -> str:
-        input_file = main_kwargs["input_file"]
-        output_file = main_kwargs["output_file"]
+    def _get_cmd(main_kwargs: t.Dict[str, t.Any], use_indices: bool) -> str:
+        input_file = main_kwargs[const._ARG_INPUT]
+        output_file = main_kwargs[const._ARG_OUTPUT]
         # USAGE: [-v] [--forward FORWARD_PRIMER] [--reverse REVERSE_PRIMER] [--skip SKIP_N_ROWS] [--revcomp] (-n NAME_HEADER | -N NAME_INDEX) (-s SEQUENCE_HEADER | -S SEQUENCE_INDEX) input output
         cmd = f"{input_file} {output_file}"
-        if main_kwargs["verbose"]:
+        if main_kwargs[const._ARG_VERBOSE]:
             cmd += " -v"
-        if main_kwargs["forward_primer"]:
-            cmd += f" --forward {main_kwargs['forward_primer']}"
-        if main_kwargs["reverse_primer"]:
-            cmd += f" --reverse {main_kwargs['reverse_primer']}"
-        if "skip_n_rows" in main_kwargs:  # skip_n_rows can return 0
-            cmd += f" --skip {main_kwargs['skip_n_rows']}"
-        if main_kwargs["reverse_complement_flag"]:
+        if main_kwargs[const._ARG_FORWARD_PRIMER]:
+            cmd += f" --forward {main_kwargs[const._ARG_FORWARD_PRIMER]}"
+        if main_kwargs[const._ARG_REVERSE_PRIMER]:
+            cmd += f" --reverse {main_kwargs[const._ARG_REVERSE_PRIMER]}"
+        if const._ARG_SKIP_N_ROWS in main_kwargs:  # skip_n_rows can return 0
+            cmd += f" --skip {main_kwargs[const._ARG_SKIP_N_ROWS]}"
+        if main_kwargs[const._ARG_REVERSE_COMPLEMENT_FLAG]:
             cmd += f" --revcomp"
-        if "name_index" in main_kwargs:  # name_index can return 0
-            cmd += f" -N {main_kwargs['name_index']}"
-        if "sequence_index" in main_kwargs:  # sequence_index can return 0
-            cmd += f" -S {main_kwargs['sequence_index']}"
+        if use_indices:
+            if const._ARG_NAME_INDEX in main_kwargs:  # name_index can return 0
+                cmd += f" -N {main_kwargs['name_index']}"
+            if const._ARG_SEQ_INDEX in main_kwargs:  # sequence_index can return 0
+                cmd += f" -S {main_kwargs['sequence_index']}"
+        else:
+            name_header = EXAMPE_HEADER__NAME
+            sequence_header = EXAMPE_HEADER__SEQUENCE
+            cmd += f" -n {name_header} -s {sequence_header}"
         return cmd
 
     yield _get_cmd
@@ -141,9 +151,11 @@ def get_cmd():
 
 @pytest.fixture
 def get_arg_cleaner(get_cmd):
-    def _get_arg_cleaner(main_kwargs: t.Dict[str, t.Any]) -> ArgsCleaner:
+    def _get_arg_cleaner(
+        main_kwargs: t.Dict[str, t.Any], use_indices: bool
+    ) -> ArgsCleaner:
+        cmd = get_cmd(main_kwargs, use_indices)
         parser = get_argparser()
-        cmd = get_cmd(main_kwargs)
         namespace = parser.parse_args(cmd.split())
         arg_cleaner = ArgsCleaner(namespace)
         return arg_cleaner
@@ -475,7 +487,11 @@ PARAMS = [
 @pytest.mark.parametrize(
     "use_arg_cleaner", [UseArgCleanerFlag.YES, UseArgCleanerFlag.NO]
 )
-def test_main__with_upper_case_sequences(
+@pytest.mark.parametrize(
+    "use_column_indices_flag",
+    [UseIndices.YES, UseIndices.NO],
+)
+def test_main(
     tabular_data: TabularData,
     make_csv_file,
     read_csv_file,
@@ -486,6 +502,7 @@ def test_main__with_upper_case_sequences(
     should_raise: ShouldRaiseFlag,
     revcomp_flag: RevCompFlag,
     primer_flag: UsePrimers,
+    use_column_indices_flag,
 ):
     """Test that sequences with upper case letters are converted to lower case."""
     # Setup data
@@ -495,9 +512,9 @@ def test_main__with_upper_case_sequences(
     output_file = tmp_path / "test.out.csv"
     forward_primer = EXAMPLE_FORWARD_PRIMER if primer_flag == UsePrimers.YES else ""
     reverse_primer = EXAMPLE_REVERSE_PRIMER if primer_flag == UsePrimers.YES else ""
+    skip_n_rows = 1 if use_column_indices_flag == UseIndices.YES else 0
 
     main_kwargs = get_main_kwargs(input_file, output_file)
-    main_kwargs[const._ARG_SKIP_N_ROWS] = 1  # Skip header row
     main_kwargs[const._ARG_REVERSE_COMPLEMENT_FLAG] = revcomp_flag.value
     main_kwargs[const._ARG_FORWARD_PRIMER] = forward_primer
     main_kwargs[const._ARG_REVERSE_PRIMER] = reverse_primer
@@ -505,18 +522,24 @@ def test_main__with_upper_case_sequences(
 
     # When: differing execution strategies
     if use_arg_cleaner == UseArgCleanerFlag.YES:
+        main_kwargs[const._ARG_SKIP_N_ROWS] = skip_n_rows
         # Mimics command line execution
-        arg_cleaner: ArgsCleaner = get_arg_cleaner(main_kwargs)
+        arg_cleaner: ArgsCleaner = get_arg_cleaner(
+            main_kwargs, use_column_indices_flag == UseIndices.YES
+        )
         arg_cleaner.validate()
         main(**arg_cleaner.to_clean_dict())
     else:
+        main_kwargs[
+            const._ARG_SKIP_N_ROWS
+        ] = 1  # Main is only column indices so must skip header
         # Directly call main
         main(**main_kwargs)
 
     # Then
     actual_df = read_csv_file(output_file)
-    # new_input_file = Path.cwd() / "test.in.lower.csv"
-    # new_output_file = Path.cwd() / "test.out.lower.csv"
+    # new_input_file = Path.cwd() / "test.in.csv"
+    # new_output_file = Path.cwd() / "test.out.csv"
     # new_input_file.write_text(input_file.read_text())
     # new_output_file.write_text(output_file.read_text())
     pd.testing.assert_frame_equal(actual_df, tabular_data.output_df)
@@ -537,7 +560,7 @@ def test_arg_cleaner_args_vs_main_kwargs(
     main_kwargs = get_main_kwargs(input_file, output_file)
 
     # Setup arg_cleaner args
-    arg_cleaner: ArgsCleaner = get_arg_cleaner(main_kwargs)
+    arg_cleaner: ArgsCleaner = get_arg_cleaner(main_kwargs, use_indices=True)
     arg_cleaner.validate()
     arg_cleaner_args = {
         "input_file": arg_cleaner.get_clean_input(),
