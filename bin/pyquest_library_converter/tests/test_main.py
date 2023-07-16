@@ -571,10 +571,10 @@ def test_main(
 
     # Then
     actual_df = read_csv_file(output_file)
-    new_input_file = Path.cwd() / "test.in.csv"
-    new_output_file = Path.cwd() / "test.out.csv"
-    new_input_file.write_text(input_file.read_text())
-    new_output_file.write_text(output_file.read_text())
+    # new_input_file = Path.cwd() / "test.in.csv"
+    # new_output_file = Path.cwd() / "test.out.csv"
+    # new_input_file.write_text(input_file.read_text())
+    # new_output_file.write_text(output_file.read_text())
     pd.testing.assert_frame_equal(actual_df, tabular_data.output_df)
 
 

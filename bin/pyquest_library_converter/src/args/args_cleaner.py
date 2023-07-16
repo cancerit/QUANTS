@@ -28,6 +28,7 @@ class ArgsCleaner:
         self._header_row_discovered = False
         self._use_forced_header_index = False
         self._header_row_index_0_idx = -1
+        self._computed_skip_n_rows = None
 
     def summary(self) -> str:
         """
@@ -131,7 +132,10 @@ class ArgsCleaner:
 
     def get_clean_adjusted_skip_n_rows(self) -> int:
         self._assert_has_validated_all()
-        return self._normailse_skip_n_rows()
+        adjusted = self._computed_skip_n_rows
+        if adjusted is None:
+            raise RuntimeError("Skip N Rows has not been computed yet")
+        return adjusted
 
     def get_clean_forced_header_index(self) -> t.Optional[int]:
         self._assert_has_validated_all()
@@ -191,12 +195,12 @@ class ArgsCleaner:
         self.__validate_input()
         self._assert_or_set_csv_helper()
         self._validate_force_header_index()
-        self.__validate_skip_n_rows()
         self._validate_name_arg_and_sequence_arg_types_together()
         self._validate_name_index_and_sequence_index_values_together()
         self._validate_name_index()
         self._validate_sequence_index()
         self._scan_for_header_row()
+        self.__validate_skip_n_rows()
         return
 
     def __validate_input(self):
@@ -214,6 +218,7 @@ class ArgsCleaner:
         if skip_n_rows < 0:
             msg = f"Skip n rows {skip_n_rows} must be >= 0."
             raise ValidationError(msg)
+        self._computed_skip_n_rows = self._normailse_skip_n_rows()
         return
 
     def _validate_output(self):
@@ -237,7 +242,7 @@ class ArgsCleaner:
             header_attr=const._ARG_SEQ_HEADER,
             index_attr=const._ARG_SEQ_INDEX,
         )
-        self._assert_valid_column_index(index)
+        self._assert_valid_column_index(index, "sequence")
         return
 
     def _validate_name_index(self):
@@ -245,7 +250,7 @@ class ArgsCleaner:
             header_attr=const._ARG_NAME_HEADER,
             index_attr=const._ARG_NAME_INDEX,
         )
-        self._assert_valid_column_index(index)
+        self._assert_valid_column_index(index, "name")
         return
 
     def _validate_name_index_and_sequence_index_values_together(self):
@@ -352,7 +357,7 @@ class ArgsCleaner:
             )
             raise ValidationError(msg)
 
-    def _assert_valid_column_index(self, index: int):
+    def _assert_valid_column_index(self, index: int, name: str):
         """
         Index is 1-indexed.
         """
@@ -361,11 +366,11 @@ class ArgsCleaner:
             msg = "The index cannot be validated before input file has been validated."
             raise RuntimeError(msg)
         min_col_index = 1  # 1-indexed
-        max_col_index = self._csv_helper.columns_count + 1  # 1-indexed
+        max_col_index = self._csv_helper.columns_count  # 1-indexed
         if min_col_index <= index <= max_col_index:
             return
         else:
-            msg = f"Sequence index {index!r} must be greater than or equal to 1."
+            msg = f"{name.capitalize()} index is out of range, got {index!r}. Expected {min_col_index!r} <= index <= {max_col_index!r}."
             raise ValidationError(msg)
 
     def _normalise_header_or_index_to_index(
@@ -399,6 +404,7 @@ class ArgsCleaner:
         return column_index_1_idx
 
     def _normailse_skip_n_rows(self) -> int:
+        self._assert_has_validated_input()
         self._assert_has_scanned_for_headers()
         self._assert_has_validated_force_header_index()
         # The user states they want to skip N rows
@@ -443,6 +449,14 @@ class ArgsCleaner:
 
         # Compute the accuracte "skip_n_rows" value
         result = implicit_offset + explicit_offset
+
+        # Finally check the result is not out of bounds
+        line_count = self._csv_helper.line_count
+        data_row_count = line_count - implicit_offset
+        if result > data_row_count:
+            detail = f" ({line_count} if including file headers/file comments)"
+            msg = f"Skip N rows value {result!r} is greater than the number of data in the file: {data_row_count}{detail}."
+            raise ValidationError(msg)
         return result
 
     def _validate_force_header_index(self) -> t.Optional[int]:
