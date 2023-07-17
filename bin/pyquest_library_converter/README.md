@@ -80,22 +80,27 @@ OUT_DIR="/out"
 ## Usage - Help
 
 ```
+usage: pyquest_library_converter.py [-h] [-v] [--forward FORWARD_PRIMER] [--reverse REVERSE_PRIMER] [--skip SKIP_N_ROWS] [--force-header-index FORCE_HEADER_INDEX] [--revcomp] [--suppress-null-errors] (-n NAME_HEADER | -N NAME_INDEX) (-s SEQUENCE_HEADER | -S SEQUENCE_INDEX) INPUT OUTPUT
+
 Transforms oligo sequences to a format that can be used in PyQuest
 
 positional arguments:
-  input                 Input file path.
+  INPUT                 Input file path.
+  OUTPUT                Output file path. You can specify a path to write to a specific file or a directory (appends input filename).
 
 optional arguments:
   -h, --help            show this help message and exit
-  -o OUTPUT, --output OUTPUT
-                        By default, input file is overwritten with the output. You can specify a path to write to a specific file or a
-                        directory (appends input filename).
   -v, --verbose         Print a summary.
-  --forward FORWARD     DNA primer to be removed from the start of the oligo sequence if provided.
-  --reverse REVERSE     DNA primer to be removed from the end of the oligo sequence if provided.
-  --skip SKIP_N_ROWS    Number of rows to skip in the CSV/TSV file before reading the data. By default, 1 row is skipped which assumes
-                        a header row. If you use the --name-header or --sequence-header options, you can set this to 0.
+  --forward FORWARD_PRIMER
+                        DNA primer to be removed from the start of the oligo sequence if provided.
+  --reverse REVERSE_PRIMER
+                        DNA primer to be removed from the end of the oligo sequence if provided.
+  --skip SKIP_N_ROWS    Choose how many data rows to skip before processing. Any headers or comments are always automatically skipped. If unset defaults to 0. E.g 0 (no data rows skipped), 1 (skip first row) and N (skip N data rows).
+  --force-header-index FORCE_HEADER_INDEX
+                        Force the input file parser to use this index for the column header row (1-index). By default, the script auto-detects the index of column header row, if any. If also using '--skip', the script will automatically skip all rows up to and including index before then skipping the speficied N data rows.
   --revcomp             Reverse complement the oligo sequence.
+  --suppress-null-errors
+                        Suppress errors and instead warn if null data is detected in the input file. Null data is defined as any of the following: , NULL, NA, NAN, NaN, N/A
   -n NAME_HEADER, --name-header NAME_HEADER
                         The column name or header in the CSV/TSV for the oligo sequence name.
   -N NAME_INDEX, --name-index NAME_INDEX
@@ -110,16 +115,13 @@ optional arguments:
 
 There are no dependencies for this script.
 
-There are no dependencies for testing this script. The built-in `unittest` module is used.
+There are test dependencies which require `pytest` and `pandas` amongst others.
 
-There are optional tool-chain dependencies for development which require Poetry:
+The tool-chain dependencies for development which require Poetry:
 - [Poetry](https://python-poetry.org/docs/#installation)
 - [pre-commit](https://pre-commit.com/#install)
 
 ## Testing
-To run the tests, run `python -m unittest` if inside a virtual environment or `python3.8 -m unittest` if not. Run this command from the directory containing this README.
-
-**OR if the optional tool-chain dependencies are installed**
 
 To run the tests, run `pytest`. Run this command from the directory containing this README.
 
