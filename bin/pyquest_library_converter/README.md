@@ -145,8 +145,8 @@ Optional.
     - Do `python3.8 -m venv .venv` to create a virtual environment with Python 3.8
     - Do `source .venv/bin/activate` to activate the virtual environment
 2. Install the dependencies
-    - Do `pip install -r requirements.txt` to install the dependencies
+    - Do `pip install -r requirements.dev-only.txt` to install the dependencies
 
 Dependencies for pip can become out of date as pyproject.toml is the source of
-truth for dependencies. To update the requirements.txt file, do
-`poetry export -f "requirements.txt" -o "requirements.txt" --with "dev" --without-hashes`.
+truth for dependencies. To update the requirements.dev-only.txt file, do
+`poetry export -f "requirements.dev-only.txt" -o "requirements.dev-only.txt" --with "dev" --without-hashes`.

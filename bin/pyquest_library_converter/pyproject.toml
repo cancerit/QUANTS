@@ -1,10 +1,10 @@
 [tool.poetry]
-name = "iv3-pyquest-transformer"
+name = "pyquest_library_converter"
 version = "0.1.0"
 description = ""
 authors = ["Ian Vermes <iv3@sanger.ac.uk>"]
 readme = "README.md"
-packages = [{include = "iv3_pyquest_transformer"}]
+packages = [{include = "pyquest_library_converter.py"}]
 
 [tool.poetry.dependencies]
 python = "^3.8"

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 import typing as t
 import sys
@@ -1135,7 +1135,10 @@ def display_error(prefix: str, error: Exception) -> None:
     print(error_msg, file=sys.stderr)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # noqa: C901
+    if sys.version_info < (3, 8):
+        display_error("Python 3.8 or newer is required.")
+        sys.exit(1)
     parser = get_argparser()
     namespace = parser.parse_args()
     cleaner = ArgsCleaner(namespace)
@@ -1144,8 +1147,8 @@ if __name__ == "__main__":
     except ValidationError as err:
         display_error("Error: Argument validation!", err)
         sys.exit(1)
-    except UndevelopedFeatureError as err:
-        print(f"Error: Not implemented feature!", file=sys.stderr)
+    except (UndevelopedFeatureError, NotImplementedError) as err:
+        display_error("Error: Not implemented feature!", err)
         sys.exit(1)
 
     main(

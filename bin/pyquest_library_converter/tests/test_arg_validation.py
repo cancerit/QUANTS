@@ -135,7 +135,7 @@ class _ArgsCleaner_Method_Tests_Mixin:
         # Given
         expected_output = self.csv_path
         namespace = self.valid_namespace
-        namespace.output = self.csv_path
+        namespace.output_file = self.csv_path
         args_cleaner = ArgsCleaner(namespace)
 
         # When
@@ -149,7 +149,7 @@ class _ArgsCleaner_Method_Tests_Mixin:
         # Given
         expected_output = self.csv_path.parent / "foo.csv"
         namespace = self.valid_namespace
-        namespace.output = expected_output
+        namespace.output_file = expected_output
         args_cleaner = ArgsCleaner(namespace)
 
         # When
@@ -163,7 +163,7 @@ class _ArgsCleaner_Method_Tests_Mixin:
         # Given
         expected_output = self.csv_path
         namespace = self.valid_namespace
-        namespace.output = self.csv_path.parent
+        namespace.output_file = self.csv_path.parent
         args_cleaner = ArgsCleaner(namespace)
 
         # When
