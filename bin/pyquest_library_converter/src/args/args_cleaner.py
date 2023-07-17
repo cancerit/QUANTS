@@ -9,6 +9,7 @@ from src.exceptions import ValidationError
 from src import constants as const
 from src.dna.helpers import find_invalid_chars_in_dna_sequence
 from src.csv.csv_helper import CSVHelper
+from src.csv.filter import is_null
 from src.enums import NameAndSequenceArgs
 from src.cli import display_warning
 
@@ -46,6 +47,7 @@ class ArgsCleaner:
         raw_sequence_index = self._get_arg(const._ARG_SEQ_INDEX)
         raw_reverse_complement_flag = self._get_arg(const._ARG_REVERSE_COMPLEMENT_FLAG)
         raw_force_header_index = self._get_arg(const._ARG_FORCE_HEADER_INDEX)
+        raw_warn_null_data = self._get_arg(const._ARG_WARN_NULL_DATA)
         is_validated = self._validated
         if is_validated:
             clean_input = self.get_clean_input()
@@ -59,6 +61,7 @@ class ArgsCleaner:
             clean_name_index = self.get_clean_name_index()
             clean_sequence_index = self.get_clean_sequence_index()
             clean_reverse_complement_flag = self.get_clean_reverse_complement_flag()
+            clean_warn_null_data = self.get_clean_warn_null_data()
         else:
             special_value = "N/A"
             clean_input = special_value
@@ -72,20 +75,22 @@ class ArgsCleaner:
             clean_name_index = special_value
             clean_sequence_index = special_value
             clean_reverse_complement_flag = special_value
+            clean_warn_null_data = special_value
         summary = f"""\
-        Is Validated: {is_validated}
+        Validated arguments: {is_validated}
         Input: {str(raw_input)!r} -> {str(clean_input)!r}
         Output: {str(raw_output)!r} -> {str(clean_output)!r}
         Verbose: {raw_verbose!r} -> {clean_verbose!r}
-        Skip N Rows: {raw_skip_n_rows!r} -> {clean_skip_n_rows!r}{is_forced}
-        Forward Primer: {raw_forward_primer!r} -> {clean_forward_primer!r}
-        Reverse Primer: {raw_reverse_primer!r} -> {clean_reverse_primer!r}
-        Name Header: {raw_name_header!r} -> {clean_name_index!r}
-        Name Index: {raw_name_index!r} -> {clean_name_index!r}
-        Sequence Header: {raw_sequence_header!r} -> {clean_sequence_index!r}
-        Sequence Index: {raw_sequence_index!r} -> {raw_sequence_index!r}
-        Reverse Complement Flag: {raw_reverse_complement_flag!r} -> {clean_reverse_complement_flag!r}
-        Force Header Index: {raw_force_header_index!r} -> {clean_forced_header_index!r}
+        Skip N rows: {raw_skip_n_rows!r} -> {clean_skip_n_rows!r}{is_forced}
+        Forward primer: {raw_forward_primer!r} -> {clean_forward_primer!r}
+        Reverse primer: {raw_reverse_primer!r} -> {clean_reverse_primer!r}
+        Name header: {raw_name_header!r} -> {clean_name_index!r}
+        Name index: {raw_name_index!r} -> {clean_name_index!r}
+        Sequence header: {raw_sequence_header!r} -> {clean_sequence_index!r}
+        Sequence index: {raw_sequence_index!r} -> {raw_sequence_index!r}
+        Reverse complement flag: {raw_reverse_complement_flag!r} -> {clean_reverse_complement_flag!r}
+        Force header index: {raw_force_header_index!r} -> {clean_forced_header_index!r}
+        Warn instead of error null data: {raw_warn_null_data!r} -> {clean_warn_null_data!r}
         """
         summary = dedent(summary).rstrip()
         return summary
@@ -112,6 +117,7 @@ class ArgsCleaner:
         KEY_SEQUENCE_INDEX = const._ARG_SEQ_INDEX
         KEY_REVERSE_COMPLEMENT_FLAG = const._ARG_REVERSE_COMPLEMENT_FLAG
         KEY_FORCE_HEADER_INDEX = const._ARG_FORCE_HEADER_INDEX
+        KEY_WARN_NULL_DATA = const._ARG_WARN_NULL_DATA
         clean_dict = {
             KEY_INPUT: self.get_clean_input(),
             KEY_ADJUSTED_SKIP_N_ROWS: self.get_clean_adjusted_skip_n_rows(),
@@ -123,6 +129,7 @@ class ArgsCleaner:
             KEY_SEQUENCE_INDEX: self.get_clean_sequence_index(),
             KEY_REVERSE_COMPLEMENT_FLAG: self.get_clean_reverse_complement_flag(),
             KEY_FORCE_HEADER_INDEX: self.get_clean_forced_header_index(),
+            KEY_WARN_NULL_DATA: self.get_clean_warn_null_data(),
         }
         return clean_dict
 
@@ -178,6 +185,10 @@ class ArgsCleaner:
         self._assert_has_validated_all()
         return self._get_arg(const._ARG_REVERSE_COMPLEMENT_FLAG)
 
+    def get_clean_warn_null_data(self) -> bool:
+        self._assert_has_validated_all()
+        return self._get_arg(const._ARG_WARN_NULL_DATA)
+
     def validate(self):
         validators = [
             self._validate_codependent_input_args,
@@ -185,6 +196,7 @@ class ArgsCleaner:
             self._validate_forward_primer,
             self._validate_reverse_primer,
             self._validate_reverse_complement_flag,
+            self._validate_warn_null_data,
         ]
         for validator in validators:
             validator()
@@ -302,6 +314,13 @@ class ArgsCleaner:
             raise ValidationError(msg)
         return
 
+    def _validate_warn_null_data(self):
+        flag = self._get_arg(const._ARG_WARN_NULL_DATA)
+        if not isinstance(flag, bool):
+            msg = f"Error/Warn null data flag {flag!r} must be a boolean."
+            raise ValidationError(msg)
+        return
+
     def _assert_has_validated_all(self, throw=True) -> bool:
         if not self._validated:
             msg = "ArgsCleaner.validate() must be called before accessing cleaned args."
@@ -344,6 +363,9 @@ class ArgsCleaner:
         if not primer:
             # Empty primer is allowed
             return
+        if is_null(primer):
+            msg = f"Illegal null value found in {primer_type}. Got {primer!r}."
+            raise ValidationError(msg)
         illegal_chars, allowed_chars = find_invalid_chars_in_dna_sequence(
             primer, allow_n=False, allow_lower_case=False
         )

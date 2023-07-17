@@ -74,6 +74,15 @@ def get_argparser() -> argparse.ArgumentParser:
         dest=const._ARG_REVERSE_COMPLEMENT_FLAG,
     )
 
+    # Suppress null data errors and warn instead
+    parser.add_argument(
+        "--suppress-null-errors",
+        action="store_true",
+        default=False,
+        help=const._HELP__WARN_NULL_DATA,
+        dest=const._ARG_WARN_NULL_DATA,
+    )
+
     # Mutually exclusive argument group for oligo sequence name
     name_group = parser.add_mutually_exclusive_group(required=True)
     name_group.add_argument(

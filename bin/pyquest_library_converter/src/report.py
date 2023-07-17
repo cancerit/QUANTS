@@ -40,6 +40,10 @@ class Report:
         self.scanning_summary = scanning_summary
         return
 
+    def add_null_data_summary(self, null_data_summary: str):
+        self.scanning_summary.append(null_data_summary)
+        return
+
     def summary(self) -> str:
         summary = self.scanning_summary.copy()
         total = self.row_count

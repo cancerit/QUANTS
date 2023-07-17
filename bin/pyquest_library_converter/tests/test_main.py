@@ -16,7 +16,7 @@ from pyquest_library_converter import main
 from src.args.args_parsing import get_argparser
 from src.args.args_cleaner import ArgsCleaner
 from src import constants as const
-from src.exceptions import ValidationError
+from src.exceptions import ValidationError, NullDataError
 
 
 # CONSTANTS
@@ -77,6 +77,11 @@ class RevCompFlag(enum.Enum):
     NO = False
 
 
+class WarnNullData(enum.Enum):
+    YES = True
+    NO = False
+
+
 class ShouldRaiseFlag(enum.Enum):
     RAISE = True
     DONT_RAISE = False
@@ -118,6 +123,7 @@ def get_main_kwargs():
             const._ARG_SEQ_INDEX: 2,  # 1-based indexing
             const._ARG_REVERSE_COMPLEMENT_FLAG: False,
             const._ARG_FORCE_HEADER_INDEX: None,
+            const._ARG_WARN_NULL_DATA: False,
         }
         kwargs = default_kwargs.copy()
         if update_kwargs is not None:
@@ -158,7 +164,9 @@ def get_cmd():
         if should_force:
             cmd += f" --force-header-index {forced_index_1_idx}"
         if main_kwargs[const._ARG_REVERSE_COMPLEMENT_FLAG]:
-            cmd += f" --revcomp"
+            cmd += " --revcomp"
+        if main_kwargs[const._ARG_WARN_NULL_DATA] == True:
+            cmd += " --suppress-null-errors"
         if use_headers:
             name_header = EXAMPE_HEADER__NAME
             sequence_header = EXAMPE_HEADER__SEQUENCE
@@ -210,7 +218,8 @@ def read_csv_file():
     def _read_csv_file(csv_file_path: Path, delimiter: t.Optional[str] = None):
         if delimiter is None:
             delimiter = const._OUTPUT_DELIMITER
-        df = pd.read_csv(str(csv_file_path), delimiter=delimiter)
+        # We skip the first row because it has a comment ## in it
+        df = pd.read_csv(str(csv_file_path), delimiter=delimiter, skiprows=1)
         return df
 
     yield _read_csv_file
@@ -599,6 +608,112 @@ def _run_main(
     # When: entering the main function
     main(**arg_dict)
     return
+
+
+NULL_PARAMS = [
+    pytest.param(
+        TabularData(
+            input_array=[
+                # Header row
+                [EXAMPE_HEADER__NAME, EXAMPE_HEADER__SEQUENCE],
+                # Data rows
+                [EXAMPLE_DATA__NAME_1, EXAMPLE_DATA__SHORT_SEQUENCE.upper()],
+                [EXAMPLE_DATA__NAME_2, "NULL"],
+            ],
+            output_array=[
+                # Header row
+                [
+                    const._OUTPUT_HEADER__ID,
+                    const._OUTPUT_HEADER__NAME,
+                    const._OUTPUT_HEADER__SEQUENCE,
+                ],
+                # Data rows
+                [
+                    1,
+                    EXAMPLE_DATA__NAME_1,
+                    EXAMPLE_DATA__SHORT_SEQUENCE.upper(),
+                ],
+            ],
+        ),
+        ShouldRaiseFlag.RAISE,
+        id="NULL_SEQUENCE",
+    ),
+    pytest.param(
+        TabularData(
+            input_array=[
+                # Header row
+                [EXAMPE_HEADER__NAME, EXAMPE_HEADER__SEQUENCE],
+                # Data rows
+                [EXAMPLE_DATA__NAME_1, EXAMPLE_DATA__SHORT_SEQUENCE.upper()],
+                ["NA", EXAMPLE_DATA__LONG_SEQUENCE.upper()],
+            ],
+            output_array=[
+                # Header row
+                [
+                    const._OUTPUT_HEADER__ID,
+                    const._OUTPUT_HEADER__NAME,
+                    const._OUTPUT_HEADER__SEQUENCE,
+                ],
+                # Data rows
+                [
+                    1,
+                    EXAMPLE_DATA__NAME_1,
+                    EXAMPLE_DATA__SHORT_SEQUENCE.upper(),
+                ],
+            ],
+        ),
+        ShouldRaiseFlag.RAISE,
+        id="NULL_NAME",
+    ),
+]
+
+
+@pytest.mark.parametrize("tabular_data, should_raise", NULL_PARAMS)
+@pytest.mark.parametrize("warn_null", [WarnNullData.YES, WarnNullData.NO])
+def test_main__with_null_data(
+    get_arg_cleaner,
+    tabular_data,
+    should_raise,
+    make_csv_file,
+    tmp_path,
+    get_main_kwargs,
+    warn_null,
+    read_csv_file,
+):
+    # GIVEN
+    input_file = make_csv_file(tabular_data.input_array)
+    output_file = tmp_path / "test.out.csv"
+
+    main_kwargs = get_main_kwargs(input_file, output_file)
+    main_kwargs[const._ARG_WARN_NULL_DATA] = warn_null.value
+    if warn_null == WarnNullData.YES:
+        should_raise = ShouldRaiseFlag.DONT_RAISE
+
+    # When: running main
+    if should_raise == ShouldRaiseFlag.RAISE:
+        with pytest.raises(NullDataError):
+            _run_main(
+                main_kwargs,
+                get_arg_cleaner,
+                use_column_headers_flag=UseHeaders.YES,
+                input_has_col_headers=InputHasColHeaders.YES,
+            )
+        return
+    else:
+        _run_main(
+            main_kwargs,
+            get_arg_cleaner,
+            use_column_headers_flag=UseHeaders.YES,
+            input_has_col_headers=InputHasColHeaders.YES,
+        )
+
+    # Then
+    actual_df = read_csv_file(output_file)
+    # new_input_file = Path.cwd() / "test.in.csv"
+    # new_output_file = Path.cwd() / "test.out.csv"
+    # new_input_file.write_text(input_file.read_text())
+    # new_output_file.write_text(output_file.read_text())
+    pd.testing.assert_frame_equal(actual_df, tabular_data.output_df)
 
 
 def test_arg_cleaner_args_vs_main_kwargs(

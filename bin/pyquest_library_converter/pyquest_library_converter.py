@@ -9,17 +9,14 @@ import tempfile
 import shutil
 
 from src.csv.csv_reader import CSVReaderFactory
-from src.csv.filter import filter_rows
+from src.csv.filter import filter_rows, NullRowSplitter
 from src.csv.write import write_rows
 from src.report import Report
 from src.dna.primer_scanner import PrimerScanner
 from src.dna import helpers as dna_helpers
 from src.args.args_parsing import get_argparser
 from src.args.args_cleaner import ArgsCleaner
-from src.exceptions import (
-    ValidationError,
-    UndevelopedFeatureError,
-)
+from src.exceptions import ValidationError, UndevelopedFeatureError, NullDataError
 from src.enums import OligoCasing
 from src import constants as const
 from src.cli import display_error
@@ -39,6 +36,7 @@ def main(
     name_index: int,
     sequence_index: int,
     reverse_complement_flag: bool,
+    warn_null_data: bool,
     **options,
 ):
     report = Report()
@@ -59,11 +57,21 @@ def main(
         dict_rows = filter_rows(
             csv_reader, name_index=name_index, sequence_index=sequence_index
         )
-        oligos_to_scan = [row[const._OUTPUT_HEADER__SEQUENCE] for row in dict_rows]
+        null_row_splitter = NullRowSplitter(dict_rows)
+        oligos_to_scan = [
+            row[const._OUTPUT_HEADER__SEQUENCE]
+            for row in null_row_splitter.not_null_rows()
+        ]
         primer_scanner.scan_all(oligos_to_scan)
         detected_forward_primer = primer_scanner.predict_forward_primer()
         detected_reverse_primer = primer_scanner.predict_reverse_primer()
         report.add_scanning_summary(primer_scanner.summary())
+        null_report = null_row_splitter.report_null_rows(
+            null_row_splitter.null_rows(),
+            raise_error=not warn_null_data,
+            start_index=adjusted_skip_n_rows,
+        )
+        report.add_null_data_summary(null_report)
         primer_scanner.raise_errors()
         oligo_case = primer_scanner.get_oligos_case()
 
@@ -115,6 +123,8 @@ def main(
             dict_rows = filter_rows(
                 csv_reader, name_index=name_index, sequence_index=sequence_index
             )
+            null_row_splitter = NullRowSplitter(dict_rows)
+            dict_rows = null_row_splitter.not_null_rows()
             dict_rows = conditionally_upper_case_sequences(dict_rows)
             dict_rows = trim_sequences_closure(dict_rows, report=report)
             dict_rows = conditionally_reverse_complement_sequences(dict_rows)
@@ -148,6 +158,9 @@ if __name__ == "__main__":  # noqa: C901
         main(**args_cleaner.to_clean_dict())
     except ValidationError as err:
         display_error(err, "Error: Argument validation!")
+        sys.exit(1)
+    except NullDataError as err:
+        display_error(err, "Error: Missing file data!")
         sys.exit(1)
     except (UndevelopedFeatureError, NotImplementedError) as err:
         display_error(err, "Error: Not implemented feature!")

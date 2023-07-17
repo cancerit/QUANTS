@@ -8,3 +8,7 @@ class ValidationError(Exception):
 
 class UndevelopedFeatureError(NotImplementedError):
     pass
+
+
+class NullDataError(ValueError):
+    pass
