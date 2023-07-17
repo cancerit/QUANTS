@@ -1,16 +1,17 @@
 import sys
-
+import warnings
 import typing as t
 
 
-def display_info(info: str, prefix: str = "Info:") -> None:
+def display_info(info: str, prefix: str = "INFO:") -> None:
     """
     Prints an info message to stdout, prefixed with "Info: ".
     """
-    print(_format_msg(info, prefix))
+    for line in info.split("\n"):
+        print(_format_msg(line, prefix))
 
 
-def display_error(error: t.Union[str, Exception], prefix: str = "Error:") -> None:
+def display_error(error: t.Union[str, Exception], prefix: str = "ERROR:") -> None:
     """
     Prints an error message to stderr, prefixed with "Error: ".
     """
@@ -18,12 +19,12 @@ def display_error(error: t.Union[str, Exception], prefix: str = "Error:") -> Non
     print(_format_msg(error, prefix), file=sys.stderr)
 
 
-def display_warning(warning: str, prefix: str = "Warning:") -> None:
+def display_warning(warning: str, prefix: str = "WARNING:") -> None:
     """
     Prints an error message to stderr, prefixed with "Warning: ".
     """
 
-    print(_format_msg(warning, prefix), file=sys.stderr)
+    warnings.warn(_format_msg(warning, prefix))
 
 
 def _format_msg(msg: t.Union[str, Exception], prefix: str) -> str:
@@ -34,3 +35,10 @@ def _format_msg(msg: t.Union[str, Exception], prefix: str) -> str:
     msg = str(msg).strip()
     formatted = " ".join([prefix, msg])
     return formatted
+
+
+def _simple_warning(message: str, *args, **kwargs):
+    print(message, file=sys.stderr)
+
+
+warnings.showwarning = _simple_warning

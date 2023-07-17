@@ -19,7 +19,7 @@ from src.args.args_cleaner import ArgsCleaner
 from src.exceptions import ValidationError, UndevelopedFeatureError, NullDataError
 from src.enums import OligoCasing
 from src import constants as const
-from src.cli import display_error
+from src import cli
 
 
 if sys.version_info < (3, 8):
@@ -136,14 +136,15 @@ def main(
 
     # At this point, the temporary file has been deleted
     if verbose:
-        print("PROCESSING REPORT")
-        print(report.summary())
+        cli.display_info("--- PROCESSING REPORT ---")
+        cli.display_info(report.summary())
+        cli.display_info("Done.")
     return
 
 
 if __name__ == "__main__":  # noqa: C901
     if sys.version_info < (3, 8):
-        display_error("Python 3.8 or newer is required.")
+        cli.display_error("Python 3.8 or newer is required.")
         sys.exit(1)
     parser = get_argparser()
     namespace = parser.parse_args()
@@ -152,16 +153,16 @@ if __name__ == "__main__":  # noqa: C901
         # Validate the arguments
         args_cleaner.validate()
         if args_cleaner.get_clean_verbose():
-            print("ARGUMENT REPORT")
-            print(args_cleaner.summary() + "\n")
+            cli.display_info("--- ARGUMENT REPORT ---")
+            cli.display_info(args_cleaner.summary())
         # Run the main function
         main(**args_cleaner.to_clean_dict())
     except ValidationError as err:
-        display_error(err, "Error: Argument validation!")
+        cli.display_error(err, "Error: Argument validation!")
         sys.exit(1)
     except NullDataError as err:
-        display_error(err, "Error: Missing file data!")
+        cli.display_error(err, "Error: Missing file data!")
         sys.exit(1)
     except (UndevelopedFeatureError, NotImplementedError) as err:
-        display_error(err, "Error: Not implemented feature!")
+        cli.display_error(err, "Error: Not implemented feature!")
         sys.exit(1)
