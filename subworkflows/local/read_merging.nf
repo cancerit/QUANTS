@@ -48,4 +48,5 @@ workflow READ_MERGING {
         
     emit:
         reads = ch_merged_reads
+        versions = SEQPREP.out.version
 }

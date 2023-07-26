@@ -32,4 +32,5 @@ workflow READ_TRANSFORM {
         ch_transform_reads = SEQKIT_SEQ.out.reads
     emit:
         reads = ch_transform_reads
+        versions = SEQKIT_SEQ.out.version
 }

@@ -160,12 +160,13 @@ workflow SGE {
         // SUBWORKFLOW: Read in samplesheet, validate and stage input files
         //
         INPUT_CHECK_CRAM ( ch_input )
-        
+
         //
         // SUBWORKFLOW: Convert CRAM to FASTQ
         //
         ch_raw_reads = CRAM_TO_FASTQ(INPUT_CHECK_CRAM.out.crams)
         ch_read_trim = ch_raw_reads
+        ch_software_versions = ch_software_versions.mix(CRAM_TO_FASTQ.out.versions)
     } else {
         //
         // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -181,6 +182,7 @@ workflow SGE {
     if (params.raw_sequencing_qc) {
         ch_raw_read_qc = ch_raw_reads.map{it -> [[id: it[0].id + '_raw', single_end: it[0].single_end], it[1]]}
         RAW_SEQUENCING_QC ( ch_raw_read_qc )
+        ch_software_versions = ch_software_versions.mix(RAW_SEQUENCING_QC.out.fastqc_version, RAW_SEQUENCING_QC.out.seqkit_version)
     }
 
     //
@@ -189,12 +191,14 @@ workflow SGE {
     if (params.read_trimming) {
         READ_TRIMMING ( ch_read_trim )
         ch_read_merge = READ_TRIMMING.out.reads
+        ch_software_versions = ch_software_versions.mix(READ_TRIMMING.out.versions)
         //
         // SUBWORKFLOW: Run FASTQC on trimmed reads
         //
         if (params.read_trimming_qc) {
             ch_trimmed_read_qc = READ_TRIMMING.out.reads.map{it -> [[id: it[0].id + '_trimmed', single_end: it[0].single_end], it[1]]}
             TRIMMED_SEQUENCING_QC ( ch_trimmed_read_qc )
+            ch_software_versions = ch_software_versions.mix(TRIMMED_SEQUENCING_QC.out.fastqc_version, TRIMMED_SEQUENCING_QC.out.seqkit_version)
         }
     } else {
         ch_read_merge = ch_read_trim
@@ -206,6 +210,7 @@ workflow SGE {
     if (params.read_merging) {
         READ_MERGING ( ch_read_merge )
         ch_read_transform = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1]]}
+        ch_software_versions = ch_software_versions.mix(READ_MERGING.out.versions)
 
         //
         // SUBWORKFLOW: Run FASTQC on merged reads
@@ -213,6 +218,7 @@ workflow SGE {
         if (params.read_merging_qc) {
             ch_merged_read_qc = ch_read_transform
             MERGED_SEQUENCING_QC ( ch_merged_read_qc )
+            ch_software_versions = ch_software_versions.mix(MERGED_SEQUENCING_QC.out.fastqc_version, MERGED_SEQUENCING_QC.out.seqkit_version)
         }
     } else {
         ch_read_transform = ch_read_merge
@@ -225,6 +231,7 @@ workflow SGE {
     if (params.read_transform ) {
         READ_TRANSFORM ( ch_read_transform )
         ch_read_filter = READ_TRANSFORM.out.reads
+        ch_software_versions = ch_software_versions.mix(READ_TRANSFORM.out.versions)
     } else {
         ch_read_filter = ch_read_transform
     }
@@ -236,6 +243,7 @@ workflow SGE {
     if (params.read_filtering) {
         READ_FILTERING ( ch_read_filter )
         ch_reads_to_analyse = READ_FILTERING.out.reads
+        ch_software_versions = ch_software_versions.mix(READ_FILTERING.out.versions)
         
         //
         // SUBWORKFLOW: Run FASTQC on filtered reads
@@ -243,6 +251,7 @@ workflow SGE {
         if (params.read_filtering_qc) {
             ch_filtered_read_qc = READ_FILTERING.out.reads.map{it -> [[id: it[0].id + '_filtered', single_end: true], it[1]]}
             FILTERED_SEQUENCING_QC ( ch_filtered_read_qc )
+            ch_software_versions = ch_software_versions.mix(FILTERED_SEQUENCING_QC.out.fastqc_version, FILTERED_SEQUENCING_QC.out.seqkit_version)
         }
     } else {
         ch_reads_to_analyse = ch_read_filter
@@ -254,11 +263,13 @@ workflow SGE {
     //
     if (params.quantification) {
         QUANTIFICATION ( ch_reads_to_analyse )
+        ch_software_versions = ch_software_versions.mix(QUANTIFICATION.out.versions)
     }
 
     //
     // MODULE: Pipeline reporting
     //
+    ch_software_versions.view()
     ch_software_versions
         .map { it -> if (it) [ it.baseName, it ] }
         .groupTuple()
