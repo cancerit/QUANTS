@@ -269,13 +269,11 @@ workflow SGE {
     //
     // MODULE: Pipeline reporting
     //
-    ch_software_versions.view()
     ch_software_versions
         .map { it -> if (it) [ it.baseName, it ] }
         .groupTuple()
         .map { it[1][0] }
         .flatten()
-        .collect()
         .set { ch_software_versions }
 
     GET_SOFTWARE_VERSIONS (
@@ -315,7 +313,7 @@ workflow SGE {
 
         multiqc_report       = MULTIQC.out.report.toList()
         ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
-    } 
+    }
 }
 
 /*

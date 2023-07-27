@@ -44,6 +44,6 @@ process PYQUEST {
         $sample \\
         $output \\
         $reads
-    echo \$(pyquest --version) > ${software}.version.txt
+    echo \$(pyquest --version | awk '{print \$3}') > ${software}.version.txt
     """
 }

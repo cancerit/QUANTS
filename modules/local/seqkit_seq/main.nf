@@ -41,6 +41,6 @@ process SEQKIT_SEQ {
     
     gzip ${prefix}.${suffix}.fq
 
-    echo \$(seqkit --version 2>&1) | sed 's/^.*seqkit //; s/Using.*\$//' > ${software}.version.txt
+    echo \$(seqkit version 2>&1) | sed 's/^.*seqkit //' > ${software}.version.txt
     """
 }
