@@ -408,7 +408,10 @@
             "$ref": "#/definitions/read_merging_options"
         },
         {
-            "$ref": "#/definitions/read_trimming_options"
+            "$ref": "#/definitions/adapter_trimming_options"
+        },
+        {
+            "$ref": "#/definitions/primer_trimming_options"
         },
         {
             "$ref": "#/definitions/read_filtering_options"

@@ -25,18 +25,28 @@ if ( input_type_options.contains( params.input_type ) == false ) {
 	    exit 1
     }
 
-// Check read trimming software (if set)
+// Check adapter and primer trimming software (if set)
 def read_trimming_software = ['cutadapt']
-if (params.read_trimming) {
-    if ( read_trimming_software.contains( params.read_trimming ) == false ) {
-	    printErr("If read_trimming is set, software must be one of: " + read_trimming_software.join(',') + ".")
+if (params.adapter_trimming) {
+    if ( read_trimming_software.contains( params.adapter_trimming ) == false ) {
+	    printErr("If adapter_trimming is set, software must be one of: " + read_trimming_software.join(',') + ".")
+	    exit 1
+    }
+}
+if (params.primer_trimming) {
+    if ( read_trimming_software.contains( params.primer_trimming ) == false ) {
+	    printErr("If primer_trimming is set, software must be one of: " + read_trimming_software.join(',') + ".")
 	    exit 1
     }
 }
 
-// Check read trimming QC (if read trimming set)
-if (params.read_trimming_qc && !params.read_trimming) {
-    printErr("Read trimming QC cannot be run when read_trimming is set to false.")
+// Check adapter and primer trimming QC (if read trimming set)
+if (params.adapter_trimming_qc && !params.adapter_trimming) {
+    printErr("Adapter trimming QC cannot be run when adapter_trimming is set to false.")
+	exit 1
+}
+if (params.primer_trimming_qc && !params.primer_trimming) {
+    printErr("Primer trimming QC cannot be run when primer_trimming is set to false.")
 	exit 1
 }
 
@@ -128,12 +138,15 @@ include { INPUT_CHECK_FASTQ;
 include { CRAM_TO_FASTQ } from '../subworkflows/local/cram_to_fastq' addParams( options: [:] )
 include { READ_TRANSFORM } from '../subworkflows/local/read_transform' addParams( options: [:] )
 include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( options: [:] )
-include { READ_TRIMMING } from '../subworkflows/local/read_trimming' addParams( options: [:] )
+// TO DO: Both trimming steps use cutadapt - once stable, look at combining / abstraction to avoid duplication here
+include { ADAPTER_TRIMMING } from '../subworkflows/local/adapter_trimming' addParams( options: [:] )
+include { PRIMER_TRIMMING } from '../subworkflows/local/primer_trimming' addParams( options: [:] )
 include { READ_FILTERING } from '../subworkflows/local/read_filtering' addParams( options: [:] )
 include { QUANTIFICATION } from '../subworkflows/local/quantification' addParams( options: [:] )
 include { SEQUENCING_QC as RAW_SEQUENCING_QC; 
           SEQUENCING_QC as MERGED_SEQUENCING_QC; 
-          SEQUENCING_QC as TRIMMED_SEQUENCING_QC;
+          SEQUENCING_QC as ADAPTER_TRIMMED_SEQUENCING_QC;
+          SEQUENCING_QC as PRIMER_TRIMMED_SEQUENCING_QC;
           SEQUENCING_QC as FILTERED_SEQUENCING_QC
         } from '../subworkflows/local/sequencing_qc' addParams( options: [:] )
 
@@ -166,7 +179,7 @@ workflow SGE {
         //
         CRAM_TO_FASTQ(INPUT_CHECK_CRAM.out.crams)
         ch_raw_reads = CRAM_TO_FASTQ.out.reads
-        ch_read_trim = ch_raw_reads
+        ch_adapter_trim = ch_raw_reads
         ch_software_versions = ch_software_versions.mix(CRAM_TO_FASTQ.out.versions)
     } else {
         //
@@ -174,7 +187,7 @@ workflow SGE {
         //
         INPUT_CHECK_FASTQ ( ch_input )
         ch_raw_reads = INPUT_CHECK_FASTQ.out.reads
-        ch_read_trim = INPUT_CHECK_FASTQ.out.reads
+        ch_adapter_trim = INPUT_CHECK_FASTQ.out.reads
     }
 
     //
@@ -187,22 +200,43 @@ workflow SGE {
     }
 
     //
-    // SUBWORKFLOW: Run adapter/quality trimming
+    // SUBWORKFLOW: Run adapter trimming
     //
-    if (params.read_trimming) {
-        READ_TRIMMING ( ch_read_trim )
-        ch_read_merge = READ_TRIMMING.out.reads
-        ch_software_versions = ch_software_versions.mix(READ_TRIMMING.out.versions)
+    if (params.adapter_trimming) {
+        // Run adapter trimming
+        ADAPTER_TRIMMING ( ch_adapter_trim )
         //
-        // SUBWORKFLOW: Run FASTQC on trimmed reads
+        //SUBWORKFLOW: Run FASTQC on adapter trimmed reads
         //
-        if (params.read_trimming_qc) {
-            ch_trimmed_read_qc = READ_TRIMMING.out.reads.map{it -> [[id: it[0].id + '_trimmed', single_end: it[0].single_end], it[1]]}
-            TRIMMED_SEQUENCING_QC ( ch_trimmed_read_qc )
-            ch_software_versions = ch_software_versions.mix(TRIMMED_SEQUENCING_QC.out.fastqc_version, TRIMMED_SEQUENCING_QC.out.seqkit_version)
+        if (params.adapter_trimming_qc) {
+            ch_adapter_trimming_qc = ADAPTER_TRIMMING.out.reads.map{it -> [[id: it[0].id + '_adapter_trimmed', single_end: it[0].single_end], it[1]]}
+            ADAPTER_TRIMMED_SEQUENCING_QC ( ch_adapter_trimming_qc )
         }
+        // Send to next stage
+        ch_primer_trim = ADAPTER_TRIMMING.out.reads
     } else {
-        ch_read_merge = ch_read_trim
+        ch_primer_trim = ch_adapter_trim
+    }
+
+    //
+    // SUBWORKFLOW: Run primer trimming
+    //
+    if (params.primer_trimming) {
+        // Run primer trimming
+        PRIMER_TRIMMING ( ch_primer_trim )
+        ch_software_versions = ch_software_versions.mix(PRIMER_TRIMMING.out.versions)
+        //
+        //SUBWORKFLOW: Run FASTQC on primer trimmed reads
+        //
+        if (params.primer_trimming_qc) {
+            ch_primer_trimming_qc = PRIMER_TRIMMING.out.reads.map{it -> [[id: it[0].id + '_primer_trimmed', single_end: it[0].single_end], it[1]]}
+            PRIMER_TRIMMED_SEQUENCING_QC ( ch_primer_trimming_qc )
+            ch_software_versions = ch_software_versions.mix(PRIMER_TRIMMED_SEQUENCING_QC.out.fastqc_version, PRIMER_TRIMMED_SEQUENCING_QC.out.seqkit_version)
+        }
+        // Send to next stage
+        ch_read_merge = PRIMER_TRIMMING.out.reads
+    } else {
+        ch_read_merge = ch_primer_trim
     }
 
     //
@@ -284,7 +318,7 @@ workflow SGE {
     //
     // MODULE: MultiQC
     //
-    if (params.raw_sequencing_qc || params.read_trimming_qc || params.read_merging_qc) {
+    if (params.raw_sequencing_qc || params.adapter_trimming_qc || params.primer_trimming_qc || params.read_merging_qc) {
         workflow_summary    = WorkflowSge.paramsSummaryMultiqc(workflow, summary_params)
         ch_workflow_summary = Channel.value(workflow_summary)
 
@@ -297,9 +331,13 @@ workflow SGE {
         if (params.raw_sequencing_qc) {
             ch_multiqc_files = ch_multiqc_files.mix(RAW_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
         }
-        if (params.read_trimming_qc) {
-            ch_multiqc_files = ch_multiqc_files.mix(TRIMMED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
-            ch_multiqc_files = ch_multiqc_files.mix(READ_TRIMMING.out.stats.collect{it[1]}.ifEmpty([]))
+        if (params.adapter_trimming_qc) {
+            ch_multiqc_files = ch_multiqc_files.mix(ADAPTER_TRIMMED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
+            ch_multiqc_files = ch_multiqc_files.mix(ADAPTER_TRIMMING.out.stats.collect{it[1]}.ifEmpty([]))
+        }
+        if (params.primer_trimming_qc) {
+            ch_multiqc_files = ch_multiqc_files.mix(PRIMER_TRIMMED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
+            ch_multiqc_files = ch_multiqc_files.mix(PRIMER_TRIMMING.out.stats.collect{it[1]}.ifEmpty([]))
         }
         if (params.read_merging_qc) {
             ch_multiqc_files = ch_multiqc_files.mix(MERGED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))

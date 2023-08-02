@@ -9,3 +9,5 @@ testing*
 .vscode/
 .venv/
 venv/
+params.json
+sample_manifest*
