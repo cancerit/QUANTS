@@ -36,7 +36,7 @@ module_order:
     name: 'Cutadapt'
     info: 'This section of the report shows the length of reads trimmed by Cutadapt.'
     path_filters:
-      - "*cutadapt.log"
+      - "*cutadapt.json"
 
 report_section_order:
   software_versions:

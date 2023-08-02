@@ -24,6 +24,7 @@ process CUTADAPT_ADAPTER {
     output:
     tuple val(meta), path('*.adapter_trimmed.fastq.gz'), emit: reads
     tuple val(meta), path('*.log')          , emit: log
+    tuple val(meta), path('*.json')         , emit: json
     path '*.version.txt'                    , emit: version
 
     script:
@@ -33,6 +34,7 @@ process CUTADAPT_ADAPTER {
     """
     cutadapt \\
         --cores $task.cpus \\
+        --json=${prefix}.adapter.cutadapt.json \\
         $options.args \\
         $trimmed \\
         $reads \\

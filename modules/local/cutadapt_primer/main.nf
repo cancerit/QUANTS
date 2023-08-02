@@ -23,18 +23,23 @@ process CUTADAPT_PRIMER {
 
     output:
     tuple val(meta), path('*.primer_trimmed.fastq.gz'), emit: reads
+    tuple val(meta), path('*.primer_untrimmed.fastq.gz'), emit: untrimmed_reads
     tuple val(meta), path('*.log')          , emit: log
+    tuple val(meta), path('*.json')         , emit: json
     path '*.version.txt'                    , emit: version
 
     script:
-    def software = getSoftwareName(task.process)
-    def prefix   = options.suffix ? "${meta.id}${options.suffix}" : "${meta.id}"
-    def trimmed  = meta.single_end ? "-o ${prefix}.primer_trimmed.fastq.gz" : "-o ${prefix}_1.primer_trimmed.fastq.gz -p ${prefix}_2.primer_trimmed.fastq.gz"
+    def software   = getSoftwareName(task.process)
+    def prefix     = options.suffix ? "${meta.id}${options.suffix}" : "${meta.id}"
+    def trimmed    = meta.single_end ? "-o ${prefix}.primer_trimmed.fastq.gz" : "-o ${prefix}_1.primer_trimmed.fastq.gz -p ${prefix}_2.primer_trimmed.fastq.gz"
+    def untrimmed  = meta.single_end ? "--untrimmed-output ${prefix}.primer_untrimmed.fastq.gz" : "--untrimmed-output ${prefix}_1.primer_untrimmed.fastq.gz --untrimmed-paired-output ${prefix}_2.primer_untrimmed.fastq.gz"
     """
     cutadapt \\
         --cores $task.cpus \\
+        --json=${prefix}.adapter.cutadapt.json \\
         $options.args \\
         $trimmed \\
+        $untrimmed \\
         $reads \\
         > ${prefix}.primer.cutadapt.log
     echo \$(cutadapt --version) > ${software}.version.txt
