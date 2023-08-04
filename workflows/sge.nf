@@ -164,7 +164,8 @@ workflow SGE {
         //
         // SUBWORKFLOW: Convert CRAM to FASTQ
         //
-        ch_raw_reads = CRAM_TO_FASTQ(INPUT_CHECK_CRAM.out.crams)
+        CRAM_TO_FASTQ(INPUT_CHECK_CRAM.out.crams)
+        ch_raw_reads = CRAM_TO_FASTQ.out.reads
         ch_read_trim = ch_raw_reads
         ch_software_versions = ch_software_versions.mix(CRAM_TO_FASTQ.out.versions)
     } else {
