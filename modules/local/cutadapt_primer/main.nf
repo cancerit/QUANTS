@@ -36,7 +36,7 @@ process CUTADAPT_PRIMER {
     """
     cutadapt \\
         --cores $task.cpus \\
-        --json=${prefix}.adapter.cutadapt.json \\
+        --json=${prefix}.primer.cutadapt.json \\
         $options.args \\
         $trimmed \\
         $untrimmed \\
