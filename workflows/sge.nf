@@ -205,12 +205,14 @@ workflow SGE {
     if (params.adapter_trimming) {
         // Run adapter trimming
         ADAPTER_TRIMMING ( ch_adapter_trim )
+        ch_software_versions = ch_software_versions.mix(ADAPTER_TRIMMING.out.versions)
         //
         //SUBWORKFLOW: Run FASTQC on adapter trimmed reads
         //
         if (params.adapter_trimming_qc) {
             ch_adapter_trimming_qc = ADAPTER_TRIMMING.out.reads.map{it -> [[id: it[0].id + '_adapter_trimmed', single_end: it[0].single_end], it[1]]}
             ADAPTER_TRIMMED_SEQUENCING_QC ( ch_adapter_trimming_qc )
+            ch_software_versions = ch_software_versions.mix(ADAPTER_TRIMMED_SEQUENCING_QC.out.fastqc_version, ADAPTER_TRIMMED_SEQUENCING_QC.out.seqkit_version)
         }
         // Send to next stage
         ch_primer_trim = ADAPTER_TRIMMING.out.reads

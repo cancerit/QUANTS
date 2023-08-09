@@ -32,4 +32,5 @@ workflow PRIMER_TRIMMING {
     emit:
         reads = ch_trimmed_reads
         stats = ch_trimmed_stats
+        versions = CUTADAPT_PRIMER.out.version
 }
