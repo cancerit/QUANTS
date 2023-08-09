@@ -30,4 +30,5 @@ workflow READ_FILTERING {
         }
     emit:
         reads = ch_filtered_reads
+        versions = SEQKIT_SEQ.out.version
 }

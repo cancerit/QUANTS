@@ -37,6 +37,6 @@ process FLASH2 {
         $merged \\
         -z \\
         $input_reads
-    echo \$(flash2 --version) > ${software}.version.txt
+    flash2 --version | awk 'NR==1{print \$2}' > ${software}.version.txt
     """
 }

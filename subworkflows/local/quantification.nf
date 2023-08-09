@@ -26,10 +26,12 @@ workflow QUANTIFICATION {
             ch_sample_library_counts = PYQUEST.out.library_counts
             ch_sample_read_counts = PYQUEST.out.read_counts
             ch_sample_stats = PYQUEST.out.stats
+            versions = PYQUEST.out.version
         }
 
     emit:
         library_counts = ch_sample_library_counts
         read_counts = ch_sample_read_counts
         stats = ch_sample_stats
+        versions
 }
