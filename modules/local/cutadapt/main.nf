@@ -22,7 +22,7 @@ process CUTADAPT {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path('*_trimmed.fastq.gz')  , emit: reads
+    tuple val(meta), path('*_trimmed{,_1,_2}.fastq.gz')  , emit: reads
     tuple val(meta), path('*_untrimmed_{1,2}.fastq.gz'), emit: untrimmed_reads, optional: true
     tuple val(meta), path('*.log')               , emit: log
     tuple val(meta), path('*.json')              , emit: json
@@ -37,7 +37,7 @@ process CUTADAPT {
     """
     cutadapt \\
         --cores $task.cpus \\
-        --json=${prefix}.adapter.cutadapt.json \\
+        --json=${prefix}.cutadapt.json \\
         $options.args \\
         $trimmed \\
         $untrimmed \\
