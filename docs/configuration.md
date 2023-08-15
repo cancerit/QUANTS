@@ -16,7 +16,8 @@
 ```
 --raw_sequencing_qc                   [boolean] Define whether the pipeline should run sequencing QC for raw input data.
 --read_merging_qc                     [boolean] Define whether the pipeline should run sequencing QC for merged reads (only suitable for paired-end data with read merging enabled). 
---read_trimming_qc                    [boolean] Define whether the pipeline should run sequencing QC for trimmed reads (only suitable when read trimming enabled). 
+--adapter_trimming_qc                 [boolean] Define whether the pipeline should run sequencing QC for adapter trimmed reads (only suitable when adapter trimming enabled). 
+--primer_trimming_qc                  [boolean] Define whether the pipeline should run sequencing QC for primer trimmed reads (only suitable when primer trimming enabled). 
 --read_filtering_qc                   [boolean] Define whether the pipeline should run sequencing QC for filtered reads (only suitable when read filtering enabled). 
 --seqkit_stats_options                [string]  Define options for SeqKit stats (only suitable when at least one qc is enabled).
 ```
@@ -32,8 +33,10 @@
 ## Read trimming options
 
 ```
---read_trimming                       [string]  Define whether the pipeline should trim reads.
---cutadapt_options                    [string]  Define options for cutadapt (only suitable when cutadapt enabled).
+--adapter_trimming                    [string]  Define whether the pipeline should trim adapters from reads.
+--adapter_cutadapt_options            [string]  Define options for cutadapt (only suitable when cutadapt enabled for adapter trimming).
+--primer_trimming                     [string]  Define whether the pipeline should trim primers from reads.
+--primer_cutadapt_options             [string]  Define options for cutadapt (only suitable when cutadapt enabled for primer trimming).
 ```
 
 # Read filtering options

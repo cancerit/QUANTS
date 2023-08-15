@@ -18,24 +18,28 @@ module_order:
       path_filters: 
         - "*_merged*fastqc.zip"
   - fastqc:
-      name: 'FastQC (trimmed)'
-      info: 'This section of the report shows FastQC results after trimming.'
+      name: 'FastQC (primer trimmed)'
+      info: 'This section of the report shows FastQC results after primer trimming.'
       path_filters: 
-        - "*trimmed*fastqc.zip"
+        - "*primer*trimmed*fastqc.zip"
+  - fastqc:
+      name: 'FastQC (adapter trimmed)'
+      info: 'This section of the report shows FastQC results after adapter trimming.'
+      path_filters: 
+        - "*adapter*trimmed*fastqc.zip"
   - fastqc:
       name: 'FastQC (raw)'
       info: 'This section of the report shows FastQC results for raw input data.'
       path_filters: 
         - "*raw*fastqc.zip"
   - cutadapt:
-    name: 'Cutadapt (trimmed)'
+    name: 'Cutadapt'
     info: 'This section of the report shows the length of reads trimmed by Cutadapt.'
     path_filters:
-      - "*cutadapt.log"
+      - "*cutadapt.json"
 
 report_section_order:
   software_versions:
       order: -1000
   QUANTS-summary:
       order: -1001
-

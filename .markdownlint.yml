@@ -1,5 +1,5 @@
 # Markdownlint configuration file
-default: true
+default: false
 line-length: false
 ul-indent:
     indent: 4
