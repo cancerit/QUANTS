@@ -12,7 +12,7 @@ def adapter_cutadapt_options  = modules['cutadapt_adapter']
 if (params.adapter_cutadapt_options) {
     adapter_cutadapt_options.args += " " + params.adapter_cutadapt_options
 } 
-include { CUTADAPT_ADAPTER  } from '../../modules/local/cutadapt_adapter/main' addParams( options: adapter_cutadapt_options )
+include { CUTADAPT as CUTADAPT_ADAPTER  } from '../../modules/local/cutadapt/main' addParams( options: adapter_cutadapt_options )
 
 workflow ADAPTER_TRIMMING {
     take: 

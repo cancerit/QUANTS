@@ -12,7 +12,7 @@ def primer_cutadapt_options  = modules['cutadapt_primer']
 if (params.primer_cutadapt_options) {
     primer_cutadapt_options.args += " " + params.primer_cutadapt_options
 } 
-include { CUTADAPT_PRIMER  } from '../../modules/local/cutadapt_primer/main' addParams( options: primer_cutadapt_options )
+include { CUTADAPT as CUTADAPT_PRIMER  } from '../../modules/local/cutadapt/main' addParams( options: primer_cutadapt_options )
 
 workflow PRIMER_TRIMMING {
     take: 
