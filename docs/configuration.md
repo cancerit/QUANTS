@@ -15,10 +15,10 @@
 
 ```console
 --raw_sequencing_qc                   [boolean] Define whether the pipeline should run sequencing QC for raw input data.
---read_merging_qc                     [boolean] Define whether the pipeline should run sequencing QC for merged reads (only suitable for paired-end data with read merging enabled). 
---adapter_trimming_qc                 [boolean] Define whether the pipeline should run sequencing QC for adapter trimmed reads (only suitable when adapter trimming enabled). 
---primer_trimming_qc                  [boolean] Define whether the pipeline should run sequencing QC for primer trimmed reads (only suitable when primer trimming enabled). 
---read_filtering_qc                   [boolean] Define whether the pipeline should run sequencing QC for filtered reads (only suitable when read filtering enabled). 
+--read_merging_qc                     [boolean] Define whether the pipeline should run sequencing QC for merged reads (only suitable for paired-end data with read merging enabled).
+--adapter_trimming_qc                 [boolean] Define whether the pipeline should run sequencing QC for adapter trimmed reads (only suitable when adapter trimming enabled).
+--primer_trimming_qc                  [boolean] Define whether the pipeline should run sequencing QC for primer trimmed reads (only suitable when primer trimming enabled).
+--read_filtering_qc                   [boolean] Define whether the pipeline should run sequencing QC for filtered reads (only suitable when read filtering enabled).
 --seqkit_stats_options                [string]  Define options for SeqKit stats (only suitable when at least one qc is enabled).
 ```
 
@@ -42,20 +42,20 @@
 ## Read filtering options
 
 ```console
---read_filtering                      [string]  Define whether the pipeline should filter reads (only suitable when input is single-end or read merging is enabled). 
+--read_filtering                      [string]  Define whether the pipeline should filter reads (only suitable when input is single-end or read merging is enabled).
 --seqkit_seq_options                  [string]  Define options for SeqKit seq (only suitable when read_filtering enabled).
 ```
 
 ## Library-dependent quantification options
 
 ```console
---oligo_library                       [string]  Path to tab-delimited file containing information about the oligos in the experiment (only suitable when library-dependent quantification enabled). 
+--oligo_library                       [string]  Path to tab-delimited file containing information about the oligos in the experiment (only suitable when library-dependent quantification enabled).
 ```
 
 ## Useful core options
 
 ```console
--config 
+-config
     Add the specified file to configuration set
 -name
     Assign a mnemonic name to the a pipeline run

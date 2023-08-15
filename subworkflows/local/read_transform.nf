@@ -19,10 +19,10 @@ if (params.read_transform != null && params.read_transform.contains('reverse')) 
 include { SEQKIT_SEQ  } from '../../modules/local/seqkit_seq/main' addParams( options: seqkit_seq_options )
 
 workflow READ_TRANSFORM {
-    take: 
+    take:
         reads
 
-    main: 
+    main:
         ch_transform_reads = Channel.empty()
         //
         // MODULE: Run SeqKit seq

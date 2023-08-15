@@ -13,10 +13,10 @@ def pyquest_options  = modules['pyquest']
 include { PYQUEST  } from '../../modules/local/pyquest/main.nf' addParams( options: pyquest_options )
 
 workflow QUANTIFICATION {
-    take: 
+    take:
         reads
 
-    main: 
+    main:
         ch_sample_counts = Channel.empty()
         if (params.quantification == "pyquest") {
             //

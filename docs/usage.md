@@ -72,8 +72,8 @@ Below is a basic example:
 
 ```nextflow
 params {
-   single_end: true
-   "cutadapt_options": "-a 'AGATCGGAAGAGCGGTTCAGCAGGAATGCCG' -A 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT'",
+    single_end: true
+    "cutadapt_options": "-a 'AGATCGGAAGAGCGGTTCAGCAGGAATGCCG' -A 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT'",
 }
 ```
 
