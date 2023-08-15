@@ -45,7 +45,6 @@
 
 [SeqKit](https://bioinf.shenwei.me/seqkit) is a cross-platform and ultrafast toolkit for FASTA/Q file manipulation. For further reading on the `seq` subcommand see the [usage](https://bioinf.shenwei.me/seqkit/usage/#seq).
 
-
 ## Quantification
 
 ### pyQUEST
@@ -63,7 +62,6 @@
 [pyQUEST](https://github.com/cancerit/pyQUEST) is a Python tool for quantifying read and template sequences from SGE experiments. For further reading and documentation see the [pyQUEST output file descriptions](https://github.com/cancerit/pyQUEST#file-formats).
 
 ## Quality control
-
 
 ### SeqKit stats
 
