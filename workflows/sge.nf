@@ -101,6 +101,12 @@ if (params.quantification) {
     }
 }
 
+// Check that quantification is set if transform_library is enabled
+if (params.transform_library && !params.quantification ) { 
+    printErr("If transform_library is set to true, quantification must also be set to true.")
+    exit 1
+}
+
 // Check that read merging is enabled if quantification is set and data is PE
 if (((params.quantification || params.quantification ) && !params.single_end) && !params.read_merging) {
     printErr("Read merging must be enabled when quantification is requested and input is paired end.")
@@ -301,7 +307,13 @@ workflow SGE {
     // Returns the number of reads assigned to each guide from a user-defined library
     //
     if (params.quantification) {
-        QUANTIFICATION ( ch_reads_to_analyse )
+        if (params.transform_library) {
+            oligo_library = params.oligo_library
+        } else {
+            oligo_library = params.oligo_library
+        }
+
+        QUANTIFICATION ( ch_reads_to_analyse, oligo_library )
         ch_software_versions = ch_software_versions.mix(QUANTIFICATION.out.versions)
     }
 
