@@ -180,7 +180,7 @@ include { SEQUENCING_QC as RAW_SEQUENCING_QC;
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { MULTIQC } from '../modules/nf-core/modules/multiqc/main' addParams( options: multiqc_options   )
+include { MULTIQC } from '../modules/nf-core/multiqc/main' addParams( options: multiqc_options   )
 
 /*
 ========================================================================================

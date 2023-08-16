@@ -8,7 +8,7 @@ def modules = params.modules.clone()
 //
 // MODULE: Load nf-core modules
 //
-include { FASTQC  } from '../../modules/nf-core/modules/fastqc/main' addParams( options: [:] )
+include { FASTQC  } from '../../modules/nf-core/fastqc/main' addParams( options: [:] )
 
 //
 // MODULE: SeqKit stats
