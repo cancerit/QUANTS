@@ -1,0 +1,31 @@
+name: read modification
+description: Manipulation of FASTQ files
+keywords:
+  - FASTQ
+
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+
+        e.g. [ id:'test', single_end:true ]
+  - reads:
+      type: file
+      description: |
+        List of input FASTQ files of size 1; i.e., single-end data.
+
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy Map containing sample information
+
+        e.g. [ id:'test', single_end:true ]
+  - reads:
+      type: file
+      description: |
+        List of output FASTQ files of size 1; i.e., single-end data.
+
+authors:
+  - "@vaofford"

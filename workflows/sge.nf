@@ -86,6 +86,18 @@ if (params.read_filtering_qc && !params.read_filtering) {
     exit 1
 }
 
+// Check either append_start or append_end provided when read_modification is set
+if (params.read_modification && !params.append_start && !params.append_end) {
+    printErr("If read_modification is set, a string must be provided for either append_start or append_end.")
+    exit 1
+}
+
+// Check append_quality provided when read_modification is set
+if (params.read_modification && (!params.append_quality || params.append_quality.length() > 1)) {
+    printErr("If read_modification is set, a single quality character must be provided for append_quality.")
+    exit 1
+}
+
 // Check quantification is set if library is provided
 if (params.oligo_library && !params.quantification) {
     printErr("If a library file is provided by oligo_library, quantification must be set to true.")
@@ -149,6 +161,7 @@ include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( op
 include { ADAPTER_TRIMMING } from '../subworkflows/local/adapter_trimming' addParams( options: [:] )
 include { PRIMER_TRIMMING } from '../subworkflows/local/primer_trimming' addParams( options: [:] )
 include { READ_FILTERING } from '../subworkflows/local/read_filtering' addParams( options: [:] )
+include { READ_MODIFICATION } from '../subworkflows/local/read_modification' addParams( options: [:] )
 include { QUANTIFICATION } from '../subworkflows/local/quantification' addParams( options: [:] )
 include { SEQUENCING_QC as RAW_SEQUENCING_QC;
           SEQUENCING_QC as MERGED_SEQUENCING_QC;
@@ -287,7 +300,7 @@ workflow SGE {
 
     if (params.read_filtering) {
         READ_FILTERING ( ch_read_filter )
-        ch_reads_to_analyse = READ_FILTERING.out.reads
+        ch_reads_to_modify = READ_FILTERING.out.reads
         ch_software_versions = ch_software_versions.mix(READ_FILTERING.out.versions)
 
         //
@@ -299,7 +312,18 @@ workflow SGE {
             ch_software_versions = ch_software_versions.mix(FILTERED_SEQUENCING_QC.out.fastqc_version, FILTERED_SEQUENCING_QC.out.seqkit_version)
         }
     } else {
-        ch_reads_to_analyse = ch_read_filter
+        ch_reads_to_modify = ch_read_filter
+    }
+
+    //
+    // SUBWORKFLOW: Run read modification (data must be SE by this stage)
+    //    
+    // Purpose of this process is to add string (e.g. primer sequence without errors) and quality value to start and/or end of reads
+    if (params.read_modification) {
+        READ_MODIFICATION ( ch_read_filter )
+        ch_reads_to_analyse = READ_MODIFICATION.out.reads
+    } else {
+        ch_reads_to_analyse = ch_reads_to_modify
     }
 
     //
