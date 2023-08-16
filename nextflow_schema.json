@@ -202,6 +202,11 @@
                     "description": "Path to tab-delimited file containing information about the oligos in the experiment (only required when quantification enabled).",
                     "help_text": "You will need to create a library file with information about the oligos in your experiment before running the pipeline. Use this parameter to specify its location.",
                     "fa_icon": "fas fa-file"
+                },
+                "transform_library": {
+                    "type": "boolean",
+                    "description": "Define whether the pipeline should transform the oligo library (only suitable when quantification is enabled).",
+                    "help_text": "Set this to true if library transformation is required, else set to false."
                 }
             }
         },
