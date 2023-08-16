@@ -86,6 +86,12 @@ if (params.read_filtering_qc && !params.read_filtering) {
     exit 1
 }
 
+// Check either read_modification is set when append parameters given
+if (!params.read_modification && (params.append_start || params.append_end || params.append_quality)) {
+    printErr("If read_modification is set, a string must be provided for either append_start or append_end.")
+    exit 1
+}
+
 // Check either append_start or append_end provided when read_modification is set
 if (params.read_modification && !params.append_start && !params.append_end) {
     printErr("If read_modification is set, a string must be provided for either append_start or append_end.")
@@ -320,7 +326,7 @@ workflow SGE {
     //    
     // Purpose of this process is to add string (e.g. primer sequence without errors) and quality value to start and/or end of reads
     if (params.read_modification) {
-        READ_MODIFICATION ( ch_read_filter )
+        READ_MODIFICATION ( ch_reads_to_modify )
         ch_reads_to_analyse = READ_MODIFICATION.out.reads
     } else {
         ch_reads_to_analyse = ch_reads_to_modify
