@@ -1,0 +1,67 @@
+name: pyquest_library_transformer
+description: Converts user-defined library into format which is compatible with pyQUEST.
+keywords:
+  - quantification
+tools:
+  - pyquest_library_transformer:
+      description: |
+        Converts user-defined library into format which is compatible with pyQUEST.
+      homepage: https://github.com/cancerit/QUANTS/bin/pyquest_library_converter
+      documentation: {https://github.com/cancerit/QUANTS/bin/pyquest_library_converter}
+      licence: [GPLv3]
+
+input:
+  - input:
+      type: file
+      description: |
+        User-defined library.
+  - forward:
+      type: string
+      description: |
+        String to be removed from the start of the oligo sequence if provided.
+  - reverse:
+      type: string
+      description: |
+        String to be removed from the end of the oligo sequence if provided.
+  - skip:
+      type: integer
+      description: |
+         Choose how many data rows to skip before processing. Any headers or comments are always automatically skipped. If unset defaults to 0. E.g 0 (no data rows skipped), 1 (skip first row) and N (skip N data rows).
+  - force-header-index:
+      type: string
+      description: |
+        Force the input file parser to use this index for the column header row (1-index). y default, the script auto-detects the index of column header row, if any. If also using '--skip', the script will automatically skip all rows up to and including index before then skipping the speficied N data rows.
+  - revcomp:
+      type: string
+      description: |
+        Reverse complement the oligo sequence.
+  - suppress-null-errors:
+      type: string
+      description: |
+        Suppress errors and instead warn if null data is detected in the input file. Null data is defined as any of the following: , NULL, NA, NAN, NaN, N/A
+  - name-header:
+      type: string
+      description: |
+        The column name or header in the CSV/TSV for the oligo sequence name.
+  - name-index:
+      type: string
+      description: |
+        1-indexed integer for the column index in a CSV/TSV for the oligo sequence name.
+  - sequence-header:
+      type: string
+      description: |
+        The column name or header in the CSV/TSV for the oligo sequence itself.
+  - sequence-index:
+      type: string
+      description: |
+        1-indexed integer for the column index in a CSV/TSV for the oligo sequence itself.
+output:
+  
+  - output:
+      type: string
+      description: |
+        User-defined path to which output library will be written
+
+authors:
+  - "@IanVermes"
+  - "@vaofford"

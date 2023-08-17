@@ -22,6 +22,7 @@ process PYQUEST {
 
     input:
         tuple val(meta), path(reads)
+        path(oligo_library)
 
     output:
         tuple val(meta), path("*query_counts.tsv.gz")       , emit: read_counts
@@ -31,7 +32,7 @@ process PYQUEST {
 
     script:
         def software    = getSoftwareName(task.process)
-        def queries     = params.oligo_library ? "-l ${params.oligo_library}" : ""
+        def queries     = oligo_library ? "-l ${oligo_library}" : ""
         def sample      = options.suffix ? "-s ${meta.id}${options.suffix}" : "-s ${meta.id}"
         def output      = options.suffix ? "-o ${meta.id}${options.suffix}" : "-o ${meta.id}"
         def reads       = reads
