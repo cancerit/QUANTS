@@ -29,7 +29,7 @@ process TRANSFORM_LIBRARY_FOR_PYQUEST {
         def output   = input.getName().split("\\.")[0] + '.pyquest.tsv'
 
     """
-    ${moduleDir}/bin/pyquest_library_converter/pyquest_library_converter.py \\
+    ${projectDir}/bin/pyquest_library_converter/pyquest_library_converter.py \\
         $input \\
         $output \\
         $options.args
