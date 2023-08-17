@@ -4,7 +4,7 @@
 
 You will need to create a samplesheet with information about the samples you would like to analyse before running the pipeline. If you are using library-dependent quantification, you should only include samples which were generated against that library i.e. each library should be a separate run.
 
-Use the `input` parameter to specify its location. 
+Use the `input` parameter to specify its location.
 
 ```console
 --input '[path to samplesheet file]'
@@ -16,7 +16,7 @@ The samplesheet has to be a **comma-separated** file with 2 (for single end sequ
 
 Minimum of two columns with the headings `sample` and `fastq1` where `sample` represents the sample name and `fastq1` is the path to the corresponding FASTQ file.
 
-```
+```csv
 sample,fastq_1
 SAMPLE_D4_R1,SAMPLE_D4_R1_S1_L002_R1_001.fastq.gz
 SAMPLE_D4_R2,SAMPLE_D4_R2_S1_L003_R1_001.fastq.gz
@@ -27,7 +27,7 @@ SAMPLE_D4_R3,SAMPLE_D4_R3_S1_L004_R1_001.fastq.gz
 
 Minimum of two columns with the headings `sample`, `fastq1` and `fastq2` where `sample` represents the sample name and `fastq1` and `fastq2` represent the paths to the corresponding FASTQ files R1 and R2 respectively.
 
-```
+```csv
 sample,fastq_1,fastq_2
 SAMPLE_D4_R1,SAMPLE_D4_R1_S1_L002_R1_001.fastq.gz,SAMPLE_D4_R1_S1_L002_R2_001.fastq.gz
 SAMPLE_D4_R2,SAMPLE_D4_R2_S1_L003_R1_001.fastq.gz,SAMPLE_D4_R2_S1_L003_R2_001.fastq.gz
@@ -38,7 +38,7 @@ The pipeline will auto-detect whether a sample is single- or paired-end using th
 
 A final samplesheet file consisting of both single- and paired-end data may look something like the one below. This is for 3 samples, each with 3 replicates.
 
-```
+```csv
 sample,fastq_1,fastq_2
 SAMPLE_D4_R1,SAMPLE_D4_R1_S1_L002_R1_001.fastq.gz,SAMPLE_D4_R1_S1_L002_R2_001.fastq.gz
 SAMPLE_D4_R2,SAMPLE_D4_R2_S1_L003_R1_001.fastq.gz,SAMPLE_D4_R2_S1_L003_R2_001.fastq.gz
@@ -70,4 +70,3 @@ Library-dependent quantification calculates the abundances of user-specified oli
 ### pyQUEST
 
 Information on the required library format for [pyQUEST](https://github.com/cancerit/pyQUEST) can be found [here](https://github.com/cancerit/pyQUEST#library) along with other usage details.
-

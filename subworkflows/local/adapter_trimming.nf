@@ -11,14 +11,14 @@ def modules = params.modules.clone()
 def adapter_cutadapt_options  = modules['cutadapt_adapter']
 if (params.adapter_cutadapt_options) {
     adapter_cutadapt_options.args += " " + params.adapter_cutadapt_options
-} 
+}
 include { CUTADAPT as CUTADAPT_ADAPTER  } from '../../modules/local/cutadapt/main' addParams( options: adapter_cutadapt_options )
 
 workflow ADAPTER_TRIMMING {
-    take: 
+    take:
         reads
 
-    main: 
+    main:
         ch_trimmed_reads = Channel.empty()
         if (params.adapter_trimming == "cutadapt") {
             //

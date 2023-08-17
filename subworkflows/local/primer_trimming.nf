@@ -11,14 +11,14 @@ def modules = params.modules.clone()
 def primer_cutadapt_options  = modules['cutadapt_primer']
 if (params.primer_cutadapt_options) {
     primer_cutadapt_options.args += " " + params.primer_cutadapt_options
-} 
+}
 include { CUTADAPT as CUTADAPT_PRIMER  } from '../../modules/local/cutadapt/main' addParams( options: primer_cutadapt_options )
 
 workflow PRIMER_TRIMMING {
-    take: 
+    take:
         reads
 
-    main: 
+    main:
         ch_trimmed_reads = Channel.empty()
         if (params.primer_trimming == "cutadapt") {
             //

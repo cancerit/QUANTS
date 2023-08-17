@@ -21,69 +21,69 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input sample
 // Check input_type
 def input_type_options = ['fastq', 'cram']
 if ( input_type_options.contains( params.input_type ) == false ) {
-	    printErr("input_type must be one of: " + input_type_options.join(',') + ".")
-	    exit 1
-    }
+    printErr("input_type must be one of: " + input_type_options.join(',') + ".")
+    exit 1
+}
 
 // Check adapter and primer trimming software (if set)
 def read_trimming_software = ['cutadapt']
 if (params.adapter_trimming) {
     if ( read_trimming_software.contains( params.adapter_trimming ) == false ) {
-	    printErr("If adapter_trimming is set, software must be one of: " + read_trimming_software.join(',') + ".")
-	    exit 1
+        printErr("If adapter_trimming is set, software must be one of: " + read_trimming_software.join(',') + ".")
+        exit 1
     }
 }
 if (params.primer_trimming) {
     if ( read_trimming_software.contains( params.primer_trimming ) == false ) {
-	    printErr("If primer_trimming is set, software must be one of: " + read_trimming_software.join(',') + ".")
-	    exit 1
+        printErr("If primer_trimming is set, software must be one of: " + read_trimming_software.join(',') + ".")
+        exit 1
     }
 }
 
 // Check adapter and primer trimming QC (if read trimming set)
 if (params.adapter_trimming_qc && !params.adapter_trimming) {
     printErr("Adapter trimming QC cannot be run when adapter_trimming is set to false.")
-	exit 1
+    exit 1
 }
 if (params.primer_trimming_qc && !params.primer_trimming) {
     printErr("Primer trimming QC cannot be run when primer_trimming is set to false.")
-	exit 1
+    exit 1
 }
 
 // Check read merging software (if set)
 def read_merging_software = ['seqprep', 'flash2']
 if (params.read_merging) {
     if ( read_merging_software.contains( params.read_merging ) == false ) {
-	    printErr("If read_merging is set, software must be one of: " + read_merging_software.join(',') + ".")
-	    exit 1
+        printErr("If read_merging is set, software must be one of: " + read_merging_software.join(',') + ".")
+        exit 1
     }
 }
 
 // Check read merging QC (if read merging set)
 if (params.read_merging_qc && !params.read_merging) {
     printErr("Read merging QC cannot be run when read_merging is set to false.")
-	exit 1
+    exit 1
 }
 
 // Check transformation (if set)
 def read_transformation_options = ['reverse', 'complement', 'reverse_complement']
 if (params.read_transform) {
     if ( read_transformation_options.contains( params.read_transform ) == false ) {
-	    printErr("If read_transform is set, value must be one of: " + read_transformation_options.join(',') + ".")
-	    exit 1
+        printErr("If read_transform is set, value must be one of: " + read_transformation_options.join(',') + ".")
+        exit 1
     }
 }
 
 // Check read fitering is valid (if set)
 if (params.read_filtering && (!params.single_end && !params.read_merging)) {
     printErr("Read filtering cannot be run when data is paired end or single end, but read merging is set to false.")
-	exit 1
+    exit 1
 }
 
 // Check read filtering QC (if read filtering set)
 if (params.read_filtering_qc && !params.read_filtering) {
     printErr("Read filtering QC cannot be run when read_filtering is set to false.")
-	exit 1
+    exit 1
 }
 
 // Check quantification is set if library is provided
@@ -96,15 +96,15 @@ if (params.oligo_library && !params.quantification) {
 def quantification_software = ['pyquest']
 if (params.quantification) {
     if ( quantification_software.contains( params.quantification ) == false ) {
-	    printErr("If quantification is set, software must be one of: " + quantification_software.join(',') + ".")
-	    exit 1
+        printErr("If quantification is set, software must be one of: " + quantification_software.join(',') + ".")
+        exit 1
     }
 }
 
 // Check that read merging is enabled if quantification is set and data is PE
 if (((params.quantification || params.quantification ) && !params.single_end) && !params.read_merging) {
     printErr("Read merging must be enabled when quantification is requested and input is paired end.")
-	exit 1
+    exit 1
 }
 
 /*
@@ -132,8 +132,9 @@ multiqc_options.args += params.multiqc_title ? Utils.joinModuleArgs(["--title \"
 //
 // MODULE: Local to the pipeline
 //
+// editorconfig-checker-disable
 include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['tsv':'']] )
-include { INPUT_CHECK_FASTQ; 
+include { INPUT_CHECK_FASTQ;
           INPUT_CHECK_CRAM } from '../subworkflows/local/input_check' addParams( options: [:] )
 include { CRAM_TO_FASTQ } from '../subworkflows/local/cram_to_fastq' addParams( options: [:] )
 include { READ_TRANSFORM } from '../subworkflows/local/read_transform' addParams( options: [:] )
@@ -143,17 +144,18 @@ include { ADAPTER_TRIMMING } from '../subworkflows/local/adapter_trimming' addPa
 include { PRIMER_TRIMMING } from '../subworkflows/local/primer_trimming' addParams( options: [:] )
 include { READ_FILTERING } from '../subworkflows/local/read_filtering' addParams( options: [:] )
 include { QUANTIFICATION } from '../subworkflows/local/quantification' addParams( options: [:] )
-include { SEQUENCING_QC as RAW_SEQUENCING_QC; 
-          SEQUENCING_QC as MERGED_SEQUENCING_QC; 
+include { SEQUENCING_QC as RAW_SEQUENCING_QC;
+          SEQUENCING_QC as MERGED_SEQUENCING_QC;
           SEQUENCING_QC as ADAPTER_TRIMMED_SEQUENCING_QC;
           SEQUENCING_QC as PRIMER_TRIMMED_SEQUENCING_QC;
           SEQUENCING_QC as FILTERED_SEQUENCING_QC
         } from '../subworkflows/local/sequencing_qc' addParams( options: [:] )
+// editorconfig-checker-disable
 
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { MULTIQC } from '../modules/nf-core/modules/multiqc/main' addParams( options: multiqc_options   )
+include { MULTIQC } from '../modules/nf-core/multiqc/main' addParams( options: multiqc_options   )
 
 /*
 ========================================================================================
@@ -276,12 +278,12 @@ workflow SGE {
     //
     // SUBWORKFLOW: Run read filtering (data must be SE by this stage)
     //
-    
+
     if (params.read_filtering) {
         READ_FILTERING ( ch_read_filter )
         ch_reads_to_analyse = READ_FILTERING.out.reads
         ch_software_versions = ch_software_versions.mix(READ_FILTERING.out.versions)
-        
+
         //
         // SUBWORKFLOW: Run FASTQC on filtered reads
         //
@@ -347,7 +349,7 @@ workflow SGE {
         if (params.read_filtering_qc) {
             ch_multiqc_files = ch_multiqc_files.mix(FILTERED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
         }
-        
+
         MULTIQC (
             ch_multiqc_files.collect()
         )
