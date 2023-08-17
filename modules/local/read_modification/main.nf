@@ -6,7 +6,7 @@ options        = initOptions(params.options)
 
 process APPEND_STRINGS_TO_FQ {
     tag "$meta.id"
-    label 'process_medium'
+    label 'process_low'
 
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
@@ -26,12 +26,11 @@ process APPEND_STRINGS_TO_FQ {
     def append_end = params.append_end ? params.append_end : ""
     def append_quality_start = params.append_start ? params.append_quality*append_start.length() : ""
     def append_quality_end = params.append_end ? params.append_quality*append_end.length() : ""
-    def output = "${prefix}.modified.fq"
+    def output = "${prefix}.modified.fq.gz"
 
     $/
-    zcat ${input} | \
-        sed -e '2~4s/^\(.*\)$/${append_start}\1${append_end}/' | \
-        sed -e '4~4s/^\(.*\)$/${append_quality_start}\1${append_quality_end}/' > ${output}
-    gzip ${output}
+        zcat ${input} | \
+        sed -e '2~4s/^\(.*\)$/${append_start}\1${append_end}/' -e '4~4s/^\(.*\)$/${append_quality_start}\1${append_quality_end}/' | \
+        gzip > ${output}
     /$
 }
