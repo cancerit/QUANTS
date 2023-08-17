@@ -184,6 +184,34 @@
                 }
             }
         },
+        "read_modification_options": {
+            "title": "Read modification options",
+            "type": "object",
+            "fa_icon": "fas fa-plus-circle",
+            "description": "Define pipeline options for read modification.",
+            "properties": {
+                "read_modification": {
+                    "type": "boolean",
+                    "description": "Define whether to add string and qualities to read.",
+                    "help_text": "Set this to true if read modification (e.g. adding perfect primer to read) is required, else set to false."
+                },
+                "append_start": {
+                    "type": "string",
+                    "description": "Define string to add to start of read sequence.",
+                    "help_text": "Define string to add to start of read sequence, else set to null."
+                },
+                "append_end": {
+                    "type": "string",
+                    "description": "Define string to add to end of read sequence.",
+                    "help_text": "Define string to add to end of read sequence, else set to null."
+                },
+                "append_quality": {
+                    "type": "string",
+                    "description": "Define quality value to read quality (this should be a single character).",
+                    "help_text": "Define quality value to read quality (this should be a single character), else set to null."
+                }
+            }
+        },
         "quantification_options": {
             "title": "Quantification options",
             "type": "object",
@@ -420,6 +448,9 @@
         },
         {
             "$ref": "#/definitions/read_filtering_options"
+        },
+        {
+            "$ref": "#/definitions/read_modification_options"
         },
         {
             "$ref": "#/definitions/quantification_options"
