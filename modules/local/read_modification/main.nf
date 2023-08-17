@@ -32,7 +32,7 @@ process APPEND_STRINGS_TO_FQ {
     $/
     zcat ${input} | \
         sed -e '2~4s/^\(.*\)$/${append_start}\1${append_end}/' | \
-        sed -e '4~4s/^\(.*\)$/${append_quality_start}\1${append_quality_end}/' > ${output} 
+        sed -e '4~4s/^\(.*\)$/${append_quality_start}\1${append_quality_end}/' > ${output}
     gzip ${output}
     /$
 }

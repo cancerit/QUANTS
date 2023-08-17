@@ -120,7 +120,7 @@ if (params.quantification) {
 }
 
 // Check that quantification is set if transform_library is enabled
-if (params.transform_library && !params.quantification ) { 
+if (params.transform_library && !params.quantification ) {
     printErr("If transform_library is set to true, quantification must also be set to true.")
     exit 1
 }

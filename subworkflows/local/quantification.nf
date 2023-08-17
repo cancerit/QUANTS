@@ -33,7 +33,7 @@ workflow QUANTIFICATION {
             // MODULE: Run Python library transformer
             //
             TRANSFORM_LIBRARY_FOR_PYQUEST ( oligo_library )
-        } 
+        }
 
         if (params.quantification == "pyquest") {
             //
@@ -44,7 +44,7 @@ workflow QUANTIFICATION {
             } else {
                 PYQUEST ( reads, oligo_library )
             }
-            
+
             ch_sample_library_counts = PYQUEST.out.library_counts
             ch_sample_read_counts = PYQUEST.out.read_counts
             ch_sample_stats = PYQUEST.out.stats
