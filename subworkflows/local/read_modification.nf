@@ -17,7 +17,7 @@ workflow READ_MODIFICATION {
             // MODULE: Append string to reads
             //
 
-            APPEND_STRINGS_TO_FQ ( reads, 'modified' )
+            APPEND_STRINGS_TO_FQ ( reads )
             ch_modified_reads = APPEND_STRINGS_TO_FQ.out.reads
         }
     emit:

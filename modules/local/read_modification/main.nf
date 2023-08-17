@@ -14,7 +14,6 @@ process APPEND_STRINGS_TO_FQ {
 
     input:
         tuple val(meta), path(reads)
-        val(suffix)
 
     output:
         tuple val(meta), path("*.modified.fq.gz"), emit: reads
