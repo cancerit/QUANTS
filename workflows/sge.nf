@@ -86,9 +86,9 @@ if (params.read_filtering_qc && !params.read_filtering) {
     exit 1
 }
 
-// Check either read_modification is set when append parameters given
+// Check that when append_start, append_end or append_quality are set that read_modification has been set to true
 if (!params.read_modification && (params.append_start || params.append_end || params.append_quality)) {
-    printErr("If read_modification is set, a string must be provided for either append_start or append_end.")
+    printErr("If append_start, append_end or append_quality is set, read_modification must be set to true.")
     exit 1
 }
 
