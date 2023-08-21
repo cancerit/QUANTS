@@ -4,13 +4,13 @@
 
 To see available parameters (assuming you are in the QUANTS pipeline directory):
 
-```
+```bash
 nextflow run . --help
 ```
 
 For full parameters:
 
-```
+```bash
 nextflow run . --help --show_hidden_params
 ```
 
@@ -40,7 +40,7 @@ nextflow run QUANTS --input samplesheet.csv --oligo_library library.tsv -profile
 
 ## Core Nextflow arguments
 
-> **NB:** These options are part of Nextflow and use a _single_ hyphen (pipeline parameters use a double-hyphen).
+> **NB:** These options are part of Nextflow and use a *single* hyphen (pipeline parameters use a double-hyphen).
 
 ### `-profile`
 
@@ -51,7 +51,7 @@ Several generic profiles are bundled with the pipeline which instruct the pipeli
 Note that multiple profiles can be loaded, for example: `-profile test,docker` - the order of arguments is important!
 They are loaded in sequence, so later profiles can overwrite earlier profiles.
 
-If `-profile` is not specified, the pipeline will run locally and expect all software to be installed and available on the `PATH`. This is _not_ recommended.
+If `-profile` is not specified, the pipeline will run locally and expect all software to be installed and available on the `PATH`. This is *not* recommended.
 
 * `docker`
     * A generic configuration profile to be used with [Docker](https://docker.com/)
@@ -70,10 +70,10 @@ Specify the path to a specific config file (this is a core Nextflow command). Se
 
 Below is a basic example:
 
-```
+```nextflow
 params {
-   single_end: true
-   "cutadapt_options": "-a 'AGATCGGAAGAGCGGTTCAGCAGGAATGCCG' -A 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT'",
+    single_end: true
+    "cutadapt_options": "-a 'AGATCGGAAGAGCGGTTCAGCAGGAATGCCG' -A 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT'",
 }
 ```
 

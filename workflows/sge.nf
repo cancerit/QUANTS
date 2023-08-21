@@ -21,59 +21,87 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input sample
 // Check input_type
 def input_type_options = ['fastq', 'cram']
 if ( input_type_options.contains( params.input_type ) == false ) {
-	    printErr("input_type must be one of: " + input_type_options.join(',') + ".")
-	    exit 1
-    }
+    printErr("input_type must be one of: " + input_type_options.join(',') + ".")
+    exit 1
+}
 
-// Check read trimming software (if set)
+// Check adapter and primer trimming software (if set)
 def read_trimming_software = ['cutadapt']
-if (params.read_trimming) {
-    if ( read_trimming_software.contains( params.read_trimming ) == false ) {
-	    printErr("If read_trimming is set, software must be one of: " + read_trimming_software.join(',') + ".")
-	    exit 1
+if (params.adapter_trimming) {
+    if ( read_trimming_software.contains( params.adapter_trimming ) == false ) {
+        printErr("If adapter_trimming is set, software must be one of: " + read_trimming_software.join(',') + ".")
+        exit 1
+    }
+}
+if (params.primer_trimming) {
+    if ( read_trimming_software.contains( params.primer_trimming ) == false ) {
+        printErr("If primer_trimming is set, software must be one of: " + read_trimming_software.join(',') + ".")
+        exit 1
     }
 }
 
-// Check read trimming QC (if read trimming set)
-if (params.read_trimming_qc && !params.read_trimming) {
-    printErr("Read trimming QC cannot be run when read_trimming is set to false.")
-	exit 1
+// Check adapter and primer trimming QC (if read trimming set)
+if (params.adapter_trimming_qc && !params.adapter_trimming) {
+    printErr("Adapter trimming QC cannot be run when adapter_trimming is set to false.")
+    exit 1
+}
+if (params.primer_trimming_qc && !params.primer_trimming) {
+    printErr("Primer trimming QC cannot be run when primer_trimming is set to false.")
+    exit 1
 }
 
 // Check read merging software (if set)
 def read_merging_software = ['seqprep', 'flash2']
 if (params.read_merging) {
     if ( read_merging_software.contains( params.read_merging ) == false ) {
-	    printErr("If read_merging is set, software must be one of: " + read_merging_software.join(',') + ".")
-	    exit 1
+        printErr("If read_merging is set, software must be one of: " + read_merging_software.join(',') + ".")
+        exit 1
     }
 }
 
 // Check read merging QC (if read merging set)
 if (params.read_merging_qc && !params.read_merging) {
     printErr("Read merging QC cannot be run when read_merging is set to false.")
-	exit 1
+    exit 1
 }
 
 // Check transformation (if set)
 def read_transformation_options = ['reverse', 'complement', 'reverse_complement']
 if (params.read_transform) {
     if ( read_transformation_options.contains( params.read_transform ) == false ) {
-	    printErr("If read_transform is set, value must be one of: " + read_transformation_options.join(',') + ".")
-	    exit 1
+        printErr("If read_transform is set, value must be one of: " + read_transformation_options.join(',') + ".")
+        exit 1
     }
 }
 
 // Check read fitering is valid (if set)
 if (params.read_filtering && (!params.single_end && !params.read_merging)) {
     printErr("Read filtering cannot be run when data is paired end or single end, but read merging is set to false.")
-	exit 1
+    exit 1
 }
 
 // Check read filtering QC (if read filtering set)
 if (params.read_filtering_qc && !params.read_filtering) {
     printErr("Read filtering QC cannot be run when read_filtering is set to false.")
-	exit 1
+    exit 1
+}
+
+// Check that when append_start, append_end or append_quality are set that read_modification has been set to true
+if (!params.read_modification && (params.append_start || params.append_end || params.append_quality)) {
+    printErr("If append_start, append_end or append_quality is set, read_modification must be set to true.")
+    exit 1
+}
+
+// Check either append_start or append_end provided when read_modification is set
+if (params.read_modification && !params.append_start && !params.append_end) {
+    printErr("If read_modification is set, a string must be provided for either append_start or append_end.")
+    exit 1
+}
+
+// Check append_quality provided when read_modification is set
+if (params.read_modification && (!params.append_quality || params.append_quality.length() > 1)) {
+    printErr("If read_modification is set, a single quality character must be provided for append_quality.")
+    exit 1
 }
 
 // Check quantification is set if library is provided
@@ -86,15 +114,21 @@ if (params.oligo_library && !params.quantification) {
 def quantification_software = ['pyquest']
 if (params.quantification) {
     if ( quantification_software.contains( params.quantification ) == false ) {
-	    printErr("If quantification is set, software must be one of: " + quantification_software.join(',') + ".")
-	    exit 1
+        printErr("If quantification is set, software must be one of: " + quantification_software.join(',') + ".")
+        exit 1
     }
+}
+
+// Check that quantification is set if transform_library is enabled
+if (params.transform_library && !params.quantification ) {
+    printErr("If transform_library is set to true, quantification must also be set to true.")
+    exit 1
 }
 
 // Check that read merging is enabled if quantification is set and data is PE
 if (((params.quantification || params.quantification ) && !params.single_end) && !params.read_merging) {
     printErr("Read merging must be enabled when quantification is requested and input is paired end.")
-	exit 1
+    exit 1
 }
 
 /*
@@ -122,25 +156,31 @@ multiqc_options.args += params.multiqc_title ? Utils.joinModuleArgs(["--title \"
 //
 // MODULE: Local to the pipeline
 //
+// editorconfig-checker-disable
 include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['tsv':'']] )
-include { INPUT_CHECK_FASTQ; 
+include { INPUT_CHECK_FASTQ;
           INPUT_CHECK_CRAM } from '../subworkflows/local/input_check' addParams( options: [:] )
 include { CRAM_TO_FASTQ } from '../subworkflows/local/cram_to_fastq' addParams( options: [:] )
 include { READ_TRANSFORM } from '../subworkflows/local/read_transform' addParams( options: [:] )
 include { READ_MERGING } from '../subworkflows/local/read_merging' addParams( options: [:] )
-include { READ_TRIMMING } from '../subworkflows/local/read_trimming' addParams( options: [:] )
+// TO DO: Both trimming steps use cutadapt - once stable, look at combining / abstraction to avoid duplication here
+include { ADAPTER_TRIMMING } from '../subworkflows/local/adapter_trimming' addParams( options: [:] )
+include { PRIMER_TRIMMING } from '../subworkflows/local/primer_trimming' addParams( options: [:] )
 include { READ_FILTERING } from '../subworkflows/local/read_filtering' addParams( options: [:] )
+include { READ_MODIFICATION } from '../subworkflows/local/read_modification' addParams( options: [:] )
 include { QUANTIFICATION } from '../subworkflows/local/quantification' addParams( options: [:] )
-include { SEQUENCING_QC as RAW_SEQUENCING_QC; 
-          SEQUENCING_QC as MERGED_SEQUENCING_QC; 
-          SEQUENCING_QC as TRIMMED_SEQUENCING_QC;
+include { SEQUENCING_QC as RAW_SEQUENCING_QC;
+          SEQUENCING_QC as MERGED_SEQUENCING_QC;
+          SEQUENCING_QC as ADAPTER_TRIMMED_SEQUENCING_QC;
+          SEQUENCING_QC as PRIMER_TRIMMED_SEQUENCING_QC;
           SEQUENCING_QC as FILTERED_SEQUENCING_QC
         } from '../subworkflows/local/sequencing_qc' addParams( options: [:] )
+// editorconfig-checker-disable
 
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { MULTIQC } from '../modules/nf-core/modules/multiqc/main' addParams( options: multiqc_options   )
+include { MULTIQC } from '../modules/nf-core/multiqc/main' addParams( options: multiqc_options   )
 
 /*
 ========================================================================================
@@ -160,19 +200,21 @@ workflow SGE {
         // SUBWORKFLOW: Read in samplesheet, validate and stage input files
         //
         INPUT_CHECK_CRAM ( ch_input )
-        
+
         //
         // SUBWORKFLOW: Convert CRAM to FASTQ
         //
-        ch_raw_reads = CRAM_TO_FASTQ(INPUT_CHECK_CRAM.out.crams)
-        ch_read_trim = ch_raw_reads
+        CRAM_TO_FASTQ(INPUT_CHECK_CRAM.out.crams)
+        ch_raw_reads = CRAM_TO_FASTQ.out.reads
+        ch_adapter_trim = ch_raw_reads
+        ch_software_versions = ch_software_versions.mix(CRAM_TO_FASTQ.out.versions)
     } else {
         //
         // SUBWORKFLOW: Read in samplesheet, validate and stage input files
         //
         INPUT_CHECK_FASTQ ( ch_input )
         ch_raw_reads = INPUT_CHECK_FASTQ.out.reads
-        ch_read_trim = INPUT_CHECK_FASTQ.out.reads
+        ch_adapter_trim = INPUT_CHECK_FASTQ.out.reads
     }
 
     //
@@ -181,23 +223,49 @@ workflow SGE {
     if (params.raw_sequencing_qc) {
         ch_raw_read_qc = ch_raw_reads.map{it -> [[id: it[0].id + '_raw', single_end: it[0].single_end], it[1]]}
         RAW_SEQUENCING_QC ( ch_raw_read_qc )
+        ch_software_versions = ch_software_versions.mix(RAW_SEQUENCING_QC.out.fastqc_version, RAW_SEQUENCING_QC.out.seqkit_version)
     }
 
     //
-    // SUBWORKFLOW: Run adapter/quality trimming
+    // SUBWORKFLOW: Run adapter trimming
     //
-    if (params.read_trimming) {
-        READ_TRIMMING ( ch_read_trim )
-        ch_read_merge = READ_TRIMMING.out.reads
+    if (params.adapter_trimming) {
+        // Run adapter trimming
+        ADAPTER_TRIMMING ( ch_adapter_trim )
+        ch_software_versions = ch_software_versions.mix(ADAPTER_TRIMMING.out.versions)
         //
-        // SUBWORKFLOW: Run FASTQC on trimmed reads
+        //SUBWORKFLOW: Run FASTQC on adapter trimmed reads
         //
-        if (params.read_trimming_qc) {
-            ch_trimmed_read_qc = READ_TRIMMING.out.reads.map{it -> [[id: it[0].id + '_trimmed', single_end: it[0].single_end], it[1]]}
-            TRIMMED_SEQUENCING_QC ( ch_trimmed_read_qc )
+        if (params.adapter_trimming_qc) {
+            ch_adapter_trimming_qc = ADAPTER_TRIMMING.out.reads.map{it -> [[id: it[0].id + '_adapter_trimmed', single_end: it[0].single_end], it[1]]}
+            ADAPTER_TRIMMED_SEQUENCING_QC ( ch_adapter_trimming_qc )
+            ch_software_versions = ch_software_versions.mix(ADAPTER_TRIMMED_SEQUENCING_QC.out.fastqc_version, ADAPTER_TRIMMED_SEQUENCING_QC.out.seqkit_version)
         }
+        // Send to next stage
+        ch_primer_trim = ADAPTER_TRIMMING.out.reads
     } else {
-        ch_read_merge = ch_read_trim
+        ch_primer_trim = ch_adapter_trim
+    }
+
+    //
+    // SUBWORKFLOW: Run primer trimming
+    //
+    if (params.primer_trimming) {
+        // Run primer trimming
+        PRIMER_TRIMMING ( ch_primer_trim )
+        ch_software_versions = ch_software_versions.mix(PRIMER_TRIMMING.out.versions)
+        //
+        //SUBWORKFLOW: Run FASTQC on primer trimmed reads
+        //
+        if (params.primer_trimming_qc) {
+            ch_primer_trimming_qc = PRIMER_TRIMMING.out.reads.map{it -> [[id: it[0].id + '_primer_trimmed', single_end: it[0].single_end], it[1]]}
+            PRIMER_TRIMMED_SEQUENCING_QC ( ch_primer_trimming_qc )
+            ch_software_versions = ch_software_versions.mix(PRIMER_TRIMMED_SEQUENCING_QC.out.fastqc_version, PRIMER_TRIMMED_SEQUENCING_QC.out.seqkit_version)
+        }
+        // Send to next stage
+        ch_read_merge = PRIMER_TRIMMING.out.reads
+    } else {
+        ch_read_merge = ch_primer_trim
     }
 
     //
@@ -206,6 +274,7 @@ workflow SGE {
     if (params.read_merging) {
         READ_MERGING ( ch_read_merge )
         ch_read_transform = READ_MERGING.out.reads.map{it -> [[id: it[0].id + '_merged', single_end: true], it[1]]}
+        ch_software_versions = ch_software_versions.mix(READ_MERGING.out.versions)
 
         //
         // SUBWORKFLOW: Run FASTQC on merged reads
@@ -213,6 +282,7 @@ workflow SGE {
         if (params.read_merging_qc) {
             ch_merged_read_qc = ch_read_transform
             MERGED_SEQUENCING_QC ( ch_merged_read_qc )
+            ch_software_versions = ch_software_versions.mix(MERGED_SEQUENCING_QC.out.fastqc_version, MERGED_SEQUENCING_QC.out.seqkit_version)
         }
     } else {
         ch_read_transform = ch_read_merge
@@ -225,6 +295,7 @@ workflow SGE {
     if (params.read_transform ) {
         READ_TRANSFORM ( ch_read_transform )
         ch_read_filter = READ_TRANSFORM.out.reads
+        ch_software_versions = ch_software_versions.mix(READ_TRANSFORM.out.versions)
     } else {
         ch_read_filter = ch_read_transform
     }
@@ -232,20 +303,33 @@ workflow SGE {
     //
     // SUBWORKFLOW: Run read filtering (data must be SE by this stage)
     //
-    
+
     if (params.read_filtering) {
         READ_FILTERING ( ch_read_filter )
-        ch_reads_to_analyse = READ_FILTERING.out.reads
-        
+        ch_reads_to_modify = READ_FILTERING.out.reads
+        ch_software_versions = ch_software_versions.mix(READ_FILTERING.out.versions)
+
         //
         // SUBWORKFLOW: Run FASTQC on filtered reads
         //
         if (params.read_filtering_qc) {
             ch_filtered_read_qc = READ_FILTERING.out.reads.map{it -> [[id: it[0].id + '_filtered', single_end: true], it[1]]}
             FILTERED_SEQUENCING_QC ( ch_filtered_read_qc )
+            ch_software_versions = ch_software_versions.mix(FILTERED_SEQUENCING_QC.out.fastqc_version, FILTERED_SEQUENCING_QC.out.seqkit_version)
         }
     } else {
-        ch_reads_to_analyse = ch_read_filter
+        ch_reads_to_modify = ch_read_filter
+    }
+
+    //
+    // SUBWORKFLOW: Run read modification (data must be SE by this stage)
+    //    
+    // Purpose of this process is to add string (e.g. primer sequence without errors) and quality value to start and/or end of reads
+    if (params.read_modification) {
+        READ_MODIFICATION ( ch_reads_to_modify )
+        ch_reads_to_analyse = READ_MODIFICATION.out.reads
+    } else {
+        ch_reads_to_analyse = ch_reads_to_modify
     }
 
     //
@@ -253,7 +337,14 @@ workflow SGE {
     // Returns the number of reads assigned to each guide from a user-defined library
     //
     if (params.quantification) {
-        QUANTIFICATION ( ch_reads_to_analyse )
+        if (params.transform_library) {
+            oligo_library = params.oligo_library
+        } else {
+            oligo_library = params.oligo_library
+        }
+
+        QUANTIFICATION ( ch_reads_to_analyse, oligo_library )
+        ch_software_versions = ch_software_versions.mix(QUANTIFICATION.out.versions)
     }
 
     //
@@ -264,7 +355,6 @@ workflow SGE {
         .groupTuple()
         .map { it[1][0] }
         .flatten()
-        .collect()
         .set { ch_software_versions }
 
     GET_SOFTWARE_VERSIONS (
@@ -274,7 +364,7 @@ workflow SGE {
     //
     // MODULE: MultiQC
     //
-    if (params.raw_sequencing_qc || params.read_trimming_qc || params.read_merging_qc) {
+    if (params.raw_sequencing_qc || params.adapter_trimming_qc || params.primer_trimming_qc || params.read_merging_qc) {
         workflow_summary    = WorkflowSge.paramsSummaryMultiqc(workflow, summary_params)
         ch_workflow_summary = Channel.value(workflow_summary)
 
@@ -287,9 +377,13 @@ workflow SGE {
         if (params.raw_sequencing_qc) {
             ch_multiqc_files = ch_multiqc_files.mix(RAW_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
         }
-        if (params.read_trimming_qc) {
-            ch_multiqc_files = ch_multiqc_files.mix(TRIMMED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
-            ch_multiqc_files = ch_multiqc_files.mix(READ_TRIMMING.out.stats.collect{it[1]}.ifEmpty([]))
+        if (params.adapter_trimming_qc) {
+            ch_multiqc_files = ch_multiqc_files.mix(ADAPTER_TRIMMED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
+            ch_multiqc_files = ch_multiqc_files.mix(ADAPTER_TRIMMING.out.stats.collect{it[1]}.ifEmpty([]))
+        }
+        if (params.primer_trimming_qc) {
+            ch_multiqc_files = ch_multiqc_files.mix(PRIMER_TRIMMED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
+            ch_multiqc_files = ch_multiqc_files.mix(PRIMER_TRIMMING.out.stats.collect{it[1]}.ifEmpty([]))
         }
         if (params.read_merging_qc) {
             ch_multiqc_files = ch_multiqc_files.mix(MERGED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
@@ -297,14 +391,14 @@ workflow SGE {
         if (params.read_filtering_qc) {
             ch_multiqc_files = ch_multiqc_files.mix(FILTERED_SEQUENCING_QC.out.fastqc_zip.collect{it[1]}.ifEmpty([]))
         }
-        
+
         MULTIQC (
             ch_multiqc_files.collect()
         )
 
         multiqc_report       = MULTIQC.out.report.toList()
         ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
-    } 
+    }
 }
 
 /*

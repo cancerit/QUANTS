@@ -40,7 +40,7 @@ process SEQKIT_STATS {
         --out-file ${prefix}.stats.txt \
         ${reads[0]}
 
-    echo \$(seqkit --version 2>&1) | sed 's/^.*seqkit //; s/Using.*\$//' > ${software}.version.txt
+    echo \$(seqkit version 2>&1) | sed 's/^.*seqkit //' > ${software}.version.txt
     """
     } else {
     """
@@ -52,7 +52,7 @@ process SEQKIT_STATS {
         ${reads[0]} \
         ${reads[1]}
 
-    echo \$(seqkit --version 2>&1) | sed 's/^.*seqkit //; s/Using.*\$//' > ${software}.version.txt
+    echo \$(seqkit version 2>&1) | sed 's/^.*seqkit //' > ${software}.version.txt
     """
     }
 }

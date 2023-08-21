@@ -22,7 +22,7 @@ process SEQPREP {
 
     output:
     tuple val(meta), path("*.unmerged.fq.gz"), emit: reads
-    //path "*.version.txt"                      , emit: version
+    path "*.version.txt"                     , emit: version
 
     script:
     def software = getSoftwareName(task.process)
@@ -38,6 +38,8 @@ process SEQPREP {
         -f $input_reads_forward \\
         -r $input_reads_reverse \\
         -1 $output_reads_forward \\
-        -2 $output_reads_reverse 
+        -2 $output_reads_reverse
+    echo '1.3.2' > ${software}.version.txt
     """
+    // FIXME make version dynamic not hardcoded (SeqPrep has no --version option)
 }

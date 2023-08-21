@@ -12,7 +12,7 @@ def modules = params.modules.clone()
 def flash2_options  = modules['flash2']
 if (params.flash2_options) {
     flash2_options.args += " " + params.flash2_options
-} 
+}
 include { FLASH2  } from '../../modules/local/flash2/main.nf' addParams( options: flash2_options )
 
 //
@@ -21,31 +21,36 @@ include { FLASH2  } from '../../modules/local/flash2/main.nf' addParams( options
 def seqprep_options  = modules['seqprep']
 if (params.seqprep_options) {
     seqprep_options.args += " " + params.seqprep_options
-} 
+}
 include { SEQPREP } from '../../modules/local/seqprep/read_merging/main.nf' addParams( options: seqprep_options )
 
 workflow READ_MERGING {
-    take: 
+    take:
         reads
 
-    main: 
+    main:
         ch_merged_reads = Channel.empty()
+        ch_versions = Channel.empty()
+
         if (params.read_merging == "flash2") {
             //
             // MODULE: Run FLASH
             //
             FLASH2 ( reads )
             ch_merged_reads = FLASH2.out.reads
+            ch_versions = FLASH2.out.version
         }
-        
+
         if (params.read_merging == "seqprep") {
             //
             // MODULE: Run SeqPrep
             //
             SEQPREP ( reads )
             ch_merged_reads = SEQPREP.out.reads
+            ch_versions = SEQPREP.out.version
         }
-        
+
     emit:
         reads = ch_merged_reads
+        versions = ch_versions
 }

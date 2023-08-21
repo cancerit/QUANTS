@@ -31,16 +31,16 @@ process SEQKIT_SEQ {
     script:
     def software = getSoftwareName(task.process)
     def prefix   = options.suffix ? "${meta.id}${options.suffix}" : "${meta.id}"
-    
+
     """
     seqkit \
         seq \
         $options.args \
         --threads $task.cpus \
-        ${reads[0]} > ${prefix}.${suffix}.fq 
-    
+        ${reads[0]} > ${prefix}.${suffix}.fq
+
     gzip ${prefix}.${suffix}.fq
 
-    echo \$(seqkit --version 2>&1) | sed 's/^.*seqkit //; s/Using.*\$//' > ${software}.version.txt
+    echo \$(seqkit version 2>&1) | sed 's/^.*seqkit //' > ${software}.version.txt
     """
 }

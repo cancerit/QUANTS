@@ -6,9 +6,11 @@ name: nf-core linting comment
 on:
   workflow_run:
     workflows: ["nf-core linting"]
+    types:
+      - completed
 
 jobs:
-  test:
+  post-nfcore-linting:
     runs-on: ubuntu-latest
     steps:
       - name: Download lint results

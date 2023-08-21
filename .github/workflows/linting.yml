@@ -11,14 +11,14 @@ jobs:
   Markdown:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: '10'
+          node-version: '18'
       - name: Install markdownlint
         run: npm install -g markdownlint-cli
       - name: Run Markdownlint
-        run: markdownlint .
+        run: markdownlint --ignore bin .
 
       # If the above check failed, post a comment on the PR explaining the failure
       - name: Post PR comment
@@ -49,25 +49,25 @@ jobs:
   EditorConfig:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v3
         with:
-          node-version: "10"
+          node-version: "18"
 
       - name: Install editorconfig-checker
         run: npm install -g editorconfig-checker
 
       - name: Run ECLint check
-        run: editorconfig-checker -exclude README.md $(git ls-files | grep -v test)
+        run: editorconfig-checker -exclude README.md $(git ls-files | grep -v -e test -e manifest_transformer -e pyquest_library_converter)
 
   YAML:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
-          node-version: '10'
+          node-version: '18'
       - name: Install yaml-lint
         run: npm install -g yaml-lint
       - name: Run yaml-lint
@@ -103,7 +103,7 @@ jobs:
     steps:
 
       - name: Check out pipeline code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Install Nextflow
         env:
@@ -112,9 +112,9 @@ jobs:
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
-      - uses: actions/setup-python@v1
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.6'
+          python-version: '3.11'
           architecture: 'x64'
 
       - name: Install dependencies
@@ -127,7 +127,7 @@ jobs:
           GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITHUB_PR_COMMIT: ${{ github.event.pull_request.head.sha }}
-        run: nf-core -l lint_log.txt lint ${GITHUB_WORKSPACE} --markdown lint_results.md
+        run: nf-core -l lint_log.txt lint -d ${GITHUB_WORKSPACE} --markdown lint_results.md
 
       - name: Save PR number
         if: ${{ always() }}
@@ -135,7 +135,7 @@ jobs:
 
       - name: Upload linting log file artifact
         if: ${{ always() }}
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: linting-logs
           path: |

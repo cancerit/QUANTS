@@ -72,10 +72,15 @@
                     "description": "Define whether the pipeline should run sequencing QC for merged reads (only suitable for paired-end data with read merging enabled).",
                     "help_text": "Set this to true if sequencing QC for merged reads is required, else set to false."
                 },
-                "read_trimming_qc": {
+                "adapter_trimming_qc": {
                     "type": "boolean",
-                    "description": "Define whether the pipeline should run sequencing QC for trimmed reads (only suitable when read trimming enabled).",
-                    "help_text": "Set this to true if sequencing QC for trimmed reads is required, else set to false."
+                    "description": "Define whether the pipeline should run sequencing QC for reads which have had adapters removed (only suitable when adapter trimming enabled).",
+                    "help_text": "Set this to true if sequencing QC for reads whose adapters have been removed is required, else set to false."
+                },
+                "primer_trimming_qc": {
+                    "type": "boolean",
+                    "description": "Define whether the pipeline should run sequencing QC for reads which have had primers removed (only suitable when primer trimming enabled).",
+                    "help_text": "Set this to true if sequencing QC for reads whose primers have been removed is required, else set to false."
                 },
                 "read_filtering_qc": {
                     "type": "boolean",
@@ -125,18 +130,36 @@
                 }
             }
         },
-        "read_trimming_options": {
-            "title": "Read trimming options",
+        "adapter_trimming_options": {
+            "title": "Adapter trimming options",
             "type": "object",
             "fa_icon": "fas fa-cut",
-            "description": "Define pipeline options for read trimming.",
+            "description": "Define pipeline options for trimming adapters from reads.",
             "properties": {
-                "read_trimming": {
+                "adapter_trimming": {
                     "type": "string",
-                    "description": "Define whether the pipeline should trim reads.",
-                    "help_text": "Set this to 'cutadapt' if read trimming is required, else set to null."
+                    "description": "Define whether the pipeline should trim adapters from reads.",
+                    "help_text": "Set this to 'cutadapt' if adapter trimming is required, else set to null."
                 },
-                "cutadapt_options": {
+                "adapter_cutadapt_options": {
+                    "type": "string",
+                    "description": "Define options for cutadapt (only suitable when cutadapt enabled).",
+                    "help_text": "Include valid cutadapt command line options where default options are not suitable."
+                }
+            }
+        },
+        "primer_trimming_options": {
+            "title": "Primer trimming options",
+            "type": "object",
+            "fa_icon": "fas fa-cut",
+            "description": "Define pipeline options for trimming primers from reads.",
+            "properties": {
+                "primer_trimming": {
+                    "type": "string",
+                    "description": "Define whether the pipeline should trim primers from reads.",
+                    "help_text": "Set this to 'cutadapt' if primer trimming is required, else set to null."
+                },
+                "primer_cutadapt_options": {
                     "type": "string",
                     "description": "Define options for cutadapt (only suitable when cutadapt enabled).",
                     "help_text": "Include valid cutadapt command line options where default options are not suitable."
@@ -161,6 +184,34 @@
                 }
             }
         },
+        "read_modification_options": {
+            "title": "Read modification options",
+            "type": "object",
+            "fa_icon": "fas fa-plus-circle",
+            "description": "Define pipeline options for read modification.",
+            "properties": {
+                "read_modification": {
+                    "type": "boolean",
+                    "description": "Define whether to add string and qualities to read.",
+                    "help_text": "Set this to true if read modification (e.g. adding perfect primer to read) is required, else set to false."
+                },
+                "append_start": {
+                    "type": "string",
+                    "description": "Define string to add to start of read sequence.",
+                    "help_text": "Define string to add to start of read sequence, else set to null."
+                },
+                "append_end": {
+                    "type": "string",
+                    "description": "Define string to add to end of read sequence.",
+                    "help_text": "Define string to add to end of read sequence, else set to null."
+                },
+                "append_quality": {
+                    "type": "string",
+                    "description": "Define quality value to read quality (this should be a single character).",
+                    "help_text": "Define quality value to read quality (this should be a single character), else set to null."
+                }
+            }
+        },
         "quantification_options": {
             "title": "Quantification options",
             "type": "object",
@@ -179,6 +230,11 @@
                     "description": "Path to tab-delimited file containing information about the oligos in the experiment (only required when quantification enabled).",
                     "help_text": "You will need to create a library file with information about the oligos in your experiment before running the pipeline. Use this parameter to specify its location.",
                     "fa_icon": "fas fa-file"
+                },
+                "transform_library": {
+                    "type": "boolean",
+                    "description": "Define whether the pipeline should transform the oligo library (only suitable when quantification is enabled).",
+                    "help_text": "Set this to true if library transformation is required, else set to false."
                 }
             }
         },
@@ -385,10 +441,16 @@
             "$ref": "#/definitions/read_merging_options"
         },
         {
-            "$ref": "#/definitions/read_trimming_options"
+            "$ref": "#/definitions/adapter_trimming_options"
+        },
+        {
+            "$ref": "#/definitions/primer_trimming_options"
         },
         {
             "$ref": "#/definitions/read_filtering_options"
+        },
+        {
+            "$ref": "#/definitions/read_modification_options"
         },
         {
             "$ref": "#/definitions/quantification_options"

@@ -12,10 +12,10 @@ def modules = params.modules.clone()
 include { SAMTOOLS_BAM2FQ } from '../../modules/local/samtools/bam2fq/main' addParams()
 
 workflow CRAM_TO_FASTQ {
-    take: 
+    take:
         crams
 
-    main: 
+    main:
         ch_parsed_reads = Channel.empty()
         //
         // MODULE: Run samtools bam2fq
@@ -26,6 +26,8 @@ workflow CRAM_TO_FASTQ {
             SAMTOOLS_BAM2FQ ( crams, false )
         }
         ch_parsed_reads = SAMTOOLS_BAM2FQ.out.reads
+
     emit:
         reads = ch_parsed_reads
+        versions = SAMTOOLS_BAM2FQ.out.versions
 }

@@ -11,14 +11,14 @@ def modules = params.modules.clone()
 def seqkit_seq_options  = modules['seqkit_seq']
 if (params.seqkit_seq_options) {
     seqkit_seq_options.args += " " + params.seqkit_seq_options
-} 
+}
 include { SEQKIT_SEQ  } from '../../modules/local/seqkit_seq/main' addParams( options: seqkit_seq_options )
 
 workflow READ_FILTERING {
-    take: 
+    take:
         reads
 
-    main: 
+    main:
         ch_filtered_reads = Channel.empty()
         if (params.read_filtering) {
             //
@@ -30,4 +30,5 @@ workflow READ_FILTERING {
         }
     emit:
         reads = ch_filtered_reads
+        versions = SEQKIT_SEQ.out.version
 }

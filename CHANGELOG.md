@@ -19,7 +19,7 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 * Add subflow for read transform (rev comp, rev, comp)
 * Add support for CRAM input
 * Remove separate library-independent quantification
-* Replace library-dependent quantification with counting unqiue reads + merge with library (pyCROQUET) 
+* Replace library-dependent quantification with counting unqiue reads + merge with library (pyCROQUET)
 
 ## 1.2.1.0 [4th April 2022]
 
@@ -33,3 +33,11 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 
 * Replace pyCROQUET with pyQUEST version 1.0
 * Add script for converting VaLiAnT meta file (or other CSV/TSV) into pyQUEST-formatted library (not integrated into workflow)
+
+## 3.0.0.0 - [21st August 2023]
+
+* Split read trimming into two stages
+	* Adapter trimming - removes user-defined adapter sequences and takes forward both trimmed and untrimmed reads
+	* Primer trimming - removes user-defined primer sequences and takes forward only trimmed reads
+* Add a read modification process which can append user-defined sequences to trimmed reads
+* Add library transformer to allow users to provide libraries in a different format (e.g. the meta CSV from VaLiAnT) and convert it for use with pyQUEST
