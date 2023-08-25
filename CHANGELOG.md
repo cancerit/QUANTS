@@ -37,8 +37,8 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 ## 3.0.0.0 - [21st August 2023]
 
 * Split read trimming into two stages
-	* Adapter trimming - removes user-defined adapter sequences and takes forward both trimmed and untrimmed reads
-	* Primer trimming - removes user-defined primer sequences and takes forward only trimmed reads
+    * Adapter trimming - removes user-defined adapter sequences and takes forward both trimmed and untrimmed reads
+    * Primer trimming - removes user-defined primer sequences and takes forward only trimmed reads
 * Add a read modification process which can append user-defined sequences to trimmed reads
 * Add library transformer to allow users to provide libraries in a different format (e.g. the meta CSV from VaLiAnT) and convert it for use with pyQUEST
 
