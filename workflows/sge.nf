@@ -186,6 +186,7 @@ include { MULTIQC } from '../modules/nf-core/multiqc/main' addParams( options: m
 // FUNCTIONS: collection of custom functions
 //
 include { add_seqkit_stats; modify_seqkit_stats } from '../functions/functions.nf'
+include { compose_cutadapt_jsons; collate_cutadapt_jsons } from '../functions/functions.nf'
 
 /*
 ========================================================================================
@@ -200,6 +201,7 @@ workflow SGE {
     // Set up empty channels
     ch_software_versions = Channel.empty()
     seqkit_stat_ch = Channel.empty()
+    cutadapt_jsons_ch = Channel.empty()
 
     if (params.input_type == 'cram') {
         //
@@ -240,6 +242,7 @@ workflow SGE {
         // Run adapter trimming
         ADAPTER_TRIMMING ( ch_adapter_trim )
         ch_software_versions = ch_software_versions.mix(ADAPTER_TRIMMING.out.versions)
+        cutadapt_jsons_ch = cutadapt_jsons_ch.mix(ADAPTER_TRIMMING.out.stats)
         //
         //SUBWORKFLOW: Run FASTQC on adapter trimmed reads
         //
@@ -262,6 +265,7 @@ workflow SGE {
         // Run primer trimming
         PRIMER_TRIMMING ( ch_primer_trim )
         ch_software_versions = ch_software_versions.mix(PRIMER_TRIMMING.out.versions)
+        cutadapt_jsons_ch = cutadapt_jsons_ch.mix(PRIMER_TRIMMING.out.stats)
         //
         //SUBWORKFLOW: Run FASTQC on primer trimmed reads
         //
@@ -375,6 +379,13 @@ workflow SGE {
     seqkit_stat_ch
         .map { meta, file, stage -> modify_seqkit_stats(meta, file, stage) }
         .collectFile(keepHeader: true, name: 'seqkit_stats.tsv', storeDir: "${params.outdir}/seqkit_stats")
+
+     cutadapt_jsons_ch
+        .groupTuple()
+        .map { meta, fileList -> compose_cutadapt_jsons(meta, fileList) }
+        .toList()
+        .map { collate_cutadapt_jsons(it) }
+        .collectFile(name: 'cutadapt.json', storeDir: params.outdir)
 
     //
     // MODULE: MultiQC

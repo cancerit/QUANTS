@@ -1,3 +1,6 @@
+import groovy.json.JsonSlurper
+import groovy.json.JsonOutput
+
 //
 // takes channel and SEQUENCING_QC workflow object
 // extracts seqkit_stats output channel, combines it with workflow name and appends to input channel
@@ -42,4 +45,28 @@ def modify_seqkit_stats(meta, path, stage) {
         }
 
     return newLines.join("\n") + "\n"
+
+def compose_cutadapt_jsons(meta, pathList) {
+    def jsonSlurper = new JsonSlurper()
+    def record = [:]
+
+    for (path in pathList) {
+        def stage = path.name.split("\\.")[-3]
+        def object = jsonSlurper.parse(path)
+        record[stage] = object
+    }
+
+    record = [(meta.id): record]
+    return record
+}
+
+def collate_cutadapt_jsons(jsonList) {
+    def output = [:]
+
+    for (json in jsonList) {
+        output.putAll(json)
+    }
+
+    def output_string = JsonOutput.toJson(output)
+    return output_string
 }
