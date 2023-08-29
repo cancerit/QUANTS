@@ -186,6 +186,7 @@ include { MULTIQC } from '../modules/nf-core/multiqc/main' addParams( options: m
 // FUNCTIONS: collection of custom functions
 //
 include { add_seqkit_stats; modify_seqkit_stats } from '../functions/functions.nf'
+include { add_stats_with_stage } from '../functions/functions.nf'
 include { compose_cutadapt_jsons; collate_cutadapt_jsons } from '../functions/functions.nf'
 
 /*
@@ -242,7 +243,7 @@ workflow SGE {
         // Run adapter trimming
         ADAPTER_TRIMMING ( ch_adapter_trim )
         ch_software_versions = ch_software_versions.mix(ADAPTER_TRIMMING.out.versions)
-        cutadapt_jsons_ch = cutadapt_jsons_ch.mix(ADAPTER_TRIMMING.out.stats)
+        cutadapt_jsons_ch = add_stats_with_stage(cutadapt_jsons_ch, ADAPTER_TRIMMING, 'stats')
         //
         //SUBWORKFLOW: Run FASTQC on adapter trimmed reads
         //
@@ -265,7 +266,7 @@ workflow SGE {
         // Run primer trimming
         PRIMER_TRIMMING ( ch_primer_trim )
         ch_software_versions = ch_software_versions.mix(PRIMER_TRIMMING.out.versions)
-        cutadapt_jsons_ch = cutadapt_jsons_ch.mix(PRIMER_TRIMMING.out.stats)
+        cutadapt_jsons_ch = add_stats_with_stage(cutadapt_jsons_ch, PRIMER_TRIMMING, 'stats')
         //
         //SUBWORKFLOW: Run FASTQC on primer trimmed reads
         //
@@ -382,7 +383,7 @@ workflow SGE {
 
      cutadapt_jsons_ch
         .groupTuple()
-        .map { meta, fileList -> compose_cutadapt_jsons(meta, fileList) }
+        .map { meta, fileList, stageList -> compose_cutadapt_jsons(meta, fileList, stageList) }
         .toList()
         .map { collate_cutadapt_jsons(it) }
         .collectFile(name: 'cutadapt.json', storeDir: params.outdir)

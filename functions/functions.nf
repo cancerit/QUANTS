@@ -46,12 +46,27 @@ def modify_seqkit_stats(meta, path, stage) {
 
     return newLines.join("\n") + "\n"
 
-def compose_cutadapt_jsons(meta, pathList) {
+
+//
+// takes channel and workflow object
+// extracts desired output channel from workflow, combines it with workflow name and appends to input channel
+//
+def add_stats_with_stage(channel, workflow, out_channel = 'stats') {
+    return channel.mix(
+        workflow.out.getProperty(out_channel).combine(
+            [workflow.name.split(':').last()]
+        )
+    )
+}
+
+//
+// takes cutadapt json filenames for the sample and creates a record
+//
+def compose_cutadapt_jsons(meta, pathList, stageList) {
     def jsonSlurper = new JsonSlurper()
     def record = [:]
 
-    for (path in pathList) {
-        def stage = path.name.split("\\.")[-3]
+    [pathList, stageList].transpose().each() { path, stage ->
         def object = jsonSlurper.parse(path)
         record[stage] = object
     }
@@ -60,6 +75,9 @@ def compose_cutadapt_jsons(meta, pathList) {
     return record
 }
 
+//
+// takes a list of map-objects and combines them into one json string
+//
 def collate_cutadapt_jsons(jsonList) {
     def output = [:]
 
