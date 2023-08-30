@@ -51,7 +51,7 @@ def modify_seqkit_stats(meta, path, stage) {
 // takes channel and workflow object
 // extracts desired output channel from workflow, combines it with workflow name and appends to input channel
 //
-def add_stats_with_stage(channel, workflow, out_channel = 'stats') {
+def add_stats_with_stage(channel, workflow, out_channel) {
     return channel.mix(
         workflow.out.getProperty(out_channel).combine(
             [workflow.name.split(':').last()]
