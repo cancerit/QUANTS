@@ -1,6 +1,3 @@
-import groovy.json.JsonSlurper
-import groovy.json.JsonOutput
-
 //
 // takes channel and SEQUENCING_QC workflow object
 // extracts seqkit_stats output channel, combines it with workflow name and appends to input channel
@@ -46,51 +43,14 @@ def modify_seqkit_stats(meta, path, stage) {
 
     return newLines.join("\n") + "\n"
 
-
 //
-// takes channel and workflow object
+// takes channel, workflow object and name of output channel
 // extracts desired output channel from workflow, combines it with workflow name and appends to input channel
 //
-def add_stats_with_stage(channel, workflow, out_channel) {
+def add_stats_with_stage(channel, workflow, String out_channel) {
     return channel.mix(
         workflow.out.getProperty(out_channel).combine(
             [workflow.name.split(':').last()]
         )
     )
-}
-
-//
-// takes cutadapt json filenames for the sample and creates a record
-//
-def compose_cutadapt_jsons(meta, pathList, stageList) {
-    def jsonSlurper = new JsonSlurper()
-    def record = [:]
-
-    [pathList, stageList].transpose().each() { path, stage ->
-        def object = jsonSlurper.parse(path)
-        object["read_counts"]["read1_with_adapter_percent"] = 100 * object["read_counts"]["read1_with_adapter"] / object["read_counts"]["input"]
-        if (object["read_counts"]["read2_with_adapter"]){
-            object["read_counts"]["read2_with_adapter_percent"] = 100 * object["read_counts"]["read2_with_adapter"] / object["read_counts"]["input"]
-        } else {
-            object["read_counts"]["read2_with_adapter_percent"] = null
-        }
-        record[stage] = object
-    }
-
-    record = [(meta.id): record]
-    return record
-}
-
-//
-// takes a list of map-objects and combines them into one json string
-//
-def collate_cutadapt_jsons(jsonList) {
-    def output = [:]
-
-    for (json in jsonList) {
-        output.putAll(json)
-    }
-
-    def output_string = JsonOutput.toJson(output)
-    return output_string
 }

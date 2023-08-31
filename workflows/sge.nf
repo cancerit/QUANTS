@@ -175,6 +175,7 @@ include { SEQUENCING_QC as RAW_SEQUENCING_QC;
           SEQUENCING_QC as PRIMER_TRIMMED_SEQUENCING_QC;
           SEQUENCING_QC as FILTERED_SEQUENCING_QC
         } from '../subworkflows/local/sequencing_qc' addParams( options: [:] )
+include { COLLATE_CUTADAPT_JSONS } from '../modules/local/cutadapt_json_collation/main.nf' addParams( options: [:] )
 // editorconfig-checker-disable
 
 //
@@ -187,7 +188,6 @@ include { MULTIQC } from '../modules/nf-core/multiqc/main' addParams( options: m
 //
 include { add_seqkit_stats; modify_seqkit_stats } from '../functions/functions.nf'
 include { add_stats_with_stage } from '../functions/functions.nf'
-include { compose_cutadapt_jsons; collate_cutadapt_jsons } from '../functions/functions.nf'
 
 /*
 ========================================================================================
@@ -381,12 +381,10 @@ workflow SGE {
         .map { meta, file, stage -> modify_seqkit_stats(meta, file, stage) }
         .collectFile(keepHeader: true, name: 'seqkit_stats.tsv', storeDir: "${params.outdir}/seqkit_stats")
 
-     cutadapt_jsons_ch
-        .groupTuple()
-        .map { meta, fileList, stageList -> compose_cutadapt_jsons(meta, fileList, stageList) }
-        .toList()
-        .map { collate_cutadapt_jsons(it) }
-        .collectFile(name: 'cutadapt.json', storeDir: params.outdir)
+    cutadapt_jsons_ch
+       .groupTuple()
+       .toList()
+       | COLLATE_CUTADAPT_JSONS
 
     //
     // MODULE: MultiQC
