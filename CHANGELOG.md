@@ -41,3 +41,7 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 	* Primer trimming - removes user-defined primer sequences and takes forward only trimmed reads
 * Add a read modification process which can append user-defined sequences to trimmed reads
 * Add library transformer to allow users to provide libraries in a different format (e.g. the meta CSV from VaLiAnT) and convert it for use with pyQUEST
+
+## 3.0.0.1 - [12th September 2023]
+
+* Primer trimming - bugfix to ensure cutadapt splits reads into trimmed and untrimmed files
