@@ -374,7 +374,7 @@ workflow SGE {
 
     seqkit_stat_ch
         .map { meta, file, stage -> modify_seqkit_stats(meta, file, stage) }
-        .collectFile(keepHeader: true, name: 'seqkit_stats.tsv', storeDir: params.outdir)
+        .collectFile(keepHeader: true, name: 'seqkit_stats.tsv', storeDir: "${params.outdir}/seqkit_stats")
 
     //
     // MODULE: MultiQC
