@@ -11,9 +11,24 @@ def add_seqkit_stats(channel, workflow) {
 }
 
 //
+// removes stage suffix from the sample name
+//
+def trim_sample_name(sample_name) {
+    sample_name
+        .replaceFirst(/_raw$/, "")
+        .replaceFirst(/_primer_trimmed$/, "")
+        .replaceFirst(/_adapter_trimmed$/, "")
+        .replaceFirst(/_merged$/, "")
+        .replaceFirst(/_merged_filtered$/, "")
+}
+
+//
 // each seqkit stat file prepends with two columns for sample and stage
 //
 def modify_seqkit_stats(meta, path, stage) {
+    // TODO should be removed in the future once sample name handling in the pipeline is consistent
+    def sample_name = trim_sample_name(meta.id)
+
     newLines = []
     file(path)
         .readLines()
@@ -21,9 +36,10 @@ def modify_seqkit_stats(meta, path, stage) {
             if (i == 0) {
                 line = "sample" + "\t" + "stage" + "\t" + it
             } else {
-                line = meta.id + "\t" + stage + "\t" + it
+                line = sample_name + "\t" + stage + "\t" + it
             }
             newLines.add(line)
         }
+
     return newLines.join("\n") + "\n"
 }
