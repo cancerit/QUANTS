@@ -6,7 +6,7 @@ input:
   - inputList:
       type: list
       description: |
-        Groovy list containing tuples of three objects: 
+        Groovy list containing tuples of three objects:
         meta, list of cutadapt jsons, list of stages
 output:
   - json:
