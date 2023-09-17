@@ -5,7 +5,7 @@ include { compose_cutadapt_jsons } from './functions'
 
 process COLLATE_CUTADAPT_JSONS {
     label 'process_low'
-    publishDir "${params.outdir}", mode: params.publish_dir_mode
+    publishDir "${params.outdir}/cutadapt", mode: params.publish_dir_mode
 
     input:
     val inputList  // list of tuples [meta, [list of jsons], [list of stages]]
