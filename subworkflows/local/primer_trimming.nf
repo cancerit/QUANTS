@@ -27,7 +27,7 @@ workflow PRIMER_TRIMMING {
 
             CUTADAPT_PRIMER ( reads )
             ch_trimmed_reads = CUTADAPT_PRIMER.out.reads
-            ch_trimmed_stats = CUTADAPT_PRIMER.out.log
+            ch_trimmed_stats = CUTADAPT_PRIMER.out.json
         }
     emit:
         reads = ch_trimmed_reads

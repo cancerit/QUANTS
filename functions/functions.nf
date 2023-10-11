@@ -1,10 +1,10 @@
 //
-// takes channel and SEQUENCING_QC workflow object
-// extracts seqkit_stats output channel, combines it with workflow name and appends to input channel
+// takes channel, workflow object and name of output channel
+// extracts desired output channel from workflow, combines it with workflow name and appends to input channel
 //
-def add_seqkit_stats(channel, workflow) {
+def add_stats_with_stage(channel, workflow, String out_channel) {
     return channel.mix(
-        workflow.out.seqkit_stats.combine(
+        workflow.out.getProperty(out_channel).combine(
             [workflow.name.split(':').last()]
         )
     )
