@@ -18,7 +18,7 @@ process PYQUEST {
         container "quay.io/biocontainers/flash2:2.2.00--h5bf99c6_3"
     }
     */
-    container "quay.io/wtsicgp/pyquest:1.0.0"
+    container "quay.io/wtsicgp/pyquest:1.1.0"
 
     input:
         tuple val(meta), path(reads)
