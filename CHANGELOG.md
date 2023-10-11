@@ -45,3 +45,12 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 ## 3.0.0.1 - [12th September 2023]
 
 * Primer trimming - bugfix to ensure cutadapt splits reads into trimmed and untrimmed files
+
+## 3.0.0.2 - [11th October 2023]
+
+* Collation of cutadapt JSON results into single JSON file
+* Collation of SeqKit statistics results into a single TSV file
+* Update version of pyQUEST to version 1.1.0 
+    * Improved handling of 0-length reads 
+    * Ability to extract top 50 library-independent counts as FASTA 
+
