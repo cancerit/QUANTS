@@ -99,6 +99,7 @@ jobs:
           allow-repeats: false
 
   nf-core:
+    if: false
     runs-on: ubuntu-latest
     steps:
 

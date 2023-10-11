@@ -27,7 +27,7 @@ workflow ADAPTER_TRIMMING {
 
             CUTADAPT_ADAPTER ( reads )
             ch_trimmed_reads = CUTADAPT_ADAPTER.out.reads
-            ch_trimmed_stats = CUTADAPT_ADAPTER.out.log
+            ch_trimmed_stats = CUTADAPT_ADAPTER.out.json
         }
     emit:
         reads = ch_trimmed_reads

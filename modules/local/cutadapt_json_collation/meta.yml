@@ -1,0 +1,17 @@
+name: cutadapt_json_collation
+description: Collate all cutadapt output jsons into one file
+keywords:
+  - cutadapt
+input:
+  - inputList:
+      type: list
+      description: |
+        Groovy list containing tuples of three objects:
+        meta, list of cutadapt jsons, list of stages
+output:
+  - json:
+      type: file
+      description: collated cutadapt json file for all samples
+      pattern: "cutadapt.json"
+authors:
+  - "@y-popov"

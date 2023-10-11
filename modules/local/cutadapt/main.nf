@@ -24,9 +24,9 @@ process CUTADAPT {
     output:
     tuple val(meta), path('*_trimmed{,_1,_2}.fastq.gz')  , emit: reads
     tuple val(meta), path('*_untrimmed{,_1,_2}.fastq.gz'), emit: untrimmed_reads, optional: true
-    tuple val(meta), path('*.log')               , emit: log
-    tuple val(meta), path('*.json')              , emit: json
-    path '*.version.txt'                         , emit: version
+    tuple val(meta), path('*.log')                       , emit: log
+    tuple val(meta), path('*.json')                      , emit: json
+    path '*.version.txt'                                 , emit: version
 
     script:
     def software       = getSoftwareName(task.process)
