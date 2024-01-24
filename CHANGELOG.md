@@ -50,7 +50,9 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 
 * Collation of cutadapt JSON results into single JSON file
 * Collation of SeqKit statistics results into a single TSV file
-* Update version of pyQUEST to version 1.1.0 
-    * Improved handling of 0-length reads 
-    * Ability to extract top 50 library-independent counts as FASTA 
+* Update version of pyQUEST to version 1.1.0
+    * Improved handling of 0-length reads
+    * Ability to extract top 50 library-independent counts as FASTA
+## 3.0.0.3 - [24th January 2024]
 
+* Hotfix to force COLLATE_CUTADAPT_JSONS to run on 1 cpu
