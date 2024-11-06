@@ -13,12 +13,7 @@ process SEQKIT_STATS {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process)+'_stats', meta:meta, publish_by_meta:['id']) }
 
     conda (params.enable_conda ? "bioconda::seqkit=0.15.0" : null)
-
-    if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-        container "https://depot.galaxyproject.org/singularity/seqkit:0.15.0--0"
-    } else {
-        container "quay.io/biocontainers/seqkit:0.15.0--0"
-    }
+    container "quay.io/biocontainers/seqkit:0.15.0--0"
 
     input:
         tuple val(meta), path(reads)
