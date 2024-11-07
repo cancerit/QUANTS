@@ -11,7 +11,7 @@ process TRANSFORM_LIBRARY_FOR_PYQUEST {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:'pyquest', meta:meta, publish_by_meta:['id']) }    conda (params.enable_conda ? null : null)
 
     conda (params.enable_conda ? "conda-forge::python=3.12.7" : null)
-    container "docker.io/python:3.12.7-alpine3.20"
+    container "docker.io/python:3.12.7-slim"
 
     input:
         path(oligo_library)
