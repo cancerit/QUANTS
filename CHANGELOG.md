@@ -56,3 +56,8 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 ## 3.0.0.3 - [24th January 2024]
 
 * Hotfix to force COLLATE_CUTADAPT_JSONS to run on 1 cpu
+
+## 3.0.0.4 - [7th November 2024]
+
+* Replace containers which use licensed conda packages
+* Remove galaxy depot
