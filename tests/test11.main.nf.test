@@ -1,0 +1,37 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    script "main.nf"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+                input = "${projectDir}/tests/manifests/raw-fastq-se-noRC.csv"
+                single_end = true
+                input_type = "fastq"
+                raw_sequencing_qc = true
+                adapter_trimming = "cutadapt"
+                adapter_cutadapt_options = "-a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -m 1"
+                adapter_trimming_qc = true
+                primer_trimming = "cutadapt"
+                primer_cutadapt_options = "-g 'AGCATGTCTAAGGCATATCAGAGCA...TGAGCTGGCAGAGGGGCCATTGTGG' -m 1"
+                primer_trimming_qc = true
+                read_modification = true
+                append_start = "AGCATGTCTAAGGCATATCAGAGCA"
+                append_end = "TGAGCTGGCAGAGGGGCCATTGTGG"
+                append_quality = "?"
+                transform_library = true
+                pyquest_library_converter_options = "-N 1 -S 24"
+                quantification = "pyquest"
+                oligo_library = "${projectDir}/tests/ref/1.csv"
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+
+    }
+
+}

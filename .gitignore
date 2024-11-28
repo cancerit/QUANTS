@@ -11,3 +11,8 @@ testing*
 venv/
 params*.json
 sample_manifest*
+*.log
+tests/sample-data/*
+tests/ref/*
+!**/.gitkeep
+.nf-test/

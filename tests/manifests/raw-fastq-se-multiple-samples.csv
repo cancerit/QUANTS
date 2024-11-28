@@ -1,0 +1,4 @@
+sample,fastq_1,fastq_2
+HG_CH_1_4_A,/lustre/scratch125/casm/team78/quants_test_data/DATA/2.fq.gz,
+HG_CH_1_4_B,/lustre/scratch125/casm/team78/quants_test_data/DATA/3.fq.gz,
+HG_CH_1_4_C,/lustre/scratch125/casm/team78/quants_test_data/DATA/4.fq.gz,
