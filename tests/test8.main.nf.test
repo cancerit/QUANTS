@@ -1,0 +1,35 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    script "main.nf"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+                input = "${projectDir}/tests/manifests/raw-fastq-pe.csv"
+                single_end = false
+                input_type = "fastq"
+                raw_sequencing_qc = true
+                adapter_trimming = "cutadapt"
+                adapter_cutadapt_options = "-a 'AGATCGGAAGAGCGGTTCAGCAGGAATGCCG' -A 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT' -m 1"
+                adapter_trimming_qc = true
+                primer_trimming = "cutadapt"
+                primer_cutadapt_options = "-g 'TCTACATTTTATTTGCACTACTTGAAGG...ATACTTTTAAGTTCTGGGGTCATGTG' -G 'CACATGACCCCAGAACTTAAA...AGTGCAAATAAAATGTAGA' -m 1"
+                primer_trimming_qc = true
+                read_merging = "flash2"
+                read_merging_qc = true
+                read_filtering = "seqkit"
+                seqkit_seq_options = "-m 100"
+                quantification = "pyquest"
+                oligo_library = "${projectDir}/tests/ref/4.tsv"
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+
+    }
+
+}

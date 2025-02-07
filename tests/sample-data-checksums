@@ -1,0 +1,17 @@
+77d92378b88ed28dd3f7d5d580971a53  tests/sample-data/1.cram
+26d427131d4720aa7ed07e8018c526b1  tests/sample-data/1.fq.gz
+b822820791a9fb4fde3af96afa9308a5  tests/sample-data/2.cram
+023bc001077093ad6586a4c5f601ad37  tests/sample-data/2.fq.gz
+0d131b633a2af323b025a756ae933d7b  tests/sample-data/3.fq.gz
+47201d8a28b69328823c8df973041ec2  tests/sample-data/4.fq.gz
+2ab872bb3f7de763c27d8811e3e2c622  tests/sample-data/libR1.fq.gz
+65888a8f410e81e0633a814dc77743e5  tests/sample-data/libR2.fq.gz
+5bf45c57e729d8629e99df3979d1c97c  tests/sample-data/sge.fq.gz
+4da5792d1d6a5d998f0ace0870c55f29  tests/sample-data/uR1.fq.gz
+2ef7c9ad9eaf02f903fafd340095fbd5  tests/sample-data/uR2.fq.gz
+232f948fbbd7bd49f2cf9735c527a744  tests/sample-data/vR1.fq.gz
+5dce830523e9927aba8433ff79b56db4  tests/sample-data/vR2.fq.gz
+77ffaf4d0dcf665bd9ba31e8da885c16  tests/sample-data/wR1.fq.gz
+2777816cca4302e9c042dfaeb17d6dea  tests/sample-data/wR2.fq.gz
+0aee12c4562d18eba0300ba0a144371a  tests/sample-data/xR1.fq.gz
+6a789cedb3b9f64479ec6c875eceae1a  tests/sample-data/xR2.fq.gz
