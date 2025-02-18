@@ -9,7 +9,7 @@ To confirm that you've retrieved the correct data, and named it appropriately if
 ## Test parameters
 
 | Test | Source | FASTQ or CRAM | SE or PE| RevComp | Read merging | Adapter trimming | Primer Trimming | Read filtering | Read modification | QC | Quantification |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | 
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | `test1.main.nf.test` | Trimmed | FASTQ | SE | Y | N | N | N | N | Y | N | Y |
 | `test2.main.nf.test` | Trimmed | FASTQ | SE | Y | N | N | N | N | Y | Y | Y |
 | `test3.main.nf.test` | Raw | FASTQ | SE | Y | N | Y | Y | N | Y | Y | Y |
