@@ -25,6 +25,28 @@ if ( input_type_options.contains( params.input_type ) == false ) {
     exit 1
 }
 
+// Check downsampling options
+def downsampling_seed = 100
+if (params.downsampling) {
+    if (! params.single_end) {
+        printErr("Downsampling is only enabled for single-end data!")
+        exit 1
+    }
+    if (! params.downsampling_size instanceof Integer) {
+        printErr("downsampling_size must be an integer!")
+        exit 1
+    }
+    if (params.downsampling_size < 1) {
+        printErr("downsampling_size must be greater than 0!")
+        exit 1
+    }
+    if (! params.downsampling_seed) {
+        println("Downsampling seed not set! Defaulting to " + downsampling_seed)
+    } else {
+        downsampling_seed = params.downsampling_seed
+    }
+}
+
 // Check adapter and primer trimming software (if set)
 def read_trimming_software = ['cutadapt']
 if (params.adapter_trimming) {
@@ -176,6 +198,9 @@ include { SEQUENCING_QC as RAW_SEQUENCING_QC;
           SEQUENCING_QC as FILTERED_SEQUENCING_QC
         } from '../subworkflows/local/sequencing_qc' addParams( options: [:] )
 include { COLLATE_CUTADAPT_JSONS } from '../modules/local/cutadapt_json_collation/main.nf' addParams( options: [:] )
+
+// Installed from nf-core but modified substantially
+include { SEQTK_SAMPLE } from '../modules/local/seqtk/sample/main'
 // editorconfig-checker-disable
 
 //
@@ -224,6 +249,25 @@ workflow SGE {
         INPUT_CHECK_FASTQ ( ch_input )
         ch_raw_reads = INPUT_CHECK_FASTQ.out.reads
         ch_adapter_trim = INPUT_CHECK_FASTQ.out.reads
+    }
+
+    //
+    // SUBWORKFLOW: Downsample input files
+    //
+    if (params.downsampling) {
+        ch_downsampling_size = Channel.of(params.downsampling_size)
+        ch_downsampling_seed = Channel.of(downsampling_seed)
+
+        // Produces four-element tuple with meta and reads from ch_raw_reads, as well as
+        // constant downsampling size and seed values
+        SEQTK_SAMPLE ( ch_raw_reads
+            .combine(ch_downsampling_size)
+            .combine(ch_downsampling_seed) )
+
+        ch_raw_reads = SEQTK_SAMPLE.out.reads
+        ch_adapter_trim = SEQTK_SAMPLE.out.reads
+
+        ch_software_versions = ch_software_versions.mix(SEQTK_SAMPLE.out.versions)
     }
 
     //
