@@ -2,9 +2,7 @@ process SEQTK_SAMPLE {
     tag "$meta.id"
     label 'process_single'
 
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/seqtk:1.4--he4a0461_1' :
-        'biocontainers/seqtk:1.4--he4a0461_1' }"
+    container "quay.io/biocontainers/seqtk:1.4--he4a0461_1"
 
     input:
     tuple val(meta), path(reads), val(sample_size), val(seed)
