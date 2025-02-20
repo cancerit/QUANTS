@@ -52,6 +52,14 @@
 --oligo_library                       [string]  Path to tab-delimited file containing information about the oligos in the experiment (only suitable when library-dependent quantification enabled).
 ```
 
+## Downsampling options
+
+```console
+--downsampling                        [boolean] Define whether the pipeline should downsample the input data
+--downsampling_size                   [integer] Number of counts to downsample the input data to
+--downsampling_seed                   [integer] Optional seed to give to the downsampler. 100 by default
+```
+
 ## Useful core options
 
 ```console
