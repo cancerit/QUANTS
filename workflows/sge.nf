@@ -26,7 +26,6 @@ if ( input_type_options.contains( params.input_type ) == false ) {
 }
 
 // Check downsampling options
-def downsampling_seed = 100
 if (params.downsampling) {
     if (! params.single_end) {
         printErr("Downsampling is only enabled for single-end data!")
@@ -40,10 +39,7 @@ if (params.downsampling) {
         printErr("downsampling_size must be greater than 0!")
         exit 1
     }
-    if (! params.downsampling_seed) {
-        println("Downsampling seed not set! Defaulting to " + downsampling_seed)
-        params.downsampling_seed = downsampling_seed
-    }
+    println("Downsampling seed set to " + params.downsampling_seed)
 }
 
 // Check adapter and primer trimming software (if set)
