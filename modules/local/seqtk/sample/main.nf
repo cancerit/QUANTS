@@ -5,7 +5,7 @@ process SEQTK_SAMPLE {
     container "quay.io/biocontainers/seqtk:1.4--he4a0461_1"
 
     input:
-    tuple val(meta), path(reads), val(sample_size), val(seed)
+    tuple val(meta), path(reads)
 
     output:
     tuple val(meta), path("*.fq.gz")   , emit: reads
@@ -16,6 +16,8 @@ process SEQTK_SAMPLE {
 
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def sample_size = params.downsampling_size
+    def seed = params.downsampling_seed
     if ( !sample_size ) {
         error "SEQTK/SAMPLE must have a sample_size value included"
     }

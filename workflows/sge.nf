@@ -42,8 +42,7 @@ if (params.downsampling) {
     }
     if (! params.downsampling_seed) {
         println("Downsampling seed not set! Defaulting to " + downsampling_seed)
-    } else {
-        downsampling_seed = params.downsampling_seed
+        params.downsampling_seed = downsampling_seed
     }
 }
 
@@ -255,14 +254,7 @@ workflow SGE {
     // SUBWORKFLOW: Downsample input files
     //
     if (params.downsampling) {
-        ch_downsampling_size = Channel.of(params.downsampling_size)
-        ch_downsampling_seed = Channel.of(downsampling_seed)
-
-        // Produces four-element tuple with meta and reads from ch_raw_reads, as well as
-        // constant downsampling size and seed values
-        SEQTK_SAMPLE ( ch_raw_reads
-            .combine(ch_downsampling_size)
-            .combine(ch_downsampling_seed) )
+        SEQTK_SAMPLE ( ch_raw_reads )
 
         ch_raw_reads = SEQTK_SAMPLE.out.reads
         ch_adapter_trim = SEQTK_SAMPLE.out.reads
