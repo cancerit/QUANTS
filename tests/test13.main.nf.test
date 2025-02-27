@@ -1,27 +1,40 @@
-nextflow_process {
+nextflow_pipeline {
 
-    name "Test SEQTK_SAMPLE process"
-    script "modules/local/seqtk/sample/main.nf"
-    process "SEQTK_SAMPLE"
+    name "Test main.nf exits when given conflicting downsampling parameters"
+    script "main.nf"
 
-    test("Validate downsampling") {
+    test("Should fail on downsampling conflict") {
+
         when {
             params {
+                input = "${projectDir}/tests/manifests/raw-cram-se.csv"
+                single_end = false
+                input_type = "cram"
+                raw_sequencing_qc = true
+                adapter_trimming = "cutadapt"
+                adapter_cutadapt_options = "-a AGATCGGAAGAGCACACGTCTGAACTCCAGTCA -m 1"
+                adapter_trimming_qc = true
+                primer_trimming = "cutadapt"
+                primer_cutadapt_options = "-g 'CCCTGGGAAGGTAATTTTAGATTTC...AGAGATTGGACAGCATAACGTGAAT' -m 1"
+                primer_trimming_qc = true
+                read_modification = true
+                append_start = "ATTCACGTTATGCTGTCCAATCTCT"
+                append_end = "GAAATCTAAAATTACCTTCCCAGGG"
+                append_quality = "?"
+                read_transform = "reverse_complement"
+                transform_library = true
+                pyquest_library_converter_options = "-N 1 -S 24"
+                quantification = "pyquest"
+                oligo_library = "${projectDir}/tests/ref/2.csv"
                 downsampling = true
                 downsampling_size = 1000000
                 downsampling_seed = 413
             }
-
-            process {
-                """
-                input[0] = Channel.of([["id":"test_sample", "single_end":"true"], file("${projectDir}/tests/sample-data/2.fq.gz", checkIfExists: true)])
-                """
-            }
         }
 
         then {
-            assert process.success
-            assert path(process.out.reads[0][1]).md5 == "fded5d8b62e204ed2cfada34c3af798c"
+            assert workflow.failed
         }
+
     }
 }
