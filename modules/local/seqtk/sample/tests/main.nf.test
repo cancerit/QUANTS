@@ -1,7 +1,7 @@
 nextflow_process {
 
     name "Test Process SEQTK_SAMPLE"
-    script "modules/nf-core/seqtk/sample/main.nf"
+    script "modules/local/seqtk/sample/main.nf"
     process "SEQTK_SAMPLE"
     config "./standard.config"
 
