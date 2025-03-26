@@ -11,11 +11,7 @@ process FLASH2 {
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process), meta:meta, publish_by_meta:['id']) }    conda (params.enable_conda ? "bioconda::flash=2.2.00" : null)
 
-    if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-        container "https://depot.galaxyproject.org/singularity/flash2:2.2.00--h5bf99c6_3"
-    } else {
-        container "quay.io/biocontainers/flash2:2.2.00--h5bf99c6_3"
-    }
+    container "quay.io/biocontainers/flash2:2.2.00--h5bf99c6_3"
 
     input:
     tuple val(meta), path(reads)

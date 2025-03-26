@@ -1,0 +1,31 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    script "main.nf"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+                input = "${projectDir}/tests/manifests/trimmed-fastq-se.csv"
+                single_end = true
+                input_type = "fastq"
+                read_modification = true
+                append_start = "ATTCACGTTATGCTGTCCAATCTCT"
+                append_end = "GAAATCTAAAATTACCTTCCCAGGG"
+                append_quality = "?"
+                read_transform = "reverse_complement"
+                transform_library = true
+                pyquest_library_converter_options = "-N 1 -S 24"
+                quantification = "pyquest"
+                oligo_library = "${projectDir}/tests/ref/2.csv"
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+
+    }
+
+}

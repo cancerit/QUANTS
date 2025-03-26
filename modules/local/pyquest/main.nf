@@ -12,11 +12,7 @@ process PYQUEST {
 
     // Keep for when container is public
     /*
-    if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-        container "https://depot.galaxyproject.org/singularity/flash2:2.2.00--h5bf99c6_3"
-    } else {
-        container "quay.io/biocontainers/flash2:2.2.00--h5bf99c6_3"
-    }
+    container "quay.io/biocontainers/flash2:2.2.00--h5bf99c6_3"
     */
     container "quay.io/wtsicgp/pyquest:1.1.0"
 

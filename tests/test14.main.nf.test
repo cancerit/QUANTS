@@ -1,0 +1,28 @@
+nextflow_process {
+
+    name "Test SEQTK_SAMPLE process"
+    script "modules/local/seqtk/sample/main.nf"
+    process "SEQTK_SAMPLE"
+
+    test("Validate downsampling") {
+        when {
+            params {
+                downsampling = true
+                downsampling_size = 1000000
+                downsampling_seed = 413
+            }
+
+            process {
+                """
+                input[0] = Channel.of([["id":"test_sample", "single_end":"true"], file("${projectDir}/tests/sample-data/2.fq.gz", checkIfExists: true)])
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            assert path(process.out.reads[0][1]).md5 == "fded5d8b62e204ed2cfada34c3af798c"
+        }
+    }
+}
+

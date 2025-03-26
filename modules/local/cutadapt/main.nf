@@ -12,11 +12,8 @@ process CUTADAPT {
         saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process), meta:meta, publish_by_meta:['id']) }
 
     conda (params.enable_conda ? 'bioconda::cutadapt=4.4' : null)
-    if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-        container 'https://depot.galaxyproject.org/singularity/cutadapt:4.4--py39hf95cd2a_1'
-    } else {
-        container 'quay.io/biocontainers/cutadapt:4.4--py39hf95cd2a_1'
-    }
+    container 'quay.io/biocontainers/cutadapt:4.4--py39hf95cd2a_1'
+    
 
     input:
     tuple val(meta), path(reads)

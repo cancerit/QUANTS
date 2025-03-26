@@ -1,0 +1,5 @@
+sample,fastq_1,fastq_2
+lib,../../../tests/sample-data/libR1.fq.gz,../../../tests/sample-data/libR2.fq.gz
+u,../../../tests/sample-data/uR1.fq.gz,../../../tests/sample-data/uR2.fq.gz
+v,../../../tests/sample-data/vR1.fq.gz,../../../tests/sample-data/vR2.fq.gz
+w,../../../tests/sample-data/wR1.fq.gz,../../../tests/sample-data/wR2.fq.gz

@@ -1,0 +1,30 @@
+// TEST BROKEN
+nextflow_pipeline {
+
+    name "Test Workflow main.nf"
+    script "main.nf"
+
+    test("Should run without failures") {
+
+        when {
+            params {
+                input = "${projectDir}/tests/manifests/raw-fastq-se-multiple-samples.csv"
+                single_end = true
+                input_type = "fastq"
+                raw_sequencing_qc = true
+                adapter_trimming = "cutadapt"
+                adapter_cutadapt_options = "-a 'AGATCGGAAGAGCGGTTCAGCAGGAATGCCG' -A 'AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT' -m 1"
+                adapter_trimming_qc = true
+                primer_trimming = "cutadapt"
+                primer_cutadapt_options = "-g 'TCTACATTTTATTTGCACTACTTGAAGG...ATACTTTTAAGTTCTGGGGTCATGTG' -G 'CACATGACCCCAGAACTTAAA...AGTGCAAATAAAATGTAGA' -m 1"
+                primer_trimming_qc = true
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+
+    }
+
+}

@@ -81,7 +81,7 @@ params {
 
 Specify the path to a specific JSON file containing configuration parameters (this is a core Nextflow command). This is similar, but differently formatted, to `-c`. See the [Nextflow](https://www.nextflow.io/docs/latest/config.html) documentation for more information.
 
-For configuration options, please see [configuration](assets/configuration) documentation.
+For configuration options, please see [configuration](configuration.md) documentation.
 
 ## Core Nextflow outputs
 
