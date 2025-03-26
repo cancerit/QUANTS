@@ -94,6 +94,29 @@
                 }
             }
         },
+        "downsampling_options": {
+            "title": "Downsampling options",
+            "type": "object",
+            "fa_icon": "fas fa-arrow-down",
+            "description": "Define pipeline options for downsampling.",
+            "properties": {
+                "downsampling": {
+                    "type": "boolean",
+                    "description": "Define whether the pipeline should downsample the input data.",
+                    "help_text": "Set this to true to enable downsampling, else set to false or omit."
+                },
+                "downsampling_size": {
+                    "type": "integer",
+                    "description": "Define how many reads the input data should be downsampled to."
+                },
+                "downsampling_seed": {
+                    "type": "integer",
+                    "default": 100,
+                    "description": "Define the seed for the downscaler randomisation to use.",
+                    "help_text": "Optional. Set to 100 by default, set to any other integer to change the output of the downscaler."
+                }
+            }
+        },
         "read_transformation_options": {
             "title": "Read transformation options",
             "type": "object",

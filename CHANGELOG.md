@@ -61,3 +61,8 @@ Initial release of QUANTS, created with the [nf-core](https://nf-co.re/) templat
 
 * Replace containers which use licensed conda packages
 * Remove galaxy depot
+
+## NEXT - [26th March 2025]
+
+* Add downsampling step using modified seqtk/sample module
+* Replace Python containers which use licensed conda packages

@@ -25,6 +25,23 @@ if ( input_type_options.contains( params.input_type ) == false ) {
     exit 1
 }
 
+// Check downsampling options
+if (params.downsampling) {
+    if (! params.single_end) {
+        printErr("Downsampling is only enabled for single-end data!")
+        exit 1
+    }
+    if (! params.downsampling_size instanceof Integer) {
+        printErr("downsampling_size must be an integer!")
+        exit 1
+    }
+    if (params.downsampling_size < 1) {
+        printErr("downsampling_size must be greater than 0!")
+        exit 1
+    }
+    println("Downsampling seed set to " + params.downsampling_seed)
+}
+
 // Check adapter and primer trimming software (if set)
 def read_trimming_software = ['cutadapt']
 if (params.adapter_trimming) {
@@ -176,6 +193,9 @@ include { SEQUENCING_QC as RAW_SEQUENCING_QC;
           SEQUENCING_QC as FILTERED_SEQUENCING_QC
         } from '../subworkflows/local/sequencing_qc' addParams( options: [:] )
 include { COLLATE_CUTADAPT_JSONS } from '../modules/local/cutadapt_json_collation/main.nf' addParams( options: [:] )
+
+// Installed from nf-core but modified substantially
+include { SEQTK_SAMPLE } from '../modules/local/seqtk/sample/main'
 // editorconfig-checker-disable
 
 //
@@ -224,6 +244,18 @@ workflow SGE {
         INPUT_CHECK_FASTQ ( ch_input )
         ch_raw_reads = INPUT_CHECK_FASTQ.out.reads
         ch_adapter_trim = INPUT_CHECK_FASTQ.out.reads
+    }
+
+    //
+    // SUBWORKFLOW: Downsample input files
+    //
+    if (params.downsampling) {
+        SEQTK_SAMPLE ( ch_raw_reads )
+
+        ch_raw_reads = SEQTK_SAMPLE.out.reads
+        ch_adapter_trim = SEQTK_SAMPLE.out.reads
+
+        ch_software_versions = ch_software_versions.mix(SEQTK_SAMPLE.out.versions)
     }
 
     //
