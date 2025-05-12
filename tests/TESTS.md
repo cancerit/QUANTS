@@ -22,3 +22,5 @@ To confirm that you've retrieved the correct data, and named it appropriately if
 | `test10.main.nf.test` | Raw | FASTQ | SE | N | N | Y | Y | Y | N | Y | Y |
 | `test11.main.nf.test` | Raw | FASTQ | SE | N | N | Y | Y | N | Y | Y | Y |
 | `test12.main.nf.test` | Raw | CRAM | SE | N | N | Y | Y | N | Y | Y | Y |
+| `test13.main.nf.test` | Raw | CRAM | PE | N | N | Y | Y | N | Y | Y | Y | Y |
+| `test14.main.nf.test` | Raw | FASTQ | - | - | - | - | - | - | - | - | - | Y |
